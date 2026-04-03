@@ -1,0 +1,99 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --mail-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --mail-brand: #2db8af;
+  --mail-brand-hover: #28a79e;
+  --mail-brand-subtle: rgba(45, 184, 175, 0.08);
+  --mail-bg: #ffffff;
+  --mail-bg-secondary: #f8f9fa;
+  --mail-bg-hover: #f3f5f7;
+  --mail-bg-active: #eef0f3;
+  --mail-text: #1a1a2e;
+  --mail-text-secondary: #5a6275;
+  --mail-text-muted: #8b95a8;
+  --mail-border: #e4e8ee;
+  --mail-border-subtle: #eef0f3;
+  --mail-danger: #e5484d;
+  --mail-success: #30a46c;
+  --mail-warning: #f5a623;
+  --mail-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
+  --mail-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
+  --mail-radius: 10px;
+  --mail-radius-sm: 6px;
+  --mail-sidebar-width: 240px;
+  --mail-sidebar-collapsed: 64px;
+  --mail-header-height: 52px;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--mail-font);
+  color: var(--mail-text);
+  background: var(--mail-bg);
+  line-height: 1.5;
+  overflow: hidden;
+  height: 100vh;
+}
+
+#root {
+  height: 100vh;
+  overflow: hidden;
+}
+
+a {
+  color: var(--mail-brand);
+  text-decoration: none;
+}
+
+button {
+  font-family: inherit;
+  cursor: pointer;
+}
+
+::selection {
+  background: var(--mail-brand);
+  color: #fff;
+}
+
+*:focus-visible {
+  outline: 2px solid var(--mail-brand);
+  outline-offset: 1px;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 5px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--mail-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--mail-text-muted);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
