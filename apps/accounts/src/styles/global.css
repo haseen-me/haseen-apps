@@ -1,0 +1,82 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --acc-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --acc-brand: #2db8af;
+  --acc-brand-hover: #28a79e;
+  --acc-brand-subtle: rgba(45, 184, 175, 0.08);
+  --acc-bg: #f8fafb;
+  --acc-bg-card: #ffffff;
+  --acc-bg-dark: #0b0f14;
+  --acc-text: #1a1a2e;
+  --acc-text-secondary: #5a6275;
+  --acc-text-muted: #8b95a8;
+  --acc-border: #e4e8ee;
+  --acc-danger: #e5484d;
+  --acc-danger-subtle: rgba(229, 72, 77, 0.08);
+  --acc-warning: #f5a623;
+  --acc-success: #30a46c;
+  --acc-shadow: 0 4px 24px rgba(0, 0, 0, 0.06);
+  --acc-radius: 12px;
+  --acc-radius-sm: 8px;
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+}
+
+body {
+  font-family: var(--acc-font);
+  color: var(--acc-text);
+  background: var(--acc-bg);
+  line-height: 1.6;
+  min-height: 100vh;
+}
+
+a {
+  color: var(--acc-brand);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+button {
+  font-family: inherit;
+}
+
+::selection {
+  background: var(--acc-brand);
+  color: #fff;
+}
+
+/* Focus ring */
+*:focus-visible {
+  outline: 2px solid var(--acc-brand);
+  outline-offset: 2px;
+}
+
+input:focus-visible {
+  outline: none;
+  border-color: var(--acc-brand);
+  box-shadow: 0 0 0 3px var(--acc-brand-subtle);
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@media (max-width: 768px) {
+  /* SettingsLayout: stack sidebar + content */
+  .settings-body {
+    flex-direction: column !important;
+  }
+}
