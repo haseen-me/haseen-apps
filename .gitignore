@@ -6,6 +6,11 @@ dist/
 # Go
 services/*/tmp/
 services/*/__debug_bin*
+services/gateway/gateway
+services/auth/auth
+services/mail/mail
+services/drive/drive
+services/keyserver/keyserver
 
 # Env
 .env
