@@ -12,18 +12,22 @@ import (
 func (h *Handler) GetMessage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	msgID := chi.URLParam(r, "messageID")
+	userID := UserID(r)
 
-	msg, err := h.Store.GetMessage(ctx, msgID)
+	mb, err := h.Store.GetMailboxByUser(ctx, userID)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "mailbox not found")
+		return
+	}
+
+	msg, err := h.Store.GetMessage(ctx, mb.ID, msgID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return
 	}
 
 	// Resolve labels
-	labels, _ := h.Store.GetLabels(ctx, "")
-	if mb, err := h.Store.GetMailboxByUser(ctx, UserID(r)); err == nil {
-		labels, _ = h.Store.GetLabels(ctx, mb.ID)
-	}
+	labels, _ := h.Store.GetLabels(ctx, mb.ID)
 	labelMap := buildLabelMap(labels)
 	msg.Labels = resolveLabels(msg.Labels, labelMap)
 
@@ -73,7 +77,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	// Handle threading for replies
 	threadID := ""
 	if req.ReplyToMessageID != "" {
-		origMsg, err := h.Store.GetMessage(ctx, req.ReplyToMessageID)
+		origMsg, err := h.Store.GetMessage(ctx, mb.ID, req.ReplyToMessageID)
 		if err == nil {
 			threadID = origMsg.ThreadID
 		}
@@ -157,6 +161,13 @@ func (h *Handler) deliverToRecipient(recipientAddr string, from model.EmailAddre
 func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()
 	msgID := chi.URLParam(r, "messageID")
+	userID := UserID(r)
+
+	mb, err := h.Store.GetMailboxByUser(ctx, userID)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "mailbox not found")
+		return
+	}
 
 	var req model.UpdateMessageRequest
 	if err := h.Decode(r, &req); err != nil {
@@ -164,7 +175,7 @@ func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg, err := h.Store.UpdateMessage(ctx, msgID, &req)
+	msg, err := h.Store.UpdateMessage(ctx, mb.ID, msgID, &req)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return
@@ -174,8 +185,17 @@ func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 
 // DeleteMessage removes a message.
 func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
 	msgID := chi.URLParam(r, "messageID")
-	if err := h.Store.DeleteMessage(r.Context(), msgID); err != nil {
+	userID := UserID(r)
+
+	mb, err := h.Store.GetMailboxByUser(ctx, userID)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "mailbox not found")
+		return
+	}
+
+	if err := h.Store.DeleteMessage(ctx, mb.ID, msgID); err != nil {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return
 	}
@@ -206,7 +226,7 @@ func (h *Handler) MoveMessage(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	msg, err := h.Store.MoveMessage(ctx, msgID, label.ID)
+	msg, err := h.Store.MoveMessage(ctx, mb.ID, msgID, label.ID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return

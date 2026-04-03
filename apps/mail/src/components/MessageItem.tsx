@@ -2,6 +2,7 @@ import type { Message } from '@/types/mail';
 import { useCryptoStore } from '@/store/crypto';
 import { openEnvelope } from '@haseen-me/crypto';
 import type { EncryptedEnvelope } from '@haseen-me/crypto';
+import DOMPurify from 'dompurify';
 import {
   ChevronDown,
   ChevronUp,
@@ -206,7 +207,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
             </div>
           ) : (
             <div
-              dangerouslySetInnerHTML={{ __html: message.bodyHtml }}
+              dangerouslySetInnerHTML={{ __html: DOMPurify.sanitize(message.bodyHtml) }}
               style={{
                 fontSize: 14,
                 lineHeight: 1.7,

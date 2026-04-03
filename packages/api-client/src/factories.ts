@@ -15,7 +15,7 @@ export function createMailApi(client: ApiClient): MailApi {
   return {
     getMailbox: () => client.get('/mail/mailbox'),
     getMessage: (id) => client.get(`/mail/messages/${id}`),
-    sendMessage: (params) => client.post('/mail/messages', params),
+    sendMessage: (params) => client.post('/mail/messages/send', params),
     deleteMessage: (id) => client.del(`/mail/messages/${id}`),
   };
 }
@@ -23,9 +23,14 @@ export function createMailApi(client: ApiClient): MailApi {
 export function createDriveApi(client: ApiClient): DriveApi {
   return {
     listFiles: (folderID) => client.get(`/drive/files${folderID ? `?folder=${folderID}` : ''}`),
-    uploadFile: (params) => client.post('/drive/files', params),
+    uploadFile: (params) => client.post('/drive/files/upload', params),
     downloadFile: async (fileID) => {
-      const response = await fetch(`/api/v1/drive/files/${fileID}/download`, { credentials: 'include' });
+      const token = typeof localStorage !== 'undefined'
+        ? (() => { try { return JSON.parse(localStorage.getItem('haseen-auth') ?? '{}').token; } catch { return null; } })()
+        : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const response = await fetch(`/api/v1/drive/files/${fileID}/download`, { credentials: 'include', headers });
       if (!response.ok) throw { status: response.status, message: 'download failed' };
       return response.arrayBuffer();
     },

@@ -5,7 +5,7 @@
  * All requests go through the API gateway at /api/v1/*.
  */
 
-export { createClient, type ApiClient } from './client';
+export { createClient, type ApiClient, type ClientOptions } from './client';
 export { type ApiError, isApiError } from './errors';
 export type {
   AuthApi,

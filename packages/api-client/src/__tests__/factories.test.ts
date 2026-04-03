@@ -64,11 +64,11 @@ describe('createMailApi', () => {
     expect(client.get).toHaveBeenCalledWith('/mail/messages/msg-1');
   });
 
-  it('sendMessage calls POST /mail/messages', async () => {
+  it('sendMessage calls POST /mail/messages/send', async () => {
     const api = createMailApi(client);
     const params = { to: ['b@c.com'], encryptedSubject: 'es', encryptedBody: 'eb', encryptedSessionKeys: { k: 'v' } };
     await api.sendMessage(params);
-    expect(client.post).toHaveBeenCalledWith('/mail/messages', params);
+    expect(client.post).toHaveBeenCalledWith('/mail/messages/send', params);
   });
 
   it('deleteMessage calls DELETE /mail/messages/:id', async () => {
@@ -94,11 +94,11 @@ describe('createDriveApi', () => {
     expect(client.get).toHaveBeenCalledWith('/drive/files?folder=folder-1');
   });
 
-  it('uploadFile calls POST /drive/files', async () => {
+  it('uploadFile calls POST /drive/files/upload', async () => {
     const api = createDriveApi(client);
     const params = { name: 'test.txt', encryptedData: new ArrayBuffer(10), encryptedKey: 'ek' };
     await api.uploadFile(params);
-    expect(client.post).toHaveBeenCalledWith('/drive/files', params);
+    expect(client.post).toHaveBeenCalledWith('/drive/files/upload', params);
   });
 
   it('deleteFile calls DELETE /drive/files/:id', async () => {

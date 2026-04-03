@@ -27,7 +27,7 @@ func main() {
 	smtpPort := env("SMTP_PORT", "2525")
 	domain := env("MAIL_DOMAIN", "haseen.me")
 	dbURL := env("DATABASE_URL", "postgres://haseen:haseen@localhost:5432/haseen?sslmode=disable")
-	devMode := env("DEV_MODE", "true") == "true"
+	devMode := env("DEV_MODE", "false") == "true"
 
 	// Database
 	ctx := context.Background()

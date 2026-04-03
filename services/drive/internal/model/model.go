@@ -68,8 +68,9 @@ type MoveRequest struct {
 }
 
 type ShareRequest struct {
-	Email      string `json:"email"`
-	Permission string `json:"permission"`
+	Email        string `json:"email"`
+	Permission   string `json:"permission"`
+	EncryptedKey string `json:"encryptedKey"`
 }
 
 type SearchRequest struct {

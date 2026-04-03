@@ -7,6 +7,11 @@ interface RequestOptions {
   headers?: Record<string, string>;
 }
 
+export interface ClientOptions {
+  baseUrl?: string;
+  getToken?: () => string | null;
+}
+
 export interface ApiClient {
   request<T>(options: RequestOptions): Promise<T>;
   get<T>(path: string): Promise<T>;
@@ -15,14 +20,29 @@ export interface ApiClient {
   del<T>(path: string): Promise<T>;
 }
 
-export function createClient(baseUrl = '/api/v1'): ApiClient {
+export function createClient(baseUrlOrOpts: string | ClientOptions = '/api/v1'): ApiClient {
+  const opts: ClientOptions = typeof baseUrlOrOpts === 'string'
+    ? { baseUrl: baseUrlOrOpts }
+    : baseUrlOrOpts;
+  const baseUrl = opts.baseUrl ?? '/api/v1';
+  const getToken = opts.getToken;
+
   async function request<T>(options: RequestOptions): Promise<T> {
     const { method, path, body, headers = {} } = options;
+
+    const authHeaders: Record<string, string> = {};
+    if (getToken) {
+      const token = getToken();
+      if (token) {
+        authHeaders['Authorization'] = `Bearer ${token}`;
+      }
+    }
 
     const response = await fetch(`${baseUrl}${path}`, {
       method,
       headers: {
         'Content-Type': 'application/json',
+        ...authHeaders,
         ...headers,
       },
       body: body ? JSON.stringify(body) : undefined,

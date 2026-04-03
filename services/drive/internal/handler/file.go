@@ -24,7 +24,8 @@ func (h *Handler) ListFiles(w http.ResponseWriter, r *http.Request) {
 // GetFile returns file metadata.
 func (h *Handler) GetFile(w http.ResponseWriter, r *http.Request) {
 	fileID := chi.URLParam(r, "fileID")
-	f, err := h.Store.GetFile(r.Context(), fileID)
+	uid := UserID(r)
+	f, err := h.Store.GetFile(r.Context(), uid, fileID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "file not found")
 		return
@@ -72,8 +73,12 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Store metadata in DB
-	// Placeholder encrypted content key (client sends the real one)
-	encKey := []byte("placeholder-e2e-key")
+	// Use client-provided encrypted content key
+	encKeyStr := r.FormValue("encryptedKey")
+	encKey := []byte(encKeyStr)
+	if len(encKey) == 0 {
+		encKey = []byte("unencrypted")
+	}
 	f, err := h.Store.CreateFile(ctx, uid, name, mimeType, size, folderPtr, blobPath, encKey)
 	if err != nil {
 		h.Blob.Delete(blobPath)
@@ -88,12 +93,13 @@ func (h *Handler) UploadFile(w http.ResponseWriter, r *http.Request) {
 // UpdateFile updates file name or folder.
 func (h *Handler) UpdateFile(w http.ResponseWriter, r *http.Request) {
 	fileID := chi.URLParam(r, "fileID")
+	uid := UserID(r)
 	var req model.UpdateFileRequest
 	if err := h.Decode(r, &req); err != nil {
 		h.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	f, err := h.Store.UpdateFile(r.Context(), fileID, req.Name, req.FolderID)
+	f, err := h.Store.UpdateFile(r.Context(), uid, fileID, req.Name, req.FolderID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "file not found")
 		return
@@ -104,7 +110,8 @@ func (h *Handler) UpdateFile(w http.ResponseWriter, r *http.Request) {
 // DeleteFile removes a file and its blob.
 func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 	fileID := chi.URLParam(r, "fileID")
-	blobPath, err := h.Store.DeleteFile(r.Context(), fileID)
+	uid := UserID(r)
+	blobPath, err := h.Store.DeleteFile(r.Context(), uid, fileID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "file not found")
 		return
@@ -116,12 +123,13 @@ func (h *Handler) DeleteFile(w http.ResponseWriter, r *http.Request) {
 // MoveFile moves a file to a different folder.
 func (h *Handler) MoveFile(w http.ResponseWriter, r *http.Request) {
 	fileID := chi.URLParam(r, "fileID")
+	uid := UserID(r)
 	var req model.MoveRequest
 	if err := h.Decode(r, &req); err != nil {
 		h.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
-	f, err := h.Store.MoveFile(r.Context(), fileID, req.FolderID)
+	f, err := h.Store.MoveFile(r.Context(), uid, fileID, req.FolderID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "file not found")
 		return
@@ -132,7 +140,8 @@ func (h *Handler) MoveFile(w http.ResponseWriter, r *http.Request) {
 // DownloadFile serves the raw blob data.
 func (h *Handler) DownloadFile(w http.ResponseWriter, r *http.Request) {
 	fileID := chi.URLParam(r, "fileID")
-	f, err := h.Store.GetFile(r.Context(), fileID)
+	uid := UserID(r)
+	f, err := h.Store.GetFile(r.Context(), uid, fileID)
 	if err != nil {
 		h.Error(w, http.StatusNotFound, "file not found")
 		return
@@ -176,8 +185,12 @@ func (h *Handler) ShareFile(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// Placeholder encrypted key (client sends the real one)
-	encKey := []byte("placeholder-share-key")
+	// Use client-provided encrypted share key
+	encKey := []byte(req.EncryptedKey)
+	if len(encKey) == 0 {
+		h.Error(w, http.StatusBadRequest, "encryptedKey is required")
+		return
+	}
 	share, err := h.Store.CreateShare(ctx, &fileID, nil, sharedWithID, encKey, req.Permission)
 	if err != nil {
 		h.Error(w, http.StatusInternalServerError, "failed to create share")

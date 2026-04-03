@@ -57,8 +57,8 @@ func main() {
 
 	// Reverse proxy routes
 	r.Route("/api/v1/auth", proxyRoute(authURL, "/v1"))
-	r.Route("/api/v1/mail", proxyRoute(mailURL, "/api/v1"))
-	r.Route("/api/v1/drive", proxyRoute(driveURL, "/api/v1"))
+	r.Route("/api/v1/mail", proxyRoute(mailURL, "/v1"))
+	r.Route("/api/v1/drive", proxyRoute(driveURL, "/v1"))
 	r.Route("/api/v1/keys", proxyRoute(keysURL, "/v1"))
 	r.Route("/api/v1/calendar", proxyRoute(calendarURL, "/v1"))
 
@@ -174,29 +174,54 @@ func healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL string) http
 
 type ipRateLimiter struct {
 	mu       sync.Mutex
-	limiters map[string]*rate.Limiter
+	limiters map[string]*limiterEntry
 	rate     rate.Limit
 	burst    int
 }
 
+type limiterEntry struct {
+	limiter  *rate.Limiter
+	lastSeen time.Time
+}
+
 func newIPRateLimiter(r rate.Limit, burst int) *ipRateLimiter {
-	return &ipRateLimiter{
-		limiters: make(map[string]*rate.Limiter),
+	rl := &ipRateLimiter{
+		limiters: make(map[string]*limiterEntry),
 		rate:     r,
 		burst:    burst,
 	}
+	go rl.cleanup(5 * time.Minute)
+	return rl
 }
 
 func (i *ipRateLimiter) getLimiter(ip string) *rate.Limiter {
 	i.mu.Lock()
 	defer i.mu.Unlock()
 
-	limiter, exists := i.limiters[ip]
+	entry, exists := i.limiters[ip]
 	if !exists {
-		limiter = rate.NewLimiter(i.rate, i.burst)
-		i.limiters[ip] = limiter
+		entry = &limiterEntry{
+			limiter:  rate.NewLimiter(i.rate, i.burst),
+			lastSeen: time.Now(),
+		}
+		i.limiters[ip] = entry
+	} else {
+		entry.lastSeen = time.Now()
 	}
-	return limiter
+	return entry.limiter
+}
+
+func (i *ipRateLimiter) cleanup(interval time.Duration) {
+	for {
+		time.Sleep(interval)
+		i.mu.Lock()
+		for ip, entry := range i.limiters {
+			if time.Since(entry.lastSeen) > 10*time.Minute {
+				delete(i.limiters, ip)
+			}
+		}
+		i.mu.Unlock()
+	}
 }
 
 func rateLimitMiddleware(rl *ipRateLimiter) func(http.Handler) http.Handler {

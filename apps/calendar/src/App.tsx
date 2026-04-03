@@ -30,7 +30,12 @@ export default function App() {
     let cancelled = false;
     setLoading(true);
 
-    Promise.all([calendarApi.listCalendars(), calendarApi.listEvents({ start: '', end: '' })])
+    // Fetch current month ± 1 month range
+    const now = new Date();
+    const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+    const end = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
+
+    Promise.all([calendarApi.listCalendars(), calendarApi.listEvents({ start, end })])
       .then(([calData, evData]) => {
         if (!cancelled) {
           setCalendars(

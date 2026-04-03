@@ -26,7 +26,7 @@ func main() {
 	port := envOr("DRIVE_PORT", "8083")
 	dbURL := envOr("DATABASE_URL", "postgres://haseen:haseen@localhost:5432/haseen?sslmode=disable")
 	blobDir := envOr("BLOB_DIR", "./data/blobs")
-	devMode := envOr("DEV_MODE", "true") == "true"
+	devMode := envOr("DEV_MODE", "false") == "true"
 
 	ctx := context.Background()
 

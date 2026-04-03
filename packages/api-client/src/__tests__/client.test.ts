@@ -203,6 +203,53 @@ describe('createClient', () => {
       });
     });
   });
+
+  describe('auth token', () => {
+    it('attaches Bearer token when getToken returns a token', async () => {
+      const client = createClient({ getToken: () => 'test-token-123' });
+      mockFetch.mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+      await client.get('/auth/account');
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/v1/auth/account', {
+        method: 'GET',
+        headers: {
+          'Content-Type': 'application/json',
+          'Authorization': 'Bearer test-token-123',
+        },
+        body: undefined,
+        credentials: 'include',
+      });
+    });
+
+    it('omits Authorization header when getToken returns null', async () => {
+      const client = createClient({ getToken: () => null });
+      mockFetch.mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+      await client.get('/test');
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/v1/test', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: undefined,
+        credentials: 'include',
+      });
+    });
+
+    it('omits Authorization header when getToken is not provided', async () => {
+      const client = createClient('/api/v1');
+      mockFetch.mockResolvedValueOnce(jsonResponse({ ok: true }));
+
+      await client.get('/test');
+
+      expect(mockFetch).toHaveBeenCalledWith('/api/v1/test', {
+        method: 'GET',
+        headers: { 'Content-Type': 'application/json' },
+        body: undefined,
+        credentials: 'include',
+      });
+    });
+  });
 });
 
 describe('isApiError', () => {

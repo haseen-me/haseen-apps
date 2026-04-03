@@ -17,12 +17,12 @@ func (s *Store) CreateFile(ctx context.Context, ownerID, name, mimeType string, 
 	return f, err
 }
 
-func (s *Store) GetFile(ctx context.Context, fileID string) (*model.File, error) {
+func (s *Store) GetFile(ctx context.Context, ownerID, fileID string) (*model.File, error) {
 	f := &model.File{}
 	err := s.DB.QueryRow(ctx,
 		`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at
-		 FROM drive_files WHERE id = $1`,
-		fileID,
+		 FROM drive_files WHERE id = $1 AND owner_id = $2`,
+		fileID, ownerID,
 	).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
 		return nil, err
@@ -90,36 +90,36 @@ func (s *Store) GetAllFiles(ctx context.Context, ownerID string) ([]model.File, 
 	return files, rows.Err()
 }
 
-func (s *Store) UpdateFile(ctx context.Context, fileID string, name *string, folderID *string) (*model.File, error) {
+func (s *Store) UpdateFile(ctx context.Context, ownerID, fileID string, name *string, folderID *string) (*model.File, error) {
 	f := &model.File{}
 	err := s.DB.QueryRow(ctx,
 		`UPDATE drive_files SET
 		   name = COALESCE($2, name),
 		   folder_id = COALESCE($3, folder_id),
 		   updated_at = NOW()
-		 WHERE id = $1
+		 WHERE id = $1 AND owner_id = $4
 		 RETURNING id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at`,
-		fileID, name, folderID,
+		fileID, name, folderID, ownerID,
 	).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
 	return f, err
 }
 
-func (s *Store) MoveFile(ctx context.Context, fileID string, folderID *string) (*model.File, error) {
+func (s *Store) MoveFile(ctx context.Context, ownerID, fileID string, folderID *string) (*model.File, error) {
 	f := &model.File{}
 	err := s.DB.QueryRow(ctx,
 		`UPDATE drive_files SET folder_id = $2, updated_at = NOW()
-		 WHERE id = $1
+		 WHERE id = $1 AND owner_id = $3
 		 RETURNING id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at`,
-		fileID, folderID,
+		fileID, folderID, ownerID,
 	).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
 	return f, err
 }
 
-func (s *Store) DeleteFile(ctx context.Context, fileID string) (string, error) {
+func (s *Store) DeleteFile(ctx context.Context, ownerID, fileID string) (string, error) {
 	var blobPath string
 	err := s.DB.QueryRow(ctx,
-		`DELETE FROM drive_files WHERE id = $1 RETURNING blob_path`,
-		fileID,
+		`DELETE FROM drive_files WHERE id = $1 AND owner_id = $2 RETURNING blob_path`,
+		fileID, ownerID,
 	).Scan(&blobPath)
 	if err != nil {
 		return "", err

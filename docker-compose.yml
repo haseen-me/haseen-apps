@@ -9,7 +9,12 @@ services:
       - "5432:5432"
     volumes:
       - pgdata:/var/lib/postgresql/data
-      - ./migrations:/docker-entrypoint-initdb.d
+      - ./migrations/001_initial_schema.up.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql
+      - ./migrations/002_mail_tables.up.sql:/docker-entrypoint-initdb.d/002_mail_tables.sql
+      - ./migrations/003_drive_tables.up.sql:/docker-entrypoint-initdb.d/003_drive_tables.sql
+      - ./migrations/004_mail_enhancements.up.sql:/docker-entrypoint-initdb.d/004_mail_enhancements.sql
+      - ./migrations/005_signed_pre_keys.up.sql:/docker-entrypoint-initdb.d/005_signed_pre_keys.sql
+      - ./migrations/006_calendar_tables.up.sql:/docker-entrypoint-initdb.d/006_calendar_tables.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U haseen"]
       interval: 5s

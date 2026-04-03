@@ -24,7 +24,7 @@ func main() {
 
 	port := envOr("CALENDAR_PORT", "8085")
 	dbURL := envOr("DATABASE_URL", "postgres://haseen:haseen@localhost:5432/haseen?sslmode=disable")
-	devMode := envOr("DEV_MODE", "true") == "true"
+	devMode := envOr("DEV_MODE", "false") == "true"
 
 	ctx := context.Background()
 

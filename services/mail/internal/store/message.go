@@ -50,7 +50,7 @@ func (s *Store) CreateInboundMessage(ctx context.Context, mailboxID, threadID, l
 }
 
 // GetMessage returns a single message with its attachments.
-func (s *Store) GetMessage(ctx context.Context, messageID string) (*model.Message, error) {
+func (s *Store) GetMessage(ctx context.Context, mailboxID, messageID string) (*model.Message, error) {
 	var (
 		fromRaw  string
 		toRaw    []string
@@ -64,8 +64,8 @@ func (s *Store) GetMessage(ctx context.Context, messageID string) (*model.Messag
 		`SELECT id, thread_id, from_address, to_addresses, COALESCE(cc_addresses, '{}'),
 		        COALESCE(bcc_addresses, '{}'), subject, COALESCE(body_html,''), COALESCE(body_text,''),
 		        is_read, starred, label_id, created_at
-		 FROM mail_messages WHERE id = $1`,
-		messageID,
+		 FROM mail_messages WHERE id = $1 AND mailbox_id = $2`,
+		messageID, mailboxID,
 	).Scan(
 		&msg.ID, &msg.ThreadID, &fromRaw, &toRaw, &ccRaw, &bccRaw,
 		&msg.Subject, &msg.BodyHtml, &msg.BodyText,
@@ -93,23 +93,23 @@ func (s *Store) GetMessage(ctx context.Context, messageID string) (*model.Messag
 }
 
 // UpdateMessage updates read/starred flags and/or label.
-func (s *Store) UpdateMessage(ctx context.Context, messageID string, req *model.UpdateMessageRequest) (*model.Message, error) {
+func (s *Store) UpdateMessage(ctx context.Context, mailboxID, messageID string, req *model.UpdateMessageRequest) (*model.Message, error) {
 	if req.Read != nil {
-		if _, err := s.DB.Exec(ctx, `UPDATE mail_messages SET is_read = $2 WHERE id = $1`, messageID, *req.Read); err != nil {
+		if _, err := s.DB.Exec(ctx, `UPDATE mail_messages SET is_read = $2 WHERE id = $1 AND mailbox_id = $3`, messageID, *req.Read, mailboxID); err != nil {
 			return nil, err
 		}
 	}
 	if req.Starred != nil {
-		if _, err := s.DB.Exec(ctx, `UPDATE mail_messages SET starred = $2 WHERE id = $1`, messageID, *req.Starred); err != nil {
+		if _, err := s.DB.Exec(ctx, `UPDATE mail_messages SET starred = $2 WHERE id = $1 AND mailbox_id = $3`, messageID, *req.Starred, mailboxID); err != nil {
 			return nil, err
 		}
 	}
-	return s.GetMessage(ctx, messageID)
+	return s.GetMessage(ctx, mailboxID, messageID)
 }
 
 // DeleteMessage removes a message.
-func (s *Store) DeleteMessage(ctx context.Context, messageID string) error {
-	tag, err := s.DB.Exec(ctx, `DELETE FROM mail_messages WHERE id = $1`, messageID)
+func (s *Store) DeleteMessage(ctx context.Context, mailboxID, messageID string) error {
+	tag, err := s.DB.Exec(ctx, `DELETE FROM mail_messages WHERE id = $1 AND mailbox_id = $2`, messageID, mailboxID)
 	if err != nil {
 		return err
 	}
@@ -120,10 +120,10 @@ func (s *Store) DeleteMessage(ctx context.Context, messageID string) error {
 }
 
 // MoveMessage changes the label (folder) of a message.
-func (s *Store) MoveMessage(ctx context.Context, messageID, labelID string) (*model.Message, error) {
+func (s *Store) MoveMessage(ctx context.Context, mailboxID, messageID, labelID string) (*model.Message, error) {
 	tag, err := s.DB.Exec(ctx,
-		`UPDATE mail_messages SET label_id = $2 WHERE id = $1`,
-		messageID, labelID,
+		`UPDATE mail_messages SET label_id = $2 WHERE id = $1 AND mailbox_id = $3`,
+		messageID, labelID, mailboxID,
 	)
 	if err != nil {
 		return nil, err
@@ -131,7 +131,7 @@ func (s *Store) MoveMessage(ctx context.Context, messageID, labelID string) (*mo
 	if tag.RowsAffected() == 0 {
 		return nil, ErrNotFound
 	}
-	return s.GetMessage(ctx, messageID)
+	return s.GetMessage(ctx, mailboxID, messageID)
 }
 
 // GetMessagesByThread returns all messages in a thread ordered by date.
