@@ -1,7 +1,7 @@
 export const ROUTES = {
   home: '/',
-  login: '/login',
-  register: '/register',
+  login: '/sign-in',
+  register: '/sign-up',
   mail: {
     inbox: '/mail',
     compose: '/mail/compose',
@@ -12,9 +12,14 @@ export const ROUTES = {
     folder: (id: string) => `/drive/folder/${id}`,
     file: (id: string) => `/drive/file/${id}`,
   },
+  calendar: {
+    root: '/calendar',
+    event: (id: string) => `/calendar/event/${id}`,
+  },
   accounts: {
-    settings: '/accounts',
-    security: '/accounts/security',
-    keys: '/accounts/keys',
+    settings: '/settings',
+    security: '/settings/security',
+    recovery: '/settings/recovery',
+    keys: '/settings/keys',
   },
 } as const;

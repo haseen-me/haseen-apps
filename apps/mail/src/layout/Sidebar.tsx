@@ -69,25 +69,7 @@ export function Sidebar() {
         }}
       >
         {!sidebarCollapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                background: 'var(--mail-brand)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: 13,
-              }}
-            >
-              H
-            </div>
-            <span style={{ fontWeight: 600, fontSize: 15 }}>Mail</span>
-          </div>
+          <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--mail-text)' }}>Mail</span>
         )}
         <button
           onClick={toggleSidebar}

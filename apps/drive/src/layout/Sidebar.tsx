@@ -69,25 +69,7 @@ export function Sidebar() {
         }}
       >
         {!collapsed && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-            <div
-              style={{
-                width: 26,
-                height: 26,
-                borderRadius: 6,
-                background: 'var(--drive-brand)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                color: '#fff',
-                fontWeight: 800,
-                fontSize: 13,
-              }}
-            >
-              H
-            </div>
-            <span style={{ fontWeight: 600, fontSize: 15 }}>Drive</span>
-          </div>
+          <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--drive-text)' }}>Drive</span>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}

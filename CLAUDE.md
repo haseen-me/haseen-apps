@@ -16,13 +16,15 @@ haseen-apps/
 │   ├── mail/               # haseen.me/mail — E2E encrypted email (port 3001)
 │   ├── drive/              # haseen.me/drive — Encrypted storage (port 3002)
 │   ├── accounts/           # haseen.me/accounts — Auth & settings (port 3003)
+│   ├── calendar/           # haseen.me/calendar — Encrypted calendar (port 3004)
 │   └── ui-docs/            # haseen.me/ui — UI component docs site (port 3010)
 ├── services/               # Go 1.23 microservices
 │   ├── gateway/            # API gateway, routing, CORS, rate limiting (port 8080)
 │   ├── auth/               # SRP auth, sessions, MFA, key mgmt (port 8081)
 │   ├── mail/               # SMTP in/out, encrypted message storage (port 8082)
 │   ├── drive/              # File upload/download, encrypted blob storage (port 8083)
-│   └── keyserver/          # Public key directory, key exchange (port 8084)
+│   ├── keyserver/          # Public key directory, key exchange (port 8084)
+│   └── calendar/           # Calendar events, attendees, reminders (port 8085)
 ├── packages/               # Shared TypeScript packages
 │   ├── crypto/             # Client-side E2E encryption (NaCl/TweetNaCl)
 │   ├── api-client/         # Typed HTTP client for Go services

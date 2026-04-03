@@ -17,7 +17,7 @@ export function Sidebar() {
         flexShrink: 0,
       }}
     >
-      {/* Logo */}
+      {/* Header */}
       <div
         style={{
           height: 'var(--cal-header-height)',
@@ -30,8 +30,8 @@ export function Sidebar() {
           fontSize: 15,
         }}
       >
-        <CalIcon size={20} color="var(--cal-brand)" />
-        Haseen Calendar
+        <CalIcon size={18} color="var(--cal-brand)" />
+        Calendar
       </div>
 
       {/* New event button */}

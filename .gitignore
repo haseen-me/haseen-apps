@@ -11,6 +11,15 @@ services/auth/auth
 services/mail/mail
 services/drive/drive
 services/keyserver/keyserver
+services/calendar/calendar
+
+# Go binaries at root (from go build)
+/gateway
+/auth
+/mail
+/drive
+/keyserver
+/calendar
 
 # Env
 .env
