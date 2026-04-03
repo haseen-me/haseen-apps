@@ -10,6 +10,9 @@
     "dev": "tsup src/index.ts --format esm --dts --watch",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
+    "test": "vitest run",
+    "test:watch": "vitest",
+    "test:coverage": "vitest run --coverage",
     "clean": "rm -rf dist"
   },
   "dependencies": {
@@ -17,7 +20,9 @@
     "tweetnacl-util": "^0.15.1"
   },
   "devDependencies": {
+    "@vitest/coverage-v8": "^4.1.2",
     "tsup": "^8.4.0",
-    "typescript": "^5.8.0"
+    "typescript": "^5.8.0",
+    "vitest": "^4.1.2"
   }
 }

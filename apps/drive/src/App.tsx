@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { DriveLayout } from '@/layout/DriveLayout';
 import { DriveHeader } from '@/components/DriveHeader';
 import { DriveContent } from '@/components/DriveContent';
@@ -86,6 +87,7 @@ export default function App() {
   }, [currentFolderId, setFolders, setFiles, setPath, setLoading]);
 
   return (
+    <ErrorBoundary>
     <DriveLayout>
       <DriveHeader />
       <DriveContent />
@@ -94,5 +96,6 @@ export default function App() {
       <SearchOverlay />
       <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
     </DriveLayout>
+    </ErrorBoundary>
   );
 }

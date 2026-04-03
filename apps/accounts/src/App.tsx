@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { SignUpPage } from '@/pages/SignUpPage';
 import { SignInPage } from '@/pages/SignInPage';
 import { RecoveryKeyPage } from '@/pages/RecoveryKeyPage';
@@ -8,6 +9,7 @@ import { RecoverySettingsPage } from '@/pages/RecoverySettingsPage';
 
 export default function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Routes>
         <Route path="/" element={<Navigate to="/sign-in" replace />} />
@@ -19,5 +21,6 @@ export default function App() {
         <Route path="/settings/recovery" element={<RecoverySettingsPage />} />
       </Routes>
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

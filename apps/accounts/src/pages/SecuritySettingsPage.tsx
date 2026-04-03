@@ -3,40 +3,87 @@ import { Shield, Smartphone, Key, AlertTriangle, Check, Trash2 } from 'lucide-re
 import { SettingsLayout } from '@/layout/SettingsLayout';
 import { Button, FormField, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
+import { authApi } from '@/api/auth';
+import { generateSalt, computeVerifier } from '@haseen-me/crypto';
 
 export function SecuritySettingsPage() {
-  const { user, setUser } = useAuthStore();
+  const { user, token, setUser } = useAuthStore();
   const [mfaStep, setMfaStep] = useState<'idle' | 'setup' | 'verify'>('idle');
   const [mfaCode, setMfaCode] = useState('');
+  const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaLoading, setMfaLoading] = useState(false);
+  const [mfaError, setMfaError] = useState<string | null>(null);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
   const [currentPassword, setCurrentPassword] = useState('');
   const [newPassword, setNewPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
+  const [pwLoading, setPwLoading] = useState(false);
+  const [pwSuccess, setPwSuccess] = useState(false);
+  const [pwError, setPwError] = useState<string | null>(null);
 
-  const handleEnableMfa = () => {
-    setMfaStep('setup');
+  const handleEnableMfa = async () => {
+    if (!token) return;
+    setMfaLoading(true);
+    setMfaError(null);
+    try {
+      const { secret } = await authApi.setupMfa(token);
+      setMfaSecret(secret);
+      setMfaStep('setup');
+    } catch (err) {
+      setMfaError(err instanceof Error ? err.message : 'Failed to setup MFA');
+    } finally {
+      setMfaLoading(false);
+    }
   };
 
-  const handleVerifyMfa = () => {
-    if (mfaCode.length === 6 && user) {
+  const handleVerifyMfa = async () => {
+    if (mfaCode.length !== 6 || !user || !token) return;
+    setMfaLoading(true);
+    setMfaError(null);
+    try {
+      await authApi.verifyMfa(token, mfaCode);
       setUser({ ...user, mfaEnabled: true });
       setMfaStep('idle');
       setMfaCode('');
+    } catch (err) {
+      setMfaError(err instanceof Error ? err.message : 'Invalid code');
+    } finally {
+      setMfaLoading(false);
     }
   };
 
-  const handleDisableMfa = () => {
-    if (user) {
+  const handleDisableMfa = async () => {
+    if (!user || !token) return;
+    setMfaLoading(true);
+    setMfaError(null);
+    try {
+      await authApi.disableMfa(token);
       setUser({ ...user, mfaEnabled: false });
+    } catch (err) {
+      setMfaError(err instanceof Error ? err.message : 'Failed to disable MFA');
+    } finally {
+      setMfaLoading(false);
     }
   };
 
-  const handlePasswordChange = () => {
-    if (newPassword.length >= 8 && newPassword === confirmPassword) {
+  const handlePasswordChange = async () => {
+    if (newPassword.length < 8 || newPassword !== confirmPassword || !token || !user) return;
+    setPwLoading(true);
+    setPwError(null);
+    try {
+      const salt = generateSalt();
+      const verifier = computeVerifier(salt, user.email, newPassword);
+      await authApi.updateAccount(token, { srpSalt: salt, srpVerifier: verifier });
+      setPwSuccess(true);
+      setTimeout(() => setPwSuccess(false), 3000);
       setShowPasswordChange(false);
       setCurrentPassword('');
       setNewPassword('');
       setConfirmPassword('');
+    } catch (err) {
+      setPwError(err instanceof Error ? err.message : 'Failed to change password');
+    } finally {
+      setPwLoading(false);
     }
   };
 
@@ -64,6 +111,9 @@ export function SecuritySettingsPage() {
         <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
           Your password is used to derive encryption keys locally. It is never sent to our servers.
         </p>
+
+        {pwSuccess && <Alert type="success">Password updated successfully.</Alert>}
+        {pwError && <Alert type="error">{pwError}</Alert>}
 
         {!showPasswordChange ? (
           <Button variant="secondary" onClick={() => setShowPasswordChange(true)}>
@@ -95,7 +145,7 @@ export function SecuritySettingsPage() {
               autoComplete="new-password"
             />
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button onClick={handlePasswordChange} disabled={newPassword.length < 8 || newPassword !== confirmPassword}>
+              <Button onClick={handlePasswordChange} disabled={newPassword.length < 8 || newPassword !== confirmPassword} loading={pwLoading}>
                 Update password
               </Button>
               <Button variant="secondary" onClick={() => setShowPasswordChange(false)}>
@@ -143,8 +193,10 @@ export function SecuritySettingsPage() {
           Add an extra layer of security by requiring a code from your authenticator app when signing in.
         </p>
 
+        {mfaError && <Alert type="error">{mfaError}</Alert>}
+
         {mfaStep === 'idle' && !user?.mfaEnabled && (
-          <Button onClick={handleEnableMfa}>
+          <Button onClick={handleEnableMfa} loading={mfaLoading}>
             <Shield size={16} /> Enable 2FA
           </Button>
         )}
@@ -172,7 +224,7 @@ export function SecuritySettingsPage() {
               QR code placeholder
             </div>
             <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', marginBottom: 12 }}>
-              Manual entry key: <code style={{ background: 'var(--acc-bg)', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' }}>JBSWY3DPEHPK3PXP</code>
+              Manual entry key: <code style={{ background: 'var(--acc-bg)', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' }}>{mfaSecret || 'Loading...'}</code>
             </p>
             <Button onClick={() => setMfaStep('verify')}>
               Next: Verify code
@@ -191,7 +243,7 @@ export function SecuritySettingsPage() {
               style={{ letterSpacing: '0.3em', fontFamily: 'monospace', fontSize: 18, textAlign: 'center' }}
             />
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button onClick={handleVerifyMfa} disabled={mfaCode.length !== 6}>
+              <Button onClick={handleVerifyMfa} disabled={mfaCode.length !== 6} loading={mfaLoading}>
                 Verify & Enable
               </Button>
               <Button variant="secondary" onClick={() => { setMfaStep('idle'); setMfaCode(''); }}>
@@ -202,7 +254,7 @@ export function SecuritySettingsPage() {
         )}
 
         {user?.mfaEnabled && mfaStep === 'idle' && (
-          <Button variant="danger" onClick={handleDisableMfa}>
+          <Button variant="danger" onClick={handleDisableMfa} loading={mfaLoading}>
             <Trash2 size={14} /> Disable 2FA
           </Button>
         )}

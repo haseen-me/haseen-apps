@@ -1,4 +1,5 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
+import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { Navbar } from './layout/Navbar';
 import { Footer } from './layout/Footer';
 import { HomePage } from './pages/HomePage';
@@ -9,6 +10,7 @@ import { AboutPage } from './pages/AboutPage';
 
 export function App() {
   return (
+    <ErrorBoundary>
     <BrowserRouter>
       <Navbar />
       <Routes>
@@ -30,5 +32,6 @@ export function App() {
       </Routes>
       <Footer />
     </BrowserRouter>
+    </ErrorBoundary>
   );
 }

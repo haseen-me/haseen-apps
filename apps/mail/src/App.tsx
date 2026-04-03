@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { MailLayout } from '@/layout/MailLayout';
 import { MailboxList } from '@/components/MailboxList';
 import { ThreadView } from '@/components/ThreadView';
@@ -85,6 +86,7 @@ export function App() {
   }, [setThreads, setLoading]);
 
   return (
+    <ErrorBoundary>
     <MailLayout>
       <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
         <MailboxList />
@@ -94,5 +96,6 @@ export function App() {
       <SearchOverlay />
       <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
     </MailLayout>
+    </ErrorBoundary>
   );
 }

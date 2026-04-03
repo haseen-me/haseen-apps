@@ -1,21 +1,48 @@
 import { useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { User, Camera, Trash2 } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
 import { FormField, Button, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
+import { authApi } from '@/api/auth';
 
 export function ProfileSettingsPage() {
-  const { user, setUser } = useAuthStore();
+  const navigate = useNavigate();
+  const { user, token, setUser, logout } = useAuthStore();
   const [name, setName] = useState(user?.displayName ?? '');
   const [saved, setSaved] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const [showDelete, setShowDelete] = useState(false);
   const [deleteConfirm, setDeleteConfirm] = useState('');
+  const [deleting, setDeleting] = useState(false);
 
-  const handleSave = () => {
-    if (user && name.trim()) {
-      setUser({ ...user, displayName: name.trim() });
+  const handleSave = async () => {
+    if (!user || !name.trim() || !token) return;
+    setSaving(true);
+    setError(null);
+    try {
+      const updated = await authApi.updateAccount(token, { displayName: name.trim() });
+      setUser({ ...user, ...updated });
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to update profile');
+    } finally {
+      setSaving(false);
+    }
+  };
+
+  const handleDelete = async () => {
+    if (!token || deleteConfirm !== user?.email) return;
+    setDeleting(true);
+    try {
+      await authApi.deleteAccount(token);
+      logout();
+      navigate('/sign-in');
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to delete account');
+      setDeleting(false);
     }
   };
 
@@ -27,6 +54,7 @@ export function ProfileSettingsPage() {
       </p>
 
       {saved && <Alert type="success">Profile updated successfully.</Alert>}
+      {error && <Alert type="error">{error}</Alert>}
 
       {/* Avatar */}
       <div
@@ -108,7 +136,7 @@ export function ProfileSettingsPage() {
           <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', marginBottom: 16 }}>
             Email address cannot be changed as it is bound to your encryption keys.
           </p>
-          <Button onClick={handleSave} disabled={!name.trim() || name === user?.displayName}>
+          <Button onClick={handleSave} disabled={!name.trim() || name === user?.displayName} loading={saving}>
             Save changes
           </Button>
         </div>
@@ -179,6 +207,8 @@ export function ProfileSettingsPage() {
               <Button
                 variant="danger"
                 disabled={deleteConfirm !== user?.email}
+                loading={deleting}
+                onClick={handleDelete}
               >
                 Permanently Delete
               </Button>

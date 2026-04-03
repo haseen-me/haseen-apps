@@ -52,7 +52,12 @@ export const useAuthStore = create<AuthState>((set) => ({
   loading: false,
   error: null,
   recoveryKey: null,
-  setUser: (user) => set({ user }),
+  setUser: (user) => {
+    set((s) => {
+      persistAuth(user, s.token);
+      return { user };
+    });
+  },
   setToken: (token) => set({ token }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),

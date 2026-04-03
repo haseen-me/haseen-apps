@@ -2,25 +2,38 @@ import { useState } from 'react';
 import { Copy, Check, RefreshCw, Key, AlertTriangle } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
 import { Button, Alert } from '@/components/FormUI';
+import { useAuthStore } from '@/store/auth';
+import { authApi } from '@/api/auth';
 
 export function RecoverySettingsPage() {
+  const { token, recoveryKey: storedKey, setRecoveryKey } = useAuthStore();
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  // In production, would be decrypted from the user's encrypted recovery key store
-  const recoveryKey = 'HSNR-4K7M-X9P2-QW3E-T8YU-6NB5-ZD1A-VF0H';
+  const recoveryKey = storedKey ?? 'No recovery key stored — regenerate below';
 
   const handleCopy = async () => {
-    await navigator.clipboard.writeText(recoveryKey);
+    if (!storedKey) return;
+    await navigator.clipboard.writeText(storedKey);
     setCopied(true);
     setTimeout(() => setCopied(false), 2000);
   };
 
-  const handleRegenerate = () => {
+  const handleRegenerate = async () => {
+    if (!token) return;
     setRegenerating(true);
-    // In production: authApi.generateRecoveryKey(token)
-    setTimeout(() => setRegenerating(false), 1000);
+    setError(null);
+    try {
+      const { recoveryKey: newKey } = await authApi.generateRecoveryKey(token);
+      setRecoveryKey(newKey);
+      setShowKey(true);
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Failed to generate recovery key');
+    } finally {
+      setRegenerating(false);
+    }
   };
 
   return (
@@ -29,6 +42,8 @@ export function RecoverySettingsPage() {
       <p style={{ fontSize: 14, color: 'var(--acc-text-secondary)', marginBottom: 32 }}>
         Your recovery key is the only way to access your account if you forget your password.
       </p>
+
+      {error && <Alert type="error">{error}</Alert>}
 
       <div
         style={{

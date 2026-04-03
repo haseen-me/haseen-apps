@@ -1,4 +1,5 @@
 import { useEffect } from 'react';
+import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { CalendarLayout } from '@/layout/CalendarLayout';
 import { Sidebar } from '@/components/Sidebar';
 import { CalendarHeader } from '@/components/CalendarHeader';
@@ -77,6 +78,7 @@ export default function App() {
   const ViewComponent = viewMode === 'month' ? MonthView : viewMode === 'week' ? WeekView : DayView;
 
   return (
+    <ErrorBoundary>
     <CalendarLayout>
       <Sidebar />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -86,5 +88,6 @@ export default function App() {
       <EventDialog />
       <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
     </CalendarLayout>
+    </ErrorBoundary>
   );
 }

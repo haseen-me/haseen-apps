@@ -115,7 +115,7 @@ export const authApi = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  updateAccount: (token: string, data: { displayName?: string }) =>
+  updateAccount: (token: string, data: { displayName?: string; srpSalt?: string; srpVerifier?: string }) =>
     request<AuthResponse['user']>('/account', {
       method: 'PUT',
       body: JSON.stringify(data),
