@@ -1,4 +1,5 @@
 import { useMailStore } from '@/store/mail';
+import { useDecrypt } from '@/hooks/useDecrypt';
 import { MessageItem } from './MessageItem';
 import {
   ArrowLeft,
@@ -15,7 +16,10 @@ export function ThreadView() {
   const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId } =
     useMailStore();
 
-  if (!activeThreadId) {
+  const thread = threads.find((t) => t.id === activeThreadId);
+  const decryptedSubject = useDecrypt(thread?.subject ?? '');
+
+  if (!activeThreadId || !thread) {
     return (
       <div
         style={{
@@ -36,9 +40,6 @@ export function ThreadView() {
       </div>
     );
   }
-
-  const thread = threads.find((t) => t.id === activeThreadId);
-  if (!thread) return null;
 
   const handleReply = () => {
     setReplyToThreadId(thread.id);
@@ -85,7 +86,7 @@ export function ThreadView() {
               margin: 0,
             }}
           >
-            {thread.subject}
+            {decryptedSubject}
           </h2>
           <div style={{ fontSize: 12, color: 'var(--mail-text-muted)', marginTop: 2 }}>
             {thread.messages.length} message{thread.messages.length > 1 ? 's' : ''} ·{' '}

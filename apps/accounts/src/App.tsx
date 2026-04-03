@@ -6,6 +6,7 @@ import { RecoveryKeyPage } from '@/pages/RecoveryKeyPage';
 import { ProfileSettingsPage } from '@/pages/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage';
 import { RecoverySettingsPage } from '@/pages/RecoverySettingsPage';
+import { RequireAuth } from '@/components/RequireAuth';
 
 export default function App() {
   return (
@@ -15,10 +16,10 @@ export default function App() {
         <Route path="/" element={<Navigate to="/sign-in" replace />} />
         <Route path="/sign-up" element={<SignUpPage />} />
         <Route path="/sign-in" element={<SignInPage />} />
-        <Route path="/recovery-key" element={<RecoveryKeyPage />} />
-        <Route path="/settings" element={<ProfileSettingsPage />} />
-        <Route path="/settings/security" element={<SecuritySettingsPage />} />
-        <Route path="/settings/recovery" element={<RecoverySettingsPage />} />
+        <Route path="/recovery-key" element={<RequireAuth><RecoveryKeyPage /></RequireAuth>} />
+        <Route path="/settings" element={<RequireAuth><ProfileSettingsPage /></RequireAuth>} />
+        <Route path="/settings/security" element={<RequireAuth><SecuritySettingsPage /></RequireAuth>} />
+        <Route path="/settings/recovery" element={<RequireAuth><RecoverySettingsPage /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>

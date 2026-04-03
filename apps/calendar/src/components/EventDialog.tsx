@@ -1,8 +1,10 @@
 import { useState, useEffect } from 'react';
 import { X, Clock, MapPin, AlignLeft } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
+import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
 import { calendarApi } from '@/api/client';
+import { encryptSymmetric, decryptSymmetric } from '@haseen-me/crypto';
 
 function toLocalDatetimeStr(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -23,11 +25,11 @@ export function EventDialog() {
 
   useEffect(() => {
     if (editingEvent) {
-      setTitle(editingEvent.title);
-      setDescription(editingEvent.description);
+      setTitle(decryptField(editingEvent.title));
+      setDescription(decryptField(editingEvent.description));
       setStart(toLocalDatetimeStr(new Date(editingEvent.startTime)));
       setEnd(toLocalDatetimeStr(new Date(editingEvent.endTime)));
-      setLocation(editingEvent.location);
+      setLocation(decryptField(editingEvent.location));
       setAllDay(editingEvent.allDay);
       setCalendarId(editingEvent.calendarId);
     } else if (selectedDate) {
@@ -48,27 +50,67 @@ export function EventDialog() {
   if (!eventDialogOpen) return null;
 
   const toast = useToastStore();
+  const encryptionKeyPair = useCryptoStore((s) => s.encryptionKeyPair);
+
+  function fromHex(hex: string): Uint8Array {
+    const bytes = new Uint8Array(hex.length / 2);
+    for (let i = 0; i < hex.length; i += 2) {
+      bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+    }
+    return bytes;
+  }
+
+  // Decrypt an `enc:nonce:ciphertext` field back to plaintext
+  function decryptField(value: string): string {
+    if (!value || !value.startsWith('enc:') || !encryptionKeyPair) return value;
+    try {
+      const parts = value.split(':');
+      if (parts.length !== 3) return value;
+      const key = encryptionKeyPair.secretKey.slice(0, 32);
+      const nonce = fromHex(parts[1]!);
+      const ciphertext = fromHex(parts[2]!);
+      const plaintext = decryptSymmetric({ ciphertext, nonce }, key);
+      return new TextDecoder().decode(plaintext);
+    } catch {
+      return value;
+    }
+  }
+
+  // Encrypt a string with user's key for calendar storage
+  function encryptField(value: string): string {
+    if (!value || !encryptionKeyPair) return value;
+    const key = encryptionKeyPair.secretKey.slice(0, 32);
+    const plaintext = new TextEncoder().encode(value);
+    const encrypted = encryptSymmetric(plaintext, key);
+    const nonce = Array.from(encrypted.nonce).map((b) => b.toString(16).padStart(2, '0')).join('');
+    const ct = Array.from(encrypted.ciphertext).map((b) => b.toString(16).padStart(2, '0')).join('');
+    return `enc:${nonce}:${ct}`;
+  }
 
   const handleSave = async () => {
     try {
+      const encTitle = encryptField(title);
+      const encDesc = encryptField(description);
+      const encLoc = encryptField(location);
+
       if (editingEvent) {
         await calendarApi.updateEvent(editingEvent.id, {
-          title,
-          description,
+          title: encTitle,
+          description: encDesc,
           startTime: new Date(start).toISOString(),
           endTime: new Date(end).toISOString(),
-          location,
+          location: encLoc,
           allDay,
         });
         toast.show('Event updated');
       } else {
         await calendarApi.createEvent({
           calendarId,
-          title,
-          description,
+          title: encTitle,
+          description: encDesc,
           startTime: new Date(start).toISOString(),
           endTime: new Date(end).toISOString(),
-          location,
+          location: encLoc,
           allDay,
           color: '',
         });

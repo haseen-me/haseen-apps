@@ -1,5 +1,6 @@
 import { Paperclip, Star } from 'lucide-react';
 import { useMailStore } from '@/store/mail';
+import { useDecrypt } from '@/hooks/useDecrypt';
 import type { Thread } from '@/types/mail';
 
 function formatDate(iso: string): string {
@@ -40,6 +41,8 @@ export function ThreadRow({ thread }: { thread: Thread }) {
   const isSelected = selectedIds.has(thread.id);
   const isUnread = thread.unreadCount > 0;
   const from = thread.from;
+  const decryptedSubject = useDecrypt(thread.subject);
+  const decryptedSnippet = useDecrypt(thread.snippet);
 
   return (
     <div
@@ -134,7 +137,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
             marginTop: 1,
           }}
         >
-          {thread.subject}
+          {decryptedSubject}
         </div>
 
         <div
@@ -147,7 +150,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
             marginTop: 1,
           }}
         >
-          {thread.snippet}
+          {decryptedSnippet}
         </div>
       </div>
 

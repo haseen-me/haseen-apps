@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
+import { requireAuth } from '@haseen-me/shared';
 import { MailLayout } from '@/layout/MailLayout';
 import { MailboxList } from '@/components/MailboxList';
 import { ThreadView } from '@/components/ThreadView';
@@ -13,10 +14,16 @@ import { MOCK_THREADS } from '@/data/mock';
 import { Toast } from '@haseen-me/ui';
 
 export function App() {
+  const [authed, setAuthed] = useState(false);
   const { setThreads, setLoading } = useMailStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
+
+  // Check auth on mount
+  useEffect(() => {
+    if (requireAuth()) setAuthed(true);
+  }, []);
 
   // Initialize encryption keys
   useEffect(() => {
@@ -84,6 +91,8 @@ export function App() {
       cancelled = true;
     };
   }, [setThreads, setLoading]);
+
+  if (!authed) return null;
 
   return (
     <ErrorBoundary>

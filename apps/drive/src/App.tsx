@@ -1,5 +1,6 @@
-import { useEffect } from 'react';
+import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
+import { requireAuth } from '@haseen-me/shared';
 import { DriveLayout } from '@/layout/DriveLayout';
 import { DriveHeader } from '@/components/DriveHeader';
 import { DriveContent } from '@/components/DriveContent';
@@ -14,10 +15,16 @@ import { MOCK_FILES, MOCK_FOLDERS } from '@/data/mock';
 import { Toast } from '@haseen-me/ui';
 
 export default function App() {
+  const [authed, setAuthed] = useState(false);
   const { currentFolderId, setFolders, setFiles, setPath, setLoading } = useDriveStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
+
+  // Check auth on mount
+  useEffect(() => {
+    if (requireAuth()) setAuthed(true);
+  }, []);
 
   // Initialize encryption keys
   useEffect(() => {
@@ -40,6 +47,7 @@ export default function App() {
               name: f.name,
               mimeType: f.mimeType,
               size: f.size,
+              encryptedKey: f.encryptedKey,
               createdAt: f.createdAt,
               updatedAt: f.updatedAt,
             })),
@@ -85,6 +93,8 @@ export default function App() {
       cancelled = true;
     };
   }, [currentFolderId, setFolders, setFiles, setPath, setLoading]);
+
+  if (!authed) return null;
 
   return (
     <ErrorBoundary>

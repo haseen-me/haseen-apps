@@ -1,6 +1,7 @@
 import { create } from 'zustand';
-import { generateKeyPair, generateSigningKeyPair } from '@haseen-me/crypto';
+import { generateKeyPair, generateSigningKeyPair, sign } from '@haseen-me/crypto';
 import type { KeyPair } from '@haseen-me/crypto';
+import { keysApi } from '@/api/client';
 
 interface CryptoState {
   encryptionKeyPair: KeyPair | null;
@@ -61,5 +62,13 @@ export const useCryptoStore = create<CryptoState>((set) => ({
     const sig = generateSigningKeyPair();
     storeKeys(enc, sig);
     set({ encryptionKeyPair: enc, signingKeyPair: sig, initialized: true });
+
+    // Publish keys to keyserver (fire-and-forget)
+    const selfSig = sign(enc.publicKey, sig.secretKey).signature;
+    keysApi.publishKey({
+      publicKey: toHex(enc.publicKey),
+      signingPublicKey: toHex(sig.publicKey),
+      signature: toHex(selfSig),
+    }).catch(() => {});
   },
 }));

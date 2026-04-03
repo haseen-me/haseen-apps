@@ -8,10 +8,13 @@ import {
   Presentation,
   Archive,
   FileCode,
+  Download,
 } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
 import type { DriveFile } from '@/types/drive';
 import { getFileIcon, formatFileSize } from '@/types/drive';
+import { driveApi } from '@/api/client';
+import { decryptSymmetric } from '@haseen-me/crypto';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   file: <File size={22} />,
@@ -49,6 +52,36 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 export function FileCard({ file }: { file: DriveFile }) {
   const { selectedIds, toggleSelected } = useDriveStore();
   const selected = selectedIds.has(file.id);
+
+  const handleDownload = async (e: React.MouseEvent) => {
+    e.stopPropagation();
+    try {
+      const buffer = await driveApi.downloadFile(file.id);
+      let blob: Blob;
+
+      if (file.encryptedKey) {
+        // Decrypt: session key was stored as base64-encoded raw bytes
+        const keyBytes = Uint8Array.from(atob(file.encryptedKey), (c) => c.charCodeAt(0));
+        const data = new Uint8Array(buffer);
+        // First 24 bytes = nonce, rest = ciphertext (NaCl secretbox)
+        const nonce = data.slice(0, 24);
+        const ciphertext = data.slice(24);
+        const plaintext = decryptSymmetric({ ciphertext, nonce }, keyBytes);
+        blob = new Blob([plaintext.slice().buffer as ArrayBuffer], { type: file.mimeType || 'application/octet-stream' });
+      } else {
+        blob = new Blob([buffer], { type: file.mimeType || 'application/octet-stream' });
+      }
+
+      const url = URL.createObjectURL(blob);
+      const a = document.createElement('a');
+      a.href = url;
+      a.download = file.name;
+      a.click();
+      URL.revokeObjectURL(url);
+    } catch (err) {
+      console.warn('[Drive] Download failed:', err);
+    }
+  };
 
   return (
     <div
@@ -93,23 +126,41 @@ export function FileCard({ file }: { file: DriveFile }) {
       </div>
 
       {/* Info */}
-      <div>
-        <div
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div
+            style={{
+              fontSize: 13,
+              fontWeight: 500,
+              color: 'var(--drive-text)',
+              overflow: 'hidden',
+              textOverflow: 'ellipsis',
+              whiteSpace: 'nowrap',
+            }}
+            title={file.name}
+          >
+            {file.name}
+          </div>
+          <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginTop: 2 }}>
+            {formatFileSize(file.size)}
+          </div>
+        </div>
+        <button
+          onClick={handleDownload}
+          title="Download"
           style={{
-            fontSize: 13,
-            fontWeight: 500,
-            color: 'var(--drive-text)',
-            overflow: 'hidden',
-            textOverflow: 'ellipsis',
-            whiteSpace: 'nowrap',
+            background: 'none',
+            border: 'none',
+            color: 'var(--drive-text-muted)',
+            padding: 4,
+            borderRadius: 4,
+            display: 'flex',
+            cursor: 'pointer',
+            flexShrink: 0,
           }}
-          title={file.name}
         >
-          {file.name}
-        </div>
-        <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginTop: 2 }}>
-          {formatFileSize(file.size)}
-        </div>
+          <Download size={16} />
+        </button>
       </div>
     </div>
   );

@@ -4,7 +4,7 @@ import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
 import type { EncryptedEnvelope } from '@haseen-me/crypto';
-import { mailApi } from '@/api/client';
+import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
 import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp } from 'lucide-react';
 
@@ -61,8 +61,24 @@ export function ComposePanel() {
       const recipients = to.split(',').map((e) => e.trim()).filter(Boolean);
 
       if (encrypted && encryptionKeyPair && signingKeyPair) {
-        // Encrypt for self as recipient (in production, would lookup recipient keys via keysApi)
-        const recipientPubKeys = [encryptionKeyPair.publicKey];
+        // Look up recipient public keys from keyserver
+        const recipientPubKeys: Uint8Array[] = [encryptionKeyPair.publicKey]; // always encrypt to self
+        try {
+          const keyMap = await keysApi.lookupKeys(recipients);
+          for (const email of recipients) {
+            const keys = keyMap[email];
+            if (keys?.publicKey) {
+              const hex = keys.publicKey;
+              const bytes = new Uint8Array(hex.length / 2);
+              for (let i = 0; i < hex.length; i += 2) {
+                bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
+              }
+              recipientPubKeys.push(bytes);
+            }
+          }
+        } catch {
+          // Keyserver unavailable — encrypt to self only
+        }
 
         const { envelope: subjectEnvelope, encryptedSessionKeys: subjectKeys } = sealEnvelope(
           subject || '(no subject)',

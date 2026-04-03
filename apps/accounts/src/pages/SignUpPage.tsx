@@ -76,7 +76,7 @@ export function SignUpPage() {
       const srpVerifier = computeVerifier(srpSalt, email.toLowerCase(), password);
 
       // 4. Create self-signature (sign public key with signing key)
-      sign(encKP.publicKey, sigKP.secretKey);
+      const selfSig = sign(encKP.publicKey, sigKP.secretKey).signature;
 
       // 5. Register with server
       setStatus('Creating account...');
@@ -103,6 +103,26 @@ export function SignUpPage() {
 
       if (response.recoveryKey) {
         setRecoveryKey(response.recoveryKey);
+      }
+
+      // 7. Publish public keys to keyserver
+      setStatus('Publishing keys...');
+      try {
+        await fetch('/api/v1/keys/keys/publish', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/json',
+            Authorization: `Bearer ${response.token}`,
+          },
+          body: JSON.stringify({
+            publicKey: bytesToHex(encKP.publicKey),
+            signingPublicKey: bytesToHex(sigKP.publicKey),
+            signature: bytesToHex(selfSig),
+          }),
+        });
+      } catch {
+        // Non-fatal: keys can be published later
+        console.warn('[SignUp] Could not publish keys to keyserver');
       }
 
       setStatus('');
