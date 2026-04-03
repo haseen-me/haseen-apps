@@ -10,7 +10,7 @@ import (
 )
 
 type Handler struct {
-	Store *store.Store
+	Store store.DataStore
 	Log   zerolog.Logger
 }
 

@@ -1,0 +1,54 @@
+name: CI
+
+on:
+  push:
+    branches: [master, main]
+  pull_request:
+    branches: [master, main]
+
+jobs:
+  frontend:
+    name: Frontend (build + test)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: npm
+
+      - run: npm ci
+
+      - name: Typecheck
+        run: npx turbo typecheck
+
+      - name: Build
+        run: npx turbo build
+
+      - name: Test
+        run: npx turbo test
+
+  backend:
+    name: Backend (Go)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: actions/setup-go@v5
+        with:
+          go-version: "1.23"
+
+      - name: Vet
+        run: |
+          for svc in services/auth services/gateway services/mail services/drive services/keyserver services/calendar; do
+            echo "--- go vet $svc ---"
+            cd $svc && go vet ./... && cd -
+          done
+
+      - name: Test
+        run: |
+          for svc in services/auth services/gateway services/mail services/drive services/keyserver services/calendar; do
+            echo "--- go test $svc ---"
+            cd $svc && go test ./... -count=1 && cd -
+          done

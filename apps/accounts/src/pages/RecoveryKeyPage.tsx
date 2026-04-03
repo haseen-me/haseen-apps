@@ -9,9 +9,13 @@ export function RecoveryKeyPage() {
   const navigate = useNavigate();
   const [copied, setCopied] = useState(false);
   const [confirmed, setConfirmed] = useState(false);
-  const storedRecoveryKey = useAuthStore((s) => s.recoveryKey);
+  const recoveryKey = useAuthStore((s) => s.recoveryKey);
 
-  const recoveryKey = storedRecoveryKey || 'HSNR-4K7M-X9P2-QW3E-T8YU-6NB5-ZD1A-VF0H';
+  // If there's no recovery key in the store, the user shouldn't be on this page
+  if (!recoveryKey) {
+    navigate('/settings', { replace: true });
+    return null;
+  }
 
   const handleCopy = async () => {
     await navigator.clipboard.writeText(recoveryKey);
