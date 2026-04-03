@@ -19,11 +19,15 @@
     "build:apps": "turbo build --filter='./apps/*'",
     "lint": "turbo lint",
     "typecheck": "turbo typecheck",
+    "proto:gen": "buf generate",
+    "proto:lint": "buf lint",
     "clean": "turbo clean && rm -rf node_modules"
   },
   "devDependencies": {
-    "turbo": "^2.4.0",
-    "prettier": "^3.5.0"
+    "@bufbuild/protobuf": "^2.11.0",
+    "@bufbuild/protoc-gen-es": "^2.11.0",
+    "prettier": "^3.5.0",
+    "turbo": "^2.4.0"
   },
   "prettier": {
     "singleQuote": true,

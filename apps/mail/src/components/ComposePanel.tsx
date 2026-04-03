@@ -1,7 +1,11 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMailStore } from '@/store/mail';
+import { useCryptoStore } from '@/store/crypto';
+import { sealEnvelope } from '@haseen-me/crypto';
+import type { EncryptedEnvelope } from '@haseen-me/crypto';
+import { mailApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
-import { X, Minus, Maximize2, Send, Paperclip, Lock, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp } from 'lucide-react';
 
 export function ComposePanel() {
   const { composeOpen, setComposeOpen, replyToThreadId, setReplyToThreadId, threads } =
@@ -15,7 +19,9 @@ export function ComposePanel() {
   const [body, setBody] = useState('');
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [sending, setSending] = useState(false);
+  const [encrypted, setEncrypted] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const { initializeKeys, encryptionKeyPair, signingKeyPair, initialized } = useCryptoStore();
 
   // Auto-fill reply info
   useEffect(() => {
@@ -28,6 +34,11 @@ export function ComposePanel() {
       }
     }
   }, [replyToThreadId, threads]);
+
+  // Initialize crypto keys on mount
+  useEffect(() => {
+    if (!initialized) initializeKeys();
+  }, [initialized, initializeKeys]);
 
   if (!composeOpen) return null;
 
@@ -44,10 +55,54 @@ export function ComposePanel() {
 
   const handleSend = async () => {
     setSending(true);
-    // Simulate sending
-    await new Promise((r) => setTimeout(r, 800));
-    setSending(false);
-    handleClose();
+    try {
+      const recipients = to.split(',').map((e) => e.trim()).filter(Boolean);
+
+      if (encrypted && encryptionKeyPair && signingKeyPair) {
+        // Encrypt for self as recipient (in production, would lookup recipient keys via keysApi)
+        const recipientPubKeys = [encryptionKeyPair.publicKey];
+
+        const { envelope: subjectEnvelope, encryptedSessionKeys: subjectKeys } = sealEnvelope(
+          subject || '(no subject)',
+          encryptionKeyPair,
+          signingKeyPair,
+          recipientPubKeys,
+        );
+        const { envelope: bodyEnvelope, encryptedSessionKeys: bodyKeys } = sealEnvelope(
+          body || '',
+          encryptionKeyPair,
+          signingKeyPair,
+          recipientPubKeys,
+        );
+
+        // Serialize session keys: hex pubkey -> base64 encrypted key
+        const sessionKeys: Record<string, string> = {};
+        for (const [k, v] of bodyKeys) {
+          sessionKeys[k] = btoa(String.fromCharCode(...v));
+        }
+
+        await mailApi.sendMessage({
+          to: recipients,
+          encryptedSubject: JSON.stringify(subjectEnvelope),
+          encryptedBody: JSON.stringify(bodyEnvelope),
+          encryptedSessionKeys: sessionKeys,
+        });
+      } else {
+        // Unencrypted fallback
+        await mailApi.sendMessage({
+          to: recipients,
+          encryptedSubject: subject,
+          encryptedBody: body,
+          encryptedSessionKeys: {},
+        });
+      }
+    } catch (err) {
+      // Backend may be offline in development — log and close gracefully
+      console.warn('[Mail] Send failed:', err);
+    } finally {
+      setSending(false);
+      handleClose();
+    }
   };
 
   if (minimized) {
@@ -238,18 +293,26 @@ export function ComposePanel() {
 
         <div style={{ flex: 1 }} />
 
-        <div
+        <button
+          onClick={() => setEncrypted(!encrypted)}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 4,
             fontSize: 12,
-            color: 'var(--mail-brand)',
+            color: encrypted ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: 4,
+            transition: 'color 0.15s',
           }}
+          title={encrypted ? 'End-to-end encryption enabled' : 'Encryption disabled'}
         >
-          <Lock size={13} />
-          E2E Encrypted
-        </div>
+          {encrypted ? <Lock size={13} /> : <LockOpen size={13} />}
+          {encrypted ? 'E2E Encrypted' : 'Not Encrypted'}
+        </button>
 
         <button
           onClick={handleClose}

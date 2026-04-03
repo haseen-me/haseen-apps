@@ -15,4 +15,5 @@ export { generateKeyPair, generateSigningKeyPair } from './keys';
 export { encrypt, decrypt, encryptSymmetric, decryptSymmetric } from './encryption';
 export { sign, verify } from './signing';
 export { deriveSessionKey, generateNonce } from './session';
-export type { KeyPair, EncryptedData, SignedData } from './types';
+export { sealEnvelope, openEnvelope } from './envelope';
+export type { KeyPair, EncryptedData, SignedData, EncryptedEnvelope } from './types';
