@@ -16,4 +16,17 @@ export { encrypt, decrypt, encryptSymmetric, decryptSymmetric } from './encrypti
 export { sign, verify } from './signing';
 export { deriveSessionKey, generateNonce } from './session';
 export { sealEnvelope, openEnvelope } from './envelope';
+export {
+  generateSalt,
+  computeVerifier,
+  generateEphemeral,
+  computeClientProof,
+  verifyServerProof,
+} from './srp';
+export {
+  generateKdfSalt,
+  deriveKeyFromPassword,
+  encryptPrivateKeys,
+  decryptPrivateKeys,
+} from './kdf';
 export type { KeyPair, EncryptedData, SignedData, EncryptedEnvelope } from './types';

@@ -36,6 +36,26 @@ export interface LoginVerifyPayload {
   srpM1: string;
 }
 
+export interface RegisterResponse {
+  userId: string;
+  sessionToken: string;
+  recoveryKey: string;
+}
+
+export interface LoginVerifyResponse {
+  sessionToken: string;
+  srpM2: string;
+  user: {
+    id: string;
+    email: string;
+    displayName: string;
+    mfaEnabled: boolean;
+    createdAt: string;
+  };
+  mfaRequired?: boolean;
+}
+
+// Keep backward compat alias
 export interface AuthResponse {
   token: string;
   user: {
@@ -49,14 +69,40 @@ export interface AuthResponse {
 }
 
 export const authApi = {
-  register: (data: RegisterPayload) =>
-    request<AuthResponse>('/register', { method: 'POST', body: JSON.stringify(data) }),
+  register: async (data: RegisterPayload): Promise<AuthResponse> => {
+    const res = await request<RegisterResponse>('/register', {
+      method: 'POST',
+      body: JSON.stringify({
+        email: data.email,
+        srpSalt: data.srpSalt,
+        srpVerifier: data.srpVerifier,
+        publicKey: Array.from(new TextEncoder().encode(data.publicKey)),
+        signingKey: Array.from(new TextEncoder().encode(data.signingKey)),
+      }),
+    });
+    return {
+      token: res.sessionToken,
+      user: { id: res.userId, email: data.email, displayName: '', mfaEnabled: false, createdAt: new Date().toISOString() },
+      recoveryKey: res.recoveryKey,
+    };
+  },
 
   loginInit: (data: LoginInitPayload) =>
     request<{ srpB: string; srpSalt: string }>('/login/init', { method: 'POST', body: JSON.stringify(data) }),
 
-  loginVerify: (data: LoginVerifyPayload) =>
-    request<AuthResponse>('/login/verify', { method: 'POST', body: JSON.stringify(data) }),
+  loginVerify: async (data: LoginVerifyPayload): Promise<AuthResponse> => {
+    const res = await request<LoginVerifyResponse>('/login/verify', {
+      method: 'POST',
+      body: JSON.stringify(data),
+    });
+    if (res.mfaRequired) {
+      return { token: '', user: { id: '', email: data.email, displayName: '', mfaEnabled: true, createdAt: '' } };
+    }
+    return {
+      token: res.sessionToken,
+      user: res.user,
+    };
+  },
 
   logout: (token: string) =>
     request<{ ok: boolean }>('/logout', {

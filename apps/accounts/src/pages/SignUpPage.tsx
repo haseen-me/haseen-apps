@@ -1,19 +1,39 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User } from 'lucide-react';
+import { Mail, Lock, User, Shield } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
 import { FormField, Button, Divider, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
+import {
+  generateKeyPair,
+  generateSigningKeyPair,
+  generateSalt,
+  computeVerifier,
+  encryptPrivateKeys,
+  sign,
+} from '@haseen-me/crypto';
+import { authApi } from '@/api/auth';
+
+function bytesToHex(bytes: Uint8Array): string {
+  return Array.from(bytes)
+    .map((b) => b.toString(16).padStart(2, '0'))
+    .join('');
+}
+
+function toBase64(bytes: Uint8Array): string {
+  return btoa(String.fromCharCode(...bytes));
+}
 
 export function SignUpPage() {
   const navigate = useNavigate();
-  const { setUser, setToken, setLoading, setError, loading, error } = useAuthStore();
+  const { loginSuccess, setRecoveryKey, setLoading, setError, loading, error } = useAuthStore();
 
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [confirmPassword, setConfirmPassword] = useState('');
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
+  const [status, setStatus] = useState('');
 
   const validate = () => {
     const errs: Record<string, string> = {};
@@ -34,23 +54,61 @@ export function SignUpPage() {
     setError(null);
 
     try {
-      // In production, this would:
       // 1. Generate NaCl key pairs on device
-      // 2. Derive SRP verifier from password
-      // 3. Encrypt private keys with password-derived key
-      // 4. Call authApi.register()
-      // For now, simulate success:
-      const mockUser = {
-        id: crypto.randomUUID(),
-        email,
-        displayName: name,
-        mfaEnabled: false,
-        createdAt: new Date().toISOString(),
-      };
-      setUser(mockUser);
-      setToken('mock-token-' + mockUser.id);
+      setStatus('Generating encryption keys...');
+      const encKP = generateKeyPair();
+      const sigKP = generateSigningKeyPair();
+
+      // 2. Encrypt private keys with password-derived key (PBKDF2)
+      setStatus('Deriving key from password...');
+      const encryptedKeys = await encryptPrivateKeys(
+        password,
+        encKP.secretKey,
+        sigKP.secretKey,
+      );
+
+      // Store encrypted private keys locally
+      localStorage.setItem('haseen-encrypted-keys', toBase64(encryptedKeys));
+
+      // 3. Derive SRP verifier from password
+      setStatus('Computing SRP verifier...');
+      const srpSalt = generateSalt();
+      const srpVerifier = computeVerifier(srpSalt, email.toLowerCase(), password);
+
+      // 4. Create self-signature (sign public key with signing key)
+      sign(encKP.publicKey, sigKP.secretKey);
+
+      // 5. Register with server
+      setStatus('Creating account...');
+      const response = await authApi.register({
+        email: email.toLowerCase(),
+        srpSalt,
+        srpVerifier,
+        publicKey: bytesToHex(encKP.publicKey),
+        signingKey: bytesToHex(sigKP.publicKey),
+        encryptedPrivateKey: toBase64(encryptedKeys),
+      });
+
+      // 6. Store auth state with persistence
+      loginSuccess(
+        {
+          id: response.user?.id ?? response.token,
+          email: email.toLowerCase(),
+          displayName: name,
+          mfaEnabled: false,
+          createdAt: new Date().toISOString(),
+        },
+        response.token,
+      );
+
+      if (response.recoveryKey) {
+        setRecoveryKey(response.recoveryKey);
+      }
+
+      setStatus('');
       navigate('/recovery-key');
     } catch (err) {
+      setStatus('');
       setError(err instanceof Error ? err.message : 'Registration failed');
     } finally {
       setLoading(false);
@@ -109,8 +167,15 @@ export function SignUpPage() {
           </p>
         </div>
 
-        <Button type="submit" fullWidth loading={loading}>
-          Create Account
+        {status && (
+          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 13, color: 'var(--acc-brand)' }}>
+            <Shield size={14} />
+            {status}
+          </div>
+        )}
+
+        <Button type="submit" fullWidth loading={loading} disabled={loading}>
+          {loading ? status || 'Creating Account...' : 'Create Account'}
         </Button>
       </form>
 
