@@ -1,8 +1,10 @@
 import { useDocsTheme } from '@/theme';
-import { Sun, Moon, Github, ExternalLink } from 'lucide-react';
+import { Sun, Moon, Github, ExternalLink, Menu } from 'lucide-react';
+import { useMobileNav } from './mobile';
 
 export function Header() {
   const { theme, toggle } = useDocsTheme();
+  const { toggle: toggleNav } = useMobileNav();
 
   return (
     <header style={{
@@ -21,6 +23,23 @@ export function Header() {
       zIndex: 10,
       backdropFilter: 'blur(12px)',
     }}>
+      {/* Mobile hamburger */}
+      <button
+        className="mobile-menu-btn"
+        onClick={toggleNav}
+        style={{
+          display: 'none',
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--docs-text-secondary)',
+          padding: 4,
+          marginRight: 'auto',
+        }}
+        aria-label="Open navigation"
+      >
+        <Menu size={22} />
+      </button>
       <a
         href="https://www.npmjs.com/package/@haseen-me/ui"
         target="_blank"

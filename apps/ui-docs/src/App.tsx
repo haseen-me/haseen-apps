@@ -1,4 +1,4 @@
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Link } from 'react-router-dom';
 import { DocsThemeProvider } from './theme';
 import { DocsLayout } from './layout/DocsLayout';
 
@@ -86,6 +86,15 @@ export default function App() {
           {/* Theme */}
           <Route path="/color" element={<ColorPage />} />
           <Route path="/tokens" element={<TokensPage />} />
+
+          {/* 404 */}
+          <Route path="*" element={
+            <div style={{ textAlign: 'center', padding: '80px 20px' }}>
+              <h1 style={{ fontSize: 64, fontWeight: 700, color: 'var(--docs-text-tertiary)', marginBottom: 8 }}>404</h1>
+              <p style={{ fontSize: 16, color: 'var(--docs-text-secondary)', marginBottom: 24 }}>Page not found</p>
+              <Link to="/" style={{ color: 'var(--docs-accent)', fontWeight: 500, textDecoration: 'none' }}>← Back to Introduction</Link>
+            </div>
+          } />
         </Routes>
       </DocsLayout>
     </DocsThemeProvider>

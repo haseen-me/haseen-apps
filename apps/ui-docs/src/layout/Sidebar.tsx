@@ -1,13 +1,32 @@
 import { NavLink, useLocation } from 'react-router-dom';
 import { NAV_SECTIONS } from '@/nav';
-import { Search, Command } from 'lucide-react';
-import { useState, useMemo } from 'react';
+import { Search, Command, X } from 'lucide-react';
+import { useState, useMemo, useEffect, useRef } from 'react';
+import { useMobileNav } from './mobile';
 
 export function Sidebar() {
   const location = useLocation();
   const [search, setSearch] = useState('');
+  const searchRef = useRef<HTMLInputElement>(null);
+  const { open, close } = useMobileNav();
 
-  const filteredSections = useMemo(() => {
+  // Close sidebar on route change (mobile)
+  useEffect(() => {
+    close();
+  }, [location.pathname, close]);
+
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        searchRef.current?.focus();
+      }
+    };
+    document.addEventListener('keydown', handler);
+    return () => document.removeEventListener('keydown', handler);
+  }, []);
+
+  const filteredSections = useMemo<typeof NAV_SECTIONS>(() => {
     if (!search.trim()) return NAV_SECTIONS;
     const q = search.toLowerCase();
     return NAV_SECTIONS.map((section) => ({
@@ -17,19 +36,36 @@ export function Sidebar() {
   }, [search]);
 
   return (
-    <aside style={{
-      width: 'var(--docs-sidebar-width)',
-      height: '100vh',
-      position: 'fixed',
-      top: 0,
-      left: 0,
-      background: 'var(--docs-sidebar-bg)',
-      borderRight: '1px solid var(--docs-border)',
-      display: 'flex',
-      flexDirection: 'column',
-      overflow: 'hidden',
-      zIndex: 10,
-    }}>
+    <>
+      {/* Mobile overlay backdrop */}
+      {open && (
+        <div
+          onClick={close}
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'rgba(0,0,0,0.5)',
+            zIndex: 19,
+          }}
+        />
+      )}
+      <aside
+        className={open ? 'sidebar-open' : ''}
+        style={{
+          width: 260,
+          height: '100vh',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          background: 'var(--docs-sidebar-bg)',
+          borderRight: '1px solid var(--docs-border)',
+          display: 'flex',
+          flexDirection: 'column',
+          overflow: 'hidden',
+          zIndex: 20,
+          transition: 'transform 0.2s ease',
+        }}
+      >
       {/* Logo */}
       <div style={{
         height: 'var(--docs-header-height)',
@@ -72,6 +108,7 @@ export function Sidebar() {
         }}>
           <Search size={14} />
           <input
+            ref={searchRef}
             type="text"
             placeholder="Search Haseen UI..."
             value={search}
@@ -147,6 +184,27 @@ export function Sidebar() {
           </div>
         ))}
       </nav>
+
+      {/* Mobile close button */}
+      <button
+        className="sidebar-close-btn"
+        onClick={close}
+        style={{
+          display: 'none',
+          position: 'absolute',
+          top: 16,
+          right: 16,
+          background: 'none',
+          border: 'none',
+          cursor: 'pointer',
+          color: 'var(--docs-text-secondary)',
+          padding: 4,
+        }}
+        aria-label="Close navigation"
+      >
+        <X size={20} />
+      </button>
     </aside>
+    </>
   );
 }

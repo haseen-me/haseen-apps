@@ -103,3 +103,31 @@ code {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--docs-text-tertiary);
 }
+
+/* Mobile responsive */
+@media (max-width: 768px) {
+  :root {
+    --docs-sidebar-width: 0px;
+  }
+
+  aside {
+    transform: translateX(-100%);
+  }
+
+  aside.sidebar-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-close-btn {
+    display: flex !important;
+  }
+
+  .mobile-menu-btn {
+    display: flex !important;
+  }
+
+  main {
+    padding-left: 20px !important;
+    padding-right: 20px !important;
+  }
+}
