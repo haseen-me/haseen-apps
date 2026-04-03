@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package haseen.crypto.v1;
+
+option go_package = "github.com/haseen-me/haseen-apps/proto/gen/go/crypto/v1";
+
+// Encrypted envelope wrapping any E2E encrypted payload.
+message EncryptedEnvelope {
+  uint32 version = 1;
+  string sender_public_key = 2;
+  EncryptedData encrypted_session_key = 3;
+  EncryptedData encrypted_payload = 4;
+  bytes signature = 5;
+}
+
+message EncryptedData {
+  bytes ciphertext = 1;
+  bytes nonce = 2;
+  bytes ephemeral_public_key = 3;
+}
+
+// Public key bundle stored in the keyserver.
+message PublicKeyBundle {
+  string user_id = 1;
+  bytes encryption_public_key = 2;
+  bytes signing_public_key = 3;
+  bytes self_signature = 4;
+  int64 created_at = 5;
+}

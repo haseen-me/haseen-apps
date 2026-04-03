@@ -1,0 +1,36 @@
+{
+  "name": "haseen-apps",
+  "private": true,
+  "version": "0.0.0",
+  "description": "Haseen — Privacy-first, end-to-end encrypted productivity suite",
+  "workspaces": [
+    "apps/*",
+    "packages/*"
+  ],
+  "scripts": {
+    "dev": "turbo dev",
+    "dev:web": "turbo dev --filter=@haseen-me/web",
+    "dev:mail": "turbo dev --filter=@haseen-me/mail-app",
+    "dev:drive": "turbo dev --filter=@haseen-me/drive-app",
+    "dev:accounts": "turbo dev --filter=@haseen-me/accounts",
+    "build": "turbo build",
+    "build:apps": "turbo build --filter='./apps/*'",
+    "lint": "turbo lint",
+    "typecheck": "turbo typecheck",
+    "clean": "turbo clean && rm -rf node_modules"
+  },
+  "devDependencies": {
+    "turbo": "^2.4.0",
+    "prettier": "^3.5.0"
+  },
+  "prettier": {
+    "singleQuote": true,
+    "trailingComma": "es5",
+    "printWidth": 100,
+    "tabWidth": 2,
+    "semi": true
+  },
+  "engines": {
+    "node": ">=20"
+  }
+}

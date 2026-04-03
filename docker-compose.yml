@@ -1,0 +1,96 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    environment:
+      POSTGRES_DB: haseen
+      POSTGRES_USER: haseen
+      POSTGRES_PASSWORD: haseen_dev_password
+    ports:
+      - "5432:5432"
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations:/docker-entrypoint-initdb.d
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U haseen"]
+      interval: 5s
+      timeout: 5s
+      retries: 5
+
+  redis:
+    image: redis:7-alpine
+    ports:
+      - "6379:6379"
+    volumes:
+      - redisdata:/data
+
+  gateway:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.gateway
+    ports:
+      - "8080:8080"
+    environment:
+      GATEWAY_PORT: "8080"
+      AUTH_SERVICE_URL: "http://auth:8081"
+      MAIL_SERVICE_URL: "http://mail:8082"
+      DRIVE_SERVICE_URL: "http://drive:8083"
+      KEYSERVER_URL: "http://keyserver:8084"
+    depends_on:
+      - auth
+      - mail
+      - drive
+      - keyserver
+
+  auth:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.auth
+    environment:
+      AUTH_PORT: "8081"
+      DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
+      REDIS_URL: "redis://redis:6379/0"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  mail:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.mail
+    environment:
+      MAIL_PORT: "8082"
+      DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
+      REDIS_URL: "redis://redis:6379/1"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  drive:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.drive
+    environment:
+      DRIVE_PORT: "8083"
+      DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
+      BLOB_STORAGE_PATH: "/data/blobs"
+    volumes:
+      - drivedata:/data/blobs
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  keyserver:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.keyserver
+    environment:
+      KEYSERVER_PORT: "8084"
+      DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+volumes:
+  pgdata:
+  redisdata:
+  drivedata:

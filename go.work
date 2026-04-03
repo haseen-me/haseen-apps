@@ -1,0 +1,9 @@
+go 1.23
+
+use (
+	./services/gateway
+	./services/auth
+	./services/mail
+	./services/drive
+	./services/keyserver
+)

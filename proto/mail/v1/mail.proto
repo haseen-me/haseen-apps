@@ -1,0 +1,29 @@
+syntax = "proto3";
+
+package haseen.mail.v1;
+
+option go_package = "github.com/haseen-me/haseen-apps/proto/gen/go/mail/v1";
+
+import "crypto/v1/crypto.proto";
+
+message EncryptedMailMessage {
+  string message_id = 1;
+  string thread_id = 2;
+  string from_address = 3;
+  repeated string to_addresses = 4;
+  repeated string cc_addresses = 5;
+  haseen.crypto.v1.EncryptedEnvelope encrypted_subject = 6;
+  haseen.crypto.v1.EncryptedEnvelope encrypted_body = 7;
+  repeated EncryptedAttachment attachments = 8;
+  int64 created_at = 9;
+  bool read = 10;
+  string label = 11;
+}
+
+message EncryptedAttachment {
+  string attachment_id = 1;
+  string filename = 2;
+  string mime_type = 3;
+  uint64 size = 4;
+  haseen.crypto.v1.EncryptedData encrypted_data = 5;
+}

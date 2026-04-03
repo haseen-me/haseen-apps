@@ -1,0 +1,23 @@
+{
+  "compilerOptions": {
+    "target": "ES2022",
+    "module": "ESNext",
+    "moduleResolution": "bundler",
+    "strict": true,
+    "skipLibCheck": true,
+    "noEmit": true,
+    "jsx": "react-jsx",
+    "esModuleInterop": true,
+    "resolveJsonModule": true,
+    "isolatedModules": true,
+    "incremental": true,
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "paths": {
+      "@haseen-me/crypto": ["./packages/crypto/src"],
+      "@haseen-me/api-client": ["./packages/api-client/src"],
+      "@haseen-me/shared": ["./packages/shared/src"],
+      "@haseen-me/config/*": ["./packages/config/*"]
+    }
+  },
+  "exclude": ["node_modules", "**/node_modules", "**/dist"]
+}
