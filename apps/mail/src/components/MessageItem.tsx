@@ -1,4 +1,7 @@
 import type { Message } from '@/types/mail';
+import { useCryptoStore } from '@/store/crypto';
+import { openEnvelope } from '@haseen-me/crypto';
+import type { EncryptedEnvelope } from '@haseen-me/crypto';
 import {
   ChevronDown,
   ChevronUp,
@@ -8,7 +11,7 @@ import {
   ShieldCheck,
   ShieldAlert,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useMemo } from 'react';
 
 function formatFullDate(iso: string): string {
   const d = new Date(iso);
@@ -44,6 +47,32 @@ function stringToColor(str: string): string {
 export function MessageItem({ message, isLast }: { message: Message; isLast: boolean }) {
   const [collapsed, setCollapsed] = useState(!isLast);
   const from = message.from;
+  const { encryptionKeyPair, signingKeyPair } = useCryptoStore();
+
+  // Attempt to decrypt message body if it's an encrypted envelope
+  const decryptedBody = useMemo(() => {
+    if (!message.encrypted || !encryptionKeyPair || !signingKeyPair) return null;
+    try {
+      const envelope: EncryptedEnvelope = JSON.parse(message.bodyHtml);
+      // Use the sender's encrypted session key from the envelope itself
+      const sessionKeyData = envelope.encryptedSessionKey;
+      const combined = new Uint8Array(sessionKeyData.nonce.length + sessionKeyData.ciphertext.length);
+      combined.set(new Uint8Array(Object.values(sessionKeyData.nonce)));
+      combined.set(new Uint8Array(Object.values(sessionKeyData.ciphertext)), sessionKeyData.nonce.length);
+
+      return openEnvelope(
+        envelope,
+        combined,
+        encryptionKeyPair,
+        signingKeyPair.publicKey,
+      );
+    } catch {
+      // Not a JSON envelope — it's mock data with HTML, show as-is
+      return null;
+    }
+  }, [message.bodyHtml, message.encrypted, encryptionKeyPair, signingKeyPair]);
+
+  const displayBody = decryptedBody ?? message.bodyHtml;
 
   return (
     <div
@@ -163,15 +192,29 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
           )}
 
           {/* HTML body */}
-          <div
-            dangerouslySetInnerHTML={{ __html: message.bodyHtml }}
-            style={{
-              fontSize: 14,
-              lineHeight: 1.7,
-              color: 'var(--mail-text)',
-              overflowWrap: 'break-word',
-            }}
-          />
+          {decryptedBody ? (
+            <div
+              style={{
+                fontSize: 14,
+                lineHeight: 1.7,
+                color: 'var(--mail-text)',
+                overflowWrap: 'break-word',
+                whiteSpace: 'pre-wrap',
+              }}
+            >
+              {decryptedBody}
+            </div>
+          ) : (
+            <div
+              dangerouslySetInnerHTML={{ __html: message.bodyHtml }}
+              style={{
+                fontSize: 14,
+                lineHeight: 1.7,
+                color: 'var(--mail-text)',
+                overflowWrap: 'break-word',
+              }}
+            />
+          )}
 
           {/* Attachments */}
           {message.attachments.length > 0 && (

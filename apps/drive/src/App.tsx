@@ -6,39 +6,84 @@ import { UploadDialog } from '@/components/UploadDialog';
 import { NewFolderDialog } from '@/components/NewFolderDialog';
 import { SearchOverlay } from '@/components/SearchOverlay';
 import { useDriveStore } from '@/store/drive';
+import { useCryptoStore } from '@/store/crypto';
+import { useToastStore } from '@/store/toast';
+import { driveApi } from '@/api/client';
 import { MOCK_FILES, MOCK_FOLDERS } from '@/data/mock';
+import { Toast } from '@haseen-me/ui';
 
 export default function App() {
-  const { currentFolderId, setFolders, setFiles, setPath } = useDriveStore();
+  const { currentFolderId, setFolders, setFiles, setPath, setLoading } = useDriveStore();
+  const initializeKeys = useCryptoStore((s) => s.initializeKeys);
+  const initialized = useCryptoStore((s) => s.initialized);
+  const toast = useToastStore();
 
-  // Load mock data based on current folder
+  // Initialize encryption keys
   useEffect(() => {
-    const folders = MOCK_FOLDERS.filter((f) => {
-      if (currentFolderId === 'root') return f.parentId === null;
-      return f.parentId === currentFolderId;
-    });
-    const files = MOCK_FILES.filter((f) => {
-      if (currentFolderId === 'root') return f.folderId === null;
-      return f.folderId === currentFolderId;
-    });
+    if (!initialized) initializeKeys();
+  }, [initialized, initializeKeys]);
 
-    // Build breadcrumb path
-    const path: typeof MOCK_FOLDERS = [];
-    let folderId: string | null = currentFolderId === 'root' ? null : currentFolderId;
-    while (folderId) {
-      const folder = MOCK_FOLDERS.find((f) => f.id === folderId);
-      if (folder) {
-        path.unshift(folder);
-        folderId = folder.parentId;
-      } else {
-        break;
-      }
-    }
+  // Load files — try API, fall back to mock data
+  useEffect(() => {
+    let cancelled = false;
+    setLoading(true);
 
-    setFolders(folders);
-    setFiles(files);
-    setPath(path);
-  }, [currentFolderId, setFolders, setFiles, setPath]);
+    driveApi
+      .listFiles(currentFolderId === 'root' ? undefined : currentFolderId)
+      .then((data) => {
+        if (!cancelled) {
+          setFiles(
+            data.files.map((f) => ({
+              id: f.id,
+              folderId: f.folderID,
+              name: f.name,
+              mimeType: f.mimeType,
+              size: f.size,
+              createdAt: f.createdAt,
+              updatedAt: f.updatedAt,
+            })),
+          );
+          setFolders([]);
+          setPath([]);
+        }
+      })
+      .catch(() => {
+        // Backend unavailable — use mock data
+        if (!cancelled) {
+          const folders = MOCK_FOLDERS.filter((f) => {
+            if (currentFolderId === 'root') return f.parentId === null;
+            return f.parentId === currentFolderId;
+          });
+          const files = MOCK_FILES.filter((f) => {
+            if (currentFolderId === 'root') return f.folderId === null;
+            return f.folderId === currentFolderId;
+          });
+
+          const path: typeof MOCK_FOLDERS = [];
+          let fid: string | null = currentFolderId === 'root' ? null : currentFolderId;
+          while (fid) {
+            const folder = MOCK_FOLDERS.find((f) => f.id === fid);
+            if (folder) {
+              path.unshift(folder);
+              fid = folder.parentId;
+            } else {
+              break;
+            }
+          }
+
+          setFolders(folders);
+          setFiles(files);
+          setPath(path);
+        }
+      })
+      .finally(() => {
+        if (!cancelled) setLoading(false);
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [currentFolderId, setFolders, setFiles, setPath, setLoading]);
 
   return (
     <DriveLayout>
@@ -47,6 +92,7 @@ export default function App() {
       <UploadDialog />
       <NewFolderDialog />
       <SearchOverlay />
+      <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
     </DriveLayout>
   );
 }

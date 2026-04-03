@@ -1,6 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
+import { useToastStore } from '@/store/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
 import type { EncryptedEnvelope } from '@haseen-me/crypto';
 import { mailApi } from '@/api/client';
@@ -10,6 +11,7 @@ import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, Chev
 export function ComposePanel() {
   const { composeOpen, setComposeOpen, replyToThreadId, setReplyToThreadId, threads } =
     useMailStore();
+  const toast = useToastStore();
 
   const [minimized, setMinimized] = useState(false);
   const [to, setTo] = useState('');
@@ -97,11 +99,13 @@ export function ComposePanel() {
         });
       }
     } catch (err) {
-      // Backend may be offline in development — log and close gracefully
+      // Backend may be offline in development — show toast and close gracefully
       console.warn('[Mail] Send failed:', err);
+      toast.show('Message could not be sent — backend unavailable');
     } finally {
       setSending(false);
       handleClose();
+      toast.show(encrypted ? 'Encrypted message sent' : 'Message sent');
     }
   };
 

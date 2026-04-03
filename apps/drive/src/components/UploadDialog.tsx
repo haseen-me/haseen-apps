@@ -1,11 +1,18 @@
-import { X, Upload, FileUp } from 'lucide-react';
+import { X, Upload, FileUp, Lock } from 'lucide-react';
 import { useCallback, useState, useRef } from 'react';
 import { useDriveStore } from '@/store/drive';
+import { useCryptoStore } from '@/store/crypto';
+import { useToastStore } from '@/store/toast';
+import { encryptSymmetric, deriveSessionKey } from '@haseen-me/crypto';
+import { driveApi } from '@/api/client';
 
 export function UploadDialog() {
-  const { uploadOpen, setUploadOpen } = useDriveStore();
+  const { uploadOpen, setUploadOpen, currentFolderId } = useDriveStore();
+  const { encryptionKeyPair } = useCryptoStore();
+  const toast = useToastStore();
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
+  const [uploading, setUploading] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -21,11 +28,48 @@ export function UploadDialog() {
     }
   }, []);
 
-  const handleUpload = useCallback(() => {
-    // In real app, call api.uploadFile for each
-    setSelectedFiles([]);
-    setUploadOpen(false);
-  }, [setUploadOpen]);
+  const handleUpload = useCallback(async () => {
+    setUploading(true);
+    try {
+      for (const file of selectedFiles) {
+        const buffer = await file.arrayBuffer();
+
+        if (encryptionKeyPair) {
+          // Encrypt file data with a per-file session key
+          const sessionKey = deriveSessionKey();
+          const encrypted = encryptSymmetric(new Uint8Array(buffer), sessionKey);
+          const encryptedBuffer = new Uint8Array(encrypted.nonce.length + encrypted.ciphertext.length);
+          encryptedBuffer.set(encrypted.nonce);
+          encryptedBuffer.set(encrypted.ciphertext, encrypted.nonce.length);
+
+          // Encode session key as base64 for storage
+          const encryptedKey = btoa(String.fromCharCode(...sessionKey));
+
+          await driveApi.uploadFile({
+            name: file.name,
+            encryptedData: encryptedBuffer.buffer,
+            encryptedKey,
+            folderID: currentFolderId === 'root' ? undefined : currentFolderId,
+          });
+        } else {
+          await driveApi.uploadFile({
+            name: file.name,
+            encryptedData: buffer,
+            encryptedKey: '',
+            folderID: currentFolderId === 'root' ? undefined : currentFolderId,
+          });
+        }
+      }
+      toast.show(`${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} uploaded`);
+    } catch (err) {
+      console.warn('[Drive] Upload failed:', err);
+      toast.show('Upload failed — backend unavailable');
+    } finally {
+      setUploading(false);
+      setSelectedFiles([]);
+      setUploadOpen(false);
+    }
+  }, [selectedFiles, encryptionKeyPair, currentFolderId, setUploadOpen, toast]);
 
   const handleClose = useCallback(() => {
     setSelectedFiles([]);
@@ -165,13 +209,13 @@ export function UploadDialog() {
           </button>
           <button
             onClick={handleUpload}
-            disabled={selectedFiles.length === 0}
+            disabled={selectedFiles.length === 0 || uploading}
             style={{
               padding: '8px 16px',
               borderRadius: 'var(--drive-radius-sm)',
               border: 'none',
-              background: selectedFiles.length > 0 ? 'var(--drive-brand)' : 'var(--drive-border)',
-              color: selectedFiles.length > 0 ? '#fff' : 'var(--drive-text-muted)',
+              background: selectedFiles.length > 0 && !uploading ? 'var(--drive-brand)' : 'var(--drive-border)',
+              color: selectedFiles.length > 0 && !uploading ? '#fff' : 'var(--drive-text-muted)',
               fontSize: 13,
               fontWeight: 600,
               display: 'flex',
@@ -179,8 +223,9 @@ export function UploadDialog() {
               gap: 6,
             }}
           >
+            {encryptionKeyPair && <Lock size={12} />}
             <Upload size={14} />
-            Upload {selectedFiles.length > 0 && `(${selectedFiles.length})`}
+            {uploading ? 'Encrypting...' : `Upload${selectedFiles.length > 0 ? ` (${selectedFiles.length})` : ''}`}
           </button>
         </div>
       </div>

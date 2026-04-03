@@ -1,6 +1,8 @@
 import { useState, useEffect } from 'react';
 import { X, Clock, MapPin, AlignLeft } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
+import { useToastStore } from '@/store/toast';
+import { calendarApi } from '@/api/client';
 
 function toLocalDatetimeStr(d: Date): string {
   const pad = (n: number) => String(n).padStart(2, '0');
@@ -45,9 +47,39 @@ export function EventDialog() {
 
   if (!eventDialogOpen) return null;
 
-  const handleSave = () => {
-    // In production this would call the API
-    closeEventDialog();
+  const toast = useToastStore();
+
+  const handleSave = async () => {
+    try {
+      if (editingEvent) {
+        await calendarApi.updateEvent(editingEvent.id, {
+          title,
+          description,
+          startTime: new Date(start).toISOString(),
+          endTime: new Date(end).toISOString(),
+          location,
+          allDay,
+        });
+        toast.show('Event updated');
+      } else {
+        await calendarApi.createEvent({
+          calendarId,
+          title,
+          description,
+          startTime: new Date(start).toISOString(),
+          endTime: new Date(end).toISOString(),
+          location,
+          allDay,
+          color: '',
+        });
+        toast.show('Event created');
+      }
+    } catch (err) {
+      console.warn('[Calendar] Save failed:', err);
+      toast.show('Could not save event — backend unavailable');
+    } finally {
+      closeEventDialog();
+    }
   };
 
   const labelStyle: React.CSSProperties = {
