@@ -14,6 +14,7 @@
     "dev:drive": "turbo dev --filter=@haseen-me/drive-app",
     "dev:accounts": "turbo dev --filter=@haseen-me/accounts",
     "dev:ui-docs": "turbo dev --filter=@haseen-me/ui-docs",
+    "dev:calendar": "turbo dev --filter=@haseen-me/calendar-app",
     "build": "turbo build",
     "build:apps": "turbo build --filter='./apps/*'",
     "lint": "turbo lint",

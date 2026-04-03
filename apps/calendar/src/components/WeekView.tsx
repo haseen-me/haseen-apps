@@ -1,0 +1,192 @@
+import { useCalendarStore } from '@/store/calendar';
+import type { CalendarEvent } from '@/types/calendar';
+
+const HOURS = Array.from({ length: 24 }, (_, i) => i);
+const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
+
+function getWeekDates(date: Date): Date[] {
+  const start = new Date(date);
+  start.setDate(start.getDate() - start.getDay());
+  return Array.from({ length: 7 }, (_, i) => {
+    const d = new Date(start);
+    d.setDate(d.getDate() + i);
+    return d;
+  });
+}
+
+function isSameDay(a: Date, b: Date): boolean {
+  return (
+    a.getFullYear() === b.getFullYear() &&
+    a.getMonth() === b.getMonth() &&
+    a.getDate() === b.getDate()
+  );
+}
+
+function eventsForDay(
+  events: CalendarEvent[],
+  date: Date,
+  visibleIds: Set<string>,
+): CalendarEvent[] {
+  const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+  const dayEnd = new Date(dayStart);
+  dayEnd.setDate(dayEnd.getDate() + 1);
+  return events.filter((e) => {
+    if (!visibleIds.has(e.calendarId)) return false;
+    const s = new Date(e.startTime);
+    const en = new Date(e.endTime);
+    return s < dayEnd && en > dayStart;
+  });
+}
+
+function formatHour(h: number): string {
+  if (h === 0) return '12 AM';
+  if (h < 12) return `${h} AM`;
+  if (h === 12) return '12 PM';
+  return `${h - 12} PM`;
+}
+
+export function WeekView() {
+  const { currentDate, events, visibleCalendarIds, openNewEvent, openEditEvent } =
+    useCalendarStore();
+  const weekDates = getWeekDates(currentDate);
+  const today = new Date();
+
+  return (
+    <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
+      {/* Day headers */}
+      <div
+        style={{
+          display: 'grid',
+          gridTemplateColumns: '60px repeat(7, 1fr)',
+          borderBottom: '1px solid var(--cal-border)',
+        }}
+      >
+        <div />
+        {weekDates.map((date, i) => {
+          const isToday = isSameDay(date, today);
+          return (
+            <div
+              key={i}
+              style={{
+                padding: '8px 4px',
+                textAlign: 'center',
+                fontSize: 12,
+              }}
+            >
+              <div style={{ color: 'var(--cal-text-muted)', fontWeight: 600, fontSize: 11 }}>
+                {DAYS[i]}
+              </div>
+              <div
+                style={{
+                  width: 28,
+                  height: 28,
+                  margin: '2px auto 0',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  borderRadius: '50%',
+                  background: isToday ? 'var(--cal-brand)' : 'transparent',
+                  color: isToday ? '#fff' : 'var(--cal-text)',
+                  fontWeight: isToday ? 600 : 400,
+                  fontSize: 14,
+                }}
+              >
+                {date.getDate()}
+              </div>
+            </div>
+          );
+        })}
+      </div>
+
+      {/* Time grid */}
+      <div style={{ flex: 1, overflow: 'auto' }}>
+        <div
+          style={{
+            display: 'grid',
+            gridTemplateColumns: '60px repeat(7, 1fr)',
+            position: 'relative',
+          }}
+        >
+          {/* Time labels + rows */}
+          {HOURS.map((h) => (
+            <div key={h} style={{ display: 'contents' }}>
+              <div
+                style={{
+                  padding: '0 8px',
+                  height: 48,
+                  display: 'flex',
+                  alignItems: 'flex-start',
+                  justifyContent: 'flex-end',
+                  fontSize: 10,
+                  color: 'var(--cal-text-muted)',
+                  transform: 'translateY(-6px)',
+                }}
+              >
+                {h > 0 ? formatHour(h) : ''}
+              </div>
+              {weekDates.map((date, di) => {
+                const dayEvts = eventsForDay(events, date, visibleCalendarIds);
+                const hourEvents = dayEvts.filter((e) => {
+                  const eh = new Date(e.startTime).getHours();
+                  return eh === h;
+                });
+
+                return (
+                  <div
+                    key={di}
+                    onClick={() => {
+                      const d = new Date(date);
+                      d.setHours(h);
+                      openNewEvent(d);
+                    }}
+                    style={{
+                      height: 48,
+                      borderBottom: '1px solid var(--cal-border-subtle)',
+                      borderRight: di < 6 ? '1px solid var(--cal-border-subtle)' : undefined,
+                      position: 'relative',
+                      cursor: 'pointer',
+                    }}
+                  >
+                    {hourEvents.map((evt) => {
+                      const start = new Date(evt.startTime);
+                      const end = new Date(evt.endTime);
+                      const durationHours = (end.getTime() - start.getTime()) / 3600000;
+                      const topOffset = (start.getMinutes() / 60) * 48;
+                      return (
+                        <div
+                          key={evt.id}
+                          onClick={(e) => {
+                            e.stopPropagation();
+                            openEditEvent(evt);
+                          }}
+                          style={{
+                            position: 'absolute',
+                            top: topOffset,
+                            left: 2,
+                            right: 2,
+                            height: Math.max(durationHours * 48, 20),
+                            background: evt.color + '20',
+                            borderLeft: `3px solid ${evt.color}`,
+                            borderRadius: 4,
+                            padding: '2px 4px',
+                            fontSize: 11,
+                            lineHeight: '14px',
+                            overflow: 'hidden',
+                            cursor: 'pointer',
+                            zIndex: 1,
+                          }}
+                        >
+                          <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                );
+              })}
+            </div>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+}

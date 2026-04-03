@@ -35,11 +35,13 @@ services:
       MAIL_URL: "http://mail:8082"
       DRIVE_URL: "http://drive:8083"
       KEYSERVER_URL: "http://keyserver:8084"
+      CALENDAR_URL: "http://calendar:8085"
     depends_on:
       - auth
       - mail
       - drive
       - keyserver
+      - calendar
 
   auth:
     build:
@@ -85,6 +87,17 @@ services:
       dockerfile: deploy/Dockerfile.keyserver
     environment:
       KEYSERVER_PORT: "8084"
+      DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  calendar:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.calendar
+    environment:
+      CALENDAR_PORT: "8085"
       DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
     depends_on:
       postgres:

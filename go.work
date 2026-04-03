@@ -6,4 +6,5 @@ use (
 	./services/mail
 	./services/drive
 	./services/keyserver
+	./services/calendar
 )

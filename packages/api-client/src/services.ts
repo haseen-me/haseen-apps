@@ -53,3 +53,40 @@ export interface KeysApi {
   publishKey(params: { publicKey: string; signingPublicKey: string; signature: string }): Promise<void>;
   lookupKeys(emails: string[]): Promise<Record<string, { publicKey: string; signingPublicKey: string }>>;
 }
+
+/** Calendar service API types */
+export interface CalendarApi {
+  listCalendars(): Promise<{ calendars: CalendarItem[] }>;
+  createCalendar(params: { name: string; color: string }): Promise<CalendarItem>;
+  updateCalendar(id: string, params: { name?: string; color?: string }): Promise<CalendarItem>;
+  deleteCalendar(id: string): Promise<void>;
+  listEvents(params: { start: string; end: string; calendarId?: string }): Promise<{ events: CalendarEvent[] }>;
+  getEvent(id: string): Promise<CalendarEvent>;
+  createEvent(params: { calendarId: string; title: string; description: string; startTime: string; endTime: string; allDay: boolean; location: string; color: string }): Promise<CalendarEvent>;
+  updateEvent(id: string, params: Partial<CalendarEvent>): Promise<CalendarEvent>;
+  deleteEvent(id: string): Promise<void>;
+}
+
+export interface CalendarItem {
+  id: string;
+  name: string;
+  color: string;
+  isDefault: boolean;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface CalendarEvent {
+  id: string;
+  calendarId: string;
+  title: string;
+  description: string;
+  startTime: string;
+  endTime: string;
+  allDay: boolean;
+  location: string;
+  recurrenceRule: string | null;
+  color: string;
+  createdAt: string;
+  updatedAt: string;
+}

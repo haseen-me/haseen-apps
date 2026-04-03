@@ -30,6 +30,7 @@ func main() {
 	mailURL := env("MAIL_URL", "http://localhost:8082")
 	driveURL := env("DRIVE_URL", "http://localhost:8083")
 	keysURL := env("KEYSERVER_URL", "http://localhost:8084")
+	calendarURL := env("CALENDAR_URL", "http://localhost:8085")
 
 	r := chi.NewRouter()
 
@@ -52,13 +53,14 @@ func main() {
 	r.Use(rateLimitMiddleware(rl))
 
 	// Health check — aggregates all service statuses
-	r.Get("/api/health", healthHandler(authURL, mailURL, driveURL, keysURL))
+	r.Get("/api/health", healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL))
 
 	// Reverse proxy routes
 	r.Route("/api/v1/auth", proxyRoute(authURL, "/v1"))
 	r.Route("/api/v1/mail", proxyRoute(mailURL, "/api/v1"))
 	r.Route("/api/v1/drive", proxyRoute(driveURL, "/api/v1"))
 	r.Route("/api/v1/keys", proxyRoute(keysURL, "/v1"))
+	r.Route("/api/v1/calendar", proxyRoute(calendarURL, "/v1"))
 
 	log.Info().
 		Str("port", port).
@@ -66,6 +68,7 @@ func main() {
 		Str("mail", mailURL).
 		Str("drive", driveURL).
 		Str("keys", keysURL).
+		Str("calendar", calendarURL).
 		Msg("gateway started")
 
 	srv := &http.Server{
@@ -126,12 +129,13 @@ func proxyRoute(target, stripPrefix string) func(chi.Router) {
 
 // --- Health Aggregation ---
 
-func healthHandler(authURL, mailURL, driveURL, keysURL string) http.HandlerFunc {
+func healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL string) http.HandlerFunc {
 	services := map[string]string{
 		"auth":      authURL + "/health",
 		"mail":      mailURL + "/health",
 		"drive":     driveURL + "/health",
 		"keyserver": keysURL + "/health",
+		"calendar":  calendarURL + "/health",
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {
@@ -161,9 +165,8 @@ func healthHandler(authURL, mailURL, driveURL, keysURL string) http.HandlerFunc 
 
 		w.Header().Set("Content-Type", "application/json")
 		w.WriteHeader(status)
-		// Build JSON manually to avoid import overhead
-		fmt.Fprintf(w, `{"status":"%s","services":{"auth":"%s","mail":"%s","drive":"%s","keyserver":"%s"}}`,
-			overall, results["auth"], results["mail"], results["drive"], results["keyserver"])
+		fmt.Fprintf(w, `{"status":"%s","services":{"auth":"%s","mail":"%s","drive":"%s","keyserver":"%s","calendar":"%s"}}`,
+			overall, results["auth"], results["mail"], results["drive"], results["keyserver"], results["calendar"])
 	}
 }
 

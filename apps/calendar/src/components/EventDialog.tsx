@@ -1,0 +1,278 @@
+import { useState, useEffect } from 'react';
+import { X, Clock, MapPin, AlignLeft } from 'lucide-react';
+import { useCalendarStore } from '@/store/calendar';
+
+function toLocalDatetimeStr(d: Date): string {
+  const pad = (n: number) => String(n).padStart(2, '0');
+  return `${d.getFullYear()}-${pad(d.getMonth() + 1)}-${pad(d.getDate())}T${pad(d.getHours())}:${pad(d.getMinutes())}`;
+}
+
+export function EventDialog() {
+  const { eventDialogOpen, editingEvent, selectedDate, closeEventDialog, calendars } =
+    useCalendarStore();
+
+  const [title, setTitle] = useState('');
+  const [description, setDescription] = useState('');
+  const [start, setStart] = useState('');
+  const [end, setEnd] = useState('');
+  const [location, setLocation] = useState('');
+  const [allDay, setAllDay] = useState(false);
+  const [calendarId, setCalendarId] = useState('');
+
+  useEffect(() => {
+    if (editingEvent) {
+      setTitle(editingEvent.title);
+      setDescription(editingEvent.description);
+      setStart(toLocalDatetimeStr(new Date(editingEvent.startTime)));
+      setEnd(toLocalDatetimeStr(new Date(editingEvent.endTime)));
+      setLocation(editingEvent.location);
+      setAllDay(editingEvent.allDay);
+      setCalendarId(editingEvent.calendarId);
+    } else if (selectedDate) {
+      setTitle('');
+      setDescription('');
+      const s = new Date(selectedDate);
+      if (s.getHours() === 0) s.setHours(9, 0, 0, 0);
+      const e = new Date(s);
+      e.setHours(s.getHours() + 1);
+      setStart(toLocalDatetimeStr(s));
+      setEnd(toLocalDatetimeStr(e));
+      setLocation('');
+      setAllDay(false);
+      setCalendarId(calendars[0]?.id ?? '');
+    }
+  }, [editingEvent, selectedDate, calendars]);
+
+  if (!eventDialogOpen) return null;
+
+  const handleSave = () => {
+    // In production this would call the API
+    closeEventDialog();
+  };
+
+  const labelStyle: React.CSSProperties = {
+    display: 'flex',
+    alignItems: 'center',
+    gap: 8,
+    fontSize: 13,
+    color: 'var(--cal-text-secondary)',
+    marginBottom: 4,
+  };
+
+  const inputStyle: React.CSSProperties = {
+    width: '100%',
+    padding: '8px 10px',
+    border: '1px solid var(--cal-border)',
+    borderRadius: 'var(--cal-radius-sm)',
+    fontSize: 13,
+    fontFamily: 'inherit',
+    outline: 'none',
+    background: 'var(--cal-bg)',
+    color: 'var(--cal-text)',
+  };
+
+  return (
+    <div
+      style={{
+        position: 'fixed',
+        inset: 0,
+        background: 'rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 100,
+      }}
+      onClick={closeEventDialog}
+    >
+      <div
+        onClick={(e) => e.stopPropagation()}
+        style={{
+          background: 'var(--cal-bg)',
+          borderRadius: 'var(--cal-radius)',
+          boxShadow: 'var(--cal-shadow-lg)',
+          width: 420,
+          maxHeight: '80vh',
+          overflow: 'auto',
+          animation: 'fadeIn 0.15s ease-out',
+        }}
+      >
+        {/* Header */}
+        <div
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            padding: '14px 16px',
+            borderBottom: '1px solid var(--cal-border)',
+          }}
+        >
+          <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>
+            {editingEvent ? 'Edit Event' : 'New Event'}
+          </h3>
+          <button
+            onClick={closeEventDialog}
+            style={{
+              background: 'none',
+              border: 'none',
+              padding: 4,
+              color: 'var(--cal-text-muted)',
+            }}
+          >
+            <X size={18} />
+          </button>
+        </div>
+
+        {/* Body */}
+        <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
+          {/* Title */}
+          <input
+            value={title}
+            onChange={(e) => setTitle(e.target.value)}
+            placeholder="Add title"
+            style={{ ...inputStyle, fontSize: 16, fontWeight: 500, border: 'none', padding: '4px 0' }}
+          />
+
+          {/* Calendar selector */}
+          <div>
+            <label style={labelStyle}>Calendar</label>
+            <select
+              value={calendarId}
+              onChange={(e) => setCalendarId(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              {calendars.map((c) => (
+                <option key={c.id} value={c.id}>
+                  {c.name}
+                </option>
+              ))}
+            </select>
+          </div>
+
+          {/* Time */}
+          <div>
+            <label style={labelStyle}>
+              <Clock size={14} /> Time
+            </label>
+            <div style={{ display: 'flex', gap: 8, alignItems: 'center' }}>
+              <input
+                type="datetime-local"
+                value={start}
+                onChange={(e) => setStart(e.target.value)}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+              <span style={{ color: 'var(--cal-text-muted)', fontSize: 13 }}>to</span>
+              <input
+                type="datetime-local"
+                value={end}
+                onChange={(e) => setEnd(e.target.value)}
+                style={{ ...inputStyle, flex: 1 }}
+              />
+            </div>
+            <label
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: 6,
+                marginTop: 8,
+                fontSize: 12,
+                color: 'var(--cal-text-secondary)',
+                cursor: 'pointer',
+              }}
+            >
+              <input
+                type="checkbox"
+                checked={allDay}
+                onChange={(e) => setAllDay(e.target.checked)}
+              />
+              All day
+            </label>
+          </div>
+
+          {/* Location */}
+          <div>
+            <label style={labelStyle}>
+              <MapPin size={14} /> Location
+            </label>
+            <input
+              value={location}
+              onChange={(e) => setLocation(e.target.value)}
+              placeholder="Add location"
+              style={inputStyle}
+            />
+          </div>
+
+          {/* Description */}
+          <div>
+            <label style={labelStyle}>
+              <AlignLeft size={14} /> Description
+            </label>
+            <textarea
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Add description"
+              rows={3}
+              style={{ ...inputStyle, resize: 'vertical' }}
+            />
+          </div>
+        </div>
+
+        {/* Footer */}
+        <div
+          style={{
+            display: 'flex',
+            justifyContent: editingEvent ? 'space-between' : 'flex-end',
+            padding: '12px 16px',
+            borderTop: '1px solid var(--cal-border)',
+            gap: 8,
+          }}
+        >
+          {editingEvent && (
+            <button
+              onClick={closeEventDialog}
+              style={{
+                padding: '7px 16px',
+                border: 'none',
+                borderRadius: 'var(--cal-radius-sm)',
+                background: 'var(--cal-danger)',
+                color: '#fff',
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
+              Delete
+            </button>
+          )}
+          <div style={{ display: 'flex', gap: 8 }}>
+            <button
+              onClick={closeEventDialog}
+              style={{
+                padding: '7px 16px',
+                border: '1px solid var(--cal-border)',
+                borderRadius: 'var(--cal-radius-sm)',
+                background: 'var(--cal-bg)',
+                fontSize: 13,
+                color: 'var(--cal-text)',
+              }}
+            >
+              Cancel
+            </button>
+            <button
+              onClick={handleSave}
+              style={{
+                padding: '7px 16px',
+                border: 'none',
+                borderRadius: 'var(--cal-radius-sm)',
+                background: 'var(--cal-brand)',
+                color: '#fff',
+                fontSize: 13,
+                fontWeight: 500,
+              }}
+            >
+              Save
+            </button>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}

@@ -14,10 +14,14 @@ export type {
   DriveApi,
   DriveFile,
   KeysApi,
+  CalendarApi,
+  CalendarItem,
+  CalendarEvent,
 } from './services';
 export {
   createAuthApi,
   createMailApi,
   createDriveApi,
   createKeysApi,
+  createCalendarApi,
 } from './factories';

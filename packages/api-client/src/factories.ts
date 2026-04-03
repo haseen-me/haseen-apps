@@ -1,5 +1,5 @@
 import type { ApiClient } from './client';
-import type { AuthApi, MailApi, DriveApi, KeysApi } from './services';
+import type { AuthApi, MailApi, DriveApi, KeysApi, CalendarApi } from './services';
 
 export function createAuthApi(client: ApiClient): AuthApi {
   return {
@@ -38,5 +38,23 @@ export function createKeysApi(client: ApiClient): KeysApi {
     getPublicKey: (userID) => client.get(`/keys/keys/${userID}`),
     publishKey: (params) => client.post('/keys/keys/publish', params),
     lookupKeys: (emails) => client.post('/keys/keys/lookup', { userIds: emails }),
+  };
+}
+
+export function createCalendarApi(client: ApiClient): CalendarApi {
+  return {
+    listCalendars: () => client.get('/calendar/calendars'),
+    createCalendar: (params) => client.post('/calendar/calendars', params),
+    updateCalendar: (id, params) => client.put(`/calendar/calendars/${id}`, params),
+    deleteCalendar: (id) => client.del(`/calendar/calendars/${id}`),
+    listEvents: (params) => {
+      const qs = new URLSearchParams({ start: params.start, end: params.end });
+      if (params.calendarId) qs.set('calendarId', params.calendarId);
+      return client.get(`/calendar/events?${qs}`);
+    },
+    getEvent: (id) => client.get(`/calendar/events/${id}`),
+    createEvent: (params) => client.post('/calendar/events', params),
+    updateEvent: (id, params) => client.put(`/calendar/events/${id}`, params),
+    deleteEvent: (id) => client.del(`/calendar/events/${id}`),
   };
 }

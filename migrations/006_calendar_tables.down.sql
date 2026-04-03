@@ -1,0 +1,4 @@
+DROP TABLE IF EXISTS reminders;
+DROP TABLE IF EXISTS event_attendees;
+DROP TABLE IF EXISTS events;
+DROP TABLE IF EXISTS calendars;

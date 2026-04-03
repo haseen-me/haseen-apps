@@ -1,0 +1,116 @@
+import type { Calendar, CalendarEvent } from '@/types/calendar';
+
+const now = new Date();
+const y = now.getFullYear();
+const m = now.getMonth();
+
+function d(day: number, hour: number, min = 0): string {
+  return new Date(y, m, day, hour, min).toISOString();
+}
+
+export const MOCK_CALENDARS: Calendar[] = [
+  { id: 'cal-1', name: 'Personal', color: '#2db8af', isDefault: true, createdAt: d(1, 0) },
+  { id: 'cal-2', name: 'Work', color: '#3e63dd', isDefault: false, createdAt: d(1, 0) },
+  { id: 'cal-3', name: 'Family', color: '#e54666', isDefault: false, createdAt: d(1, 0) },
+];
+
+export const MOCK_EVENTS: CalendarEvent[] = [
+  {
+    id: 'evt-1',
+    calendarId: 'cal-1',
+    title: 'Morning Run',
+    description: '5K around the park',
+    startTime: d(now.getDate(), 7, 0),
+    endTime: d(now.getDate(), 8, 0),
+    allDay: false,
+    location: 'City Park',
+    recurrenceRule: null,
+    color: '#2db8af',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+  {
+    id: 'evt-2',
+    calendarId: 'cal-2',
+    title: 'Team Standup',
+    description: 'Daily sync with the team',
+    startTime: d(now.getDate(), 9, 30),
+    endTime: d(now.getDate(), 10, 0),
+    allDay: false,
+    location: 'Zoom',
+    recurrenceRule: null,
+    color: '#3e63dd',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+  {
+    id: 'evt-3',
+    calendarId: 'cal-2',
+    title: 'Sprint Planning',
+    description: 'Plan next sprint stories',
+    startTime: d(now.getDate() + 1, 14, 0),
+    endTime: d(now.getDate() + 1, 15, 30),
+    allDay: false,
+    location: 'Room A',
+    recurrenceRule: null,
+    color: '#3e63dd',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+  {
+    id: 'evt-4',
+    calendarId: 'cal-3',
+    title: 'Family Dinner',
+    description: '',
+    startTime: d(now.getDate() + 2, 19, 0),
+    endTime: d(now.getDate() + 2, 21, 0),
+    allDay: false,
+    location: 'Home',
+    recurrenceRule: null,
+    color: '#e54666',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+  {
+    id: 'evt-5',
+    calendarId: 'cal-1',
+    title: 'Dentist Appointment',
+    description: 'Annual checkup',
+    startTime: d(now.getDate() + 3, 11, 0),
+    endTime: d(now.getDate() + 3, 12, 0),
+    allDay: false,
+    location: 'Downtown Dental',
+    recurrenceRule: null,
+    color: '#2db8af',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+  {
+    id: 'evt-6',
+    calendarId: 'cal-2',
+    title: 'Project Deadline',
+    description: 'Final project delivery',
+    startTime: d(now.getDate() + 5, 0, 0),
+    endTime: d(now.getDate() + 5, 23, 59),
+    allDay: true,
+    location: '',
+    recurrenceRule: null,
+    color: '#3e63dd',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+  {
+    id: 'evt-7',
+    calendarId: 'cal-1',
+    title: 'Yoga Class',
+    description: 'Evening yoga session',
+    startTime: d(now.getDate() - 1, 18, 0),
+    endTime: d(now.getDate() - 1, 19, 0),
+    allDay: false,
+    location: 'Wellness Studio',
+    recurrenceRule: null,
+    color: '#2db8af',
+    createdAt: d(1, 0),
+    updatedAt: d(1, 0),
+  },
+];
