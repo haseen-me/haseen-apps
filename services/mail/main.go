@@ -1,28 +1,54 @@
 package main
 
 import (
+	"context"
 	"fmt"
 	"net/http"
 	"os"
+	"os/signal"
+	"syscall"
 
 	"github.com/go-chi/chi/v5"
-	"github.com/go-chi/chi/v5/middleware"
+	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
+
+	"github.com/haseen-me/haseen-apps/services/mail/internal/handler"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/middleware"
+	smtppkg "github.com/haseen-me/haseen-apps/services/mail/internal/smtp"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
 )
 
 func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	port := os.Getenv("MAIL_PORT")
-	if port == "" {
-		port = "8082"
+	port := env("MAIL_PORT", "8082")
+	smtpPort := env("SMTP_PORT", "2525")
+	domain := env("MAIL_DOMAIN", "haseen.me")
+	dbURL := env("DATABASE_URL", "postgres://haseen:haseen@localhost:5432/haseen?sslmode=disable")
+	devMode := env("DEV_MODE", "true") == "true"
+
+	// Database
+	ctx := context.Background()
+	st, err := store.New(ctx, dbURL)
+	if err != nil {
+		log.Fatal().Err(err).Msg("database connection failed")
+	}
+	defer st.Close()
+
+	// Handler
+	h := &handler.Handler{
+		Store:  st,
+		Log:    log.Logger,
+		Domain: domain,
 	}
 
+	// Router
 	r := chi.NewRouter()
-	r.Use(middleware.RequestID)
-	r.Use(middleware.Recoverer)
+	r.Use(chimw.RequestID)
+	r.Use(chimw.RealIP)
+	r.Use(chimw.Recoverer)
 
 	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
 		w.Header().Set("Content-Type", "application/json")
@@ -30,29 +56,63 @@ func main() {
 	})
 
 	r.Route("/v1", func(r chi.Router) {
-		r.Get("/mailbox", notImplemented)
-		r.Get("/mailbox/{label}", notImplemented)
-		r.Get("/messages/{messageID}", notImplemented)
-		r.Post("/messages/send", notImplemented)
-		r.Put("/messages/{messageID}", notImplemented)
-		r.Delete("/messages/{messageID}", notImplemented)
-		r.Post("/messages/{messageID}/move", notImplemented)
-		r.Get("/threads/{threadID}", notImplemented)
-		r.Post("/labels", notImplemented)
-		r.Put("/labels/{labelID}", notImplemented)
-		r.Delete("/labels/{labelID}", notImplemented)
-		r.Get("/attachments/{attachmentID}", notImplemented)
-		r.Post("/search", notImplemented)
+		if devMode {
+			r.Use(middleware.DevAuth())
+		} else {
+			r.Use(middleware.Auth(st.DB))
+		}
+
+		// Mailbox
+		r.Get("/mailbox", h.GetMailbox)
+		r.Get("/mailbox/{label}", h.GetMailboxByLabel)
+
+		// Messages
+		r.Get("/messages/{messageID}", h.GetMessage)
+		r.Post("/messages/send", h.SendMessage)
+		r.Put("/messages/{messageID}", h.UpdateMessage)
+		r.Delete("/messages/{messageID}", h.DeleteMessage)
+		r.Post("/messages/{messageID}/move", h.MoveMessage)
+
+		// Threads
+		r.Get("/threads/{threadID}", h.GetThread)
+
+		// Labels
+		r.Post("/labels", h.CreateLabel)
+		r.Put("/labels/{labelID}", h.UpdateLabel)
+		r.Delete("/labels/{labelID}", h.DeleteLabel)
+
+		// Attachments
+		r.Get("/attachments/{attachmentID}", h.GetAttachment)
+
+		// Search
+		r.Post("/search", h.Search)
 	})
 
-	log.Info().Str("port", port).Msg("mail service started")
-	if err := http.ListenAndServe(":"+port, r); err != nil {
-		log.Fatal().Err(err).Msg("mail service failed")
+	// SMTP Server (inbound)
+	smtpSrv := smtppkg.NewServer(":"+smtpPort, domain, st, log.Logger, nil)
+	if err := smtpSrv.Start(); err != nil {
+		log.Fatal().Err(err).Msg("SMTP server failed to start")
 	}
+	defer smtpSrv.Stop()
+
+	// HTTP Server
+	go func() {
+		log.Info().Str("port", port).Bool("dev", devMode).Msg("mail HTTP server started")
+		if err := http.ListenAndServe(":"+port, r); err != nil {
+			log.Fatal().Err(err).Msg("HTTP server failed")
+		}
+	}()
+
+	// Graceful shutdown
+	quit := make(chan os.Signal, 1)
+	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
+	<-quit
+	log.Info().Msg("shutting down mail service")
 }
 
-func notImplemented(w http.ResponseWriter, r *http.Request) {
-	w.Header().Set("Content-Type", "application/json")
-	w.WriteHeader(http.StatusNotImplemented)
-	fmt.Fprint(w, `{"error":"not implemented"}`)
+func env(key, fallback string) string {
+	if v := os.Getenv(key); v != "" {
+		return v
+	}
+	return fallback
 }
