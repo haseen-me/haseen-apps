@@ -1,10 +1,10 @@
 FROM golang:1.23-alpine AS builder
-WORKDIR /app
-COPY services/auth/ ./services/auth/
-COPY go.work ./
-WORKDIR /app/services/auth
+WORKDIR /build
+COPY services/auth/go.mod services/auth/go.sum ./
 RUN go mod download
-RUN CGO_ENABLED=0 go build -o /auth .
+COPY services/auth/ ./
+ENV GOWORK=off
+RUN CGO_ENABLED=0 go build -ldflags='-s -w' -o /auth .
 
 FROM alpine:3.20
 RUN apk --no-cache add ca-certificates

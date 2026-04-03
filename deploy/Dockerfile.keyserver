@@ -1,10 +1,10 @@
 FROM golang:1.23-alpine AS builder
-WORKDIR /app
-COPY services/keyserver/ ./services/keyserver/
-COPY go.work ./
-WORKDIR /app/services/keyserver
+WORKDIR /build
+COPY services/keyserver/go.mod services/keyserver/go.sum ./
 RUN go mod download
-RUN CGO_ENABLED=0 go build -o /keyserver .
+COPY services/keyserver/ ./
+ENV GOWORK=off
+RUN CGO_ENABLED=0 go build -ldflags='-s -w' -o /keyserver .
 
 FROM alpine:3.20
 RUN apk --no-cache add ca-certificates

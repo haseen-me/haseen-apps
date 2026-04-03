@@ -10,6 +10,14 @@ export { type ApiError, isApiError } from './errors';
 export type {
   AuthApi,
   MailApi,
+  MailMessage,
   DriveApi,
+  DriveFile,
   KeysApi,
 } from './services';
+export {
+  createAuthApi,
+  createMailApi,
+  createDriveApi,
+  createKeysApi,
+} from './factories';
