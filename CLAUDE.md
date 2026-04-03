@@ -15,7 +15,8 @@ haseen-apps/
 │   ├── web/                # haseen.me — Landing/marketing (port 3000)
 │   ├── mail/               # haseen.me/mail — E2E encrypted email (port 3001)
 │   ├── drive/              # haseen.me/drive — Encrypted storage (port 3002)
-│   └── accounts/           # haseen.me/accounts — Auth & settings (port 3003)
+│   ├── accounts/           # haseen.me/accounts — Auth & settings (port 3003)
+│   └── ui-docs/            # haseen.me/ui — UI component docs site (port 3010)
 ├── services/               # Go 1.23 microservices
 │   ├── gateway/            # API gateway, routing, CORS, rate limiting (port 8080)
 │   ├── auth/               # SRP auth, sessions, MFA, key mgmt (port 8081)

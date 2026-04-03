@@ -1,5 +1,5 @@
 {
-  "name": "@haseen-me/accounts-app",
+  "name": "@haseen-me/ui-docs",
   "version": "0.0.1",
   "private": true,
   "type": "module",
@@ -13,16 +13,11 @@
   },
   "dependencies": {
     "@haseen-me/ui": "file:../../../ui",
-    "@haseen-me/crypto": "*",
-    "@haseen-me/api-client": "*",
-    "@haseen-me/shared": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",
-    "framer-motion": "^12.0.0",
     "lucide-react": "^0.475.0",
-    "@floating-ui/react": "^0.27.0",
-    "zustand": "^5.0.0"
+    "prism-react-renderer": "^2.4.1"
   },
   "devDependencies": {
     "@haseen-me/config": "*",

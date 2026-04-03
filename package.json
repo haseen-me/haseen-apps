@@ -13,6 +13,7 @@
     "dev:mail": "turbo dev --filter=@haseen-me/mail-app",
     "dev:drive": "turbo dev --filter=@haseen-me/drive-app",
     "dev:accounts": "turbo dev --filter=@haseen-me/accounts",
+    "dev:ui-docs": "turbo dev --filter=@haseen-me/ui-docs",
     "build": "turbo build",
     "build:apps": "turbo build --filter='./apps/*'",
     "lint": "turbo lint",

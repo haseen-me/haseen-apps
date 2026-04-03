@@ -1,0 +1,105 @@
+*,
+*::before,
+*::after {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+:root {
+  --docs-sidebar-width: 260px;
+  --docs-header-height: 56px;
+  --docs-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --docs-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --docs-accent: #2db8af;
+  --docs-accent-hover: #28a79e;
+  --docs-accent-subtle: rgba(45, 184, 175, 0.1);
+}
+
+/* Light theme */
+[data-theme='light'] {
+  --docs-bg: #ffffff;
+  --docs-bg-secondary: #f8f9fa;
+  --docs-bg-tertiary: #f1f3f5;
+  --docs-bg-code: #f6f8fa;
+  --docs-border: #e1e4e8;
+  --docs-border-subtle: #eaeef2;
+  --docs-text-primary: #1a1a2e;
+  --docs-text-secondary: #57606a;
+  --docs-text-tertiary: #8b949e;
+  --docs-sidebar-bg: #f8f9fa;
+  --docs-sidebar-active: rgba(45, 184, 175, 0.12);
+  --docs-preview-bg: #ffffff;
+  --docs-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
+  --docs-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+}
+
+/* Dark theme */
+[data-theme='dark'] {
+  --docs-bg: #0d1117;
+  --docs-bg-secondary: #161b22;
+  --docs-bg-tertiary: #1c2128;
+  --docs-bg-code: #161b22;
+  --docs-border: #30363d;
+  --docs-border-subtle: #21262d;
+  --docs-text-primary: #e6edf3;
+  --docs-text-secondary: #8b949e;
+  --docs-text-tertiary: #6e7681;
+  --docs-sidebar-bg: #0d1117;
+  --docs-sidebar-active: rgba(45, 184, 175, 0.15);
+  --docs-preview-bg: #161b22;
+  --docs-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
+  --docs-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+}
+
+html {
+  font-size: 16px;
+  -webkit-font-smoothing: antialiased;
+  -moz-osx-font-smoothing: grayscale;
+}
+
+body {
+  font-family: var(--docs-font-sans);
+  background: var(--docs-bg);
+  color: var(--docs-text-primary);
+  line-height: 1.6;
+  transition: background-color 0.2s, color 0.2s;
+}
+
+a {
+  color: var(--docs-accent);
+  text-decoration: none;
+}
+
+a:hover {
+  text-decoration: underline;
+}
+
+code {
+  font-family: var(--docs-font-mono);
+  font-size: 0.875em;
+}
+
+::selection {
+  background: var(--docs-accent);
+  color: #fff;
+}
+
+/* Scrollbar */
+::-webkit-scrollbar {
+  width: 6px;
+  height: 6px;
+}
+
+::-webkit-scrollbar-track {
+  background: transparent;
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--docs-border);
+  border-radius: 3px;
+}
+
+::-webkit-scrollbar-thumb:hover {
+  background: var(--docs-text-tertiary);
+}
