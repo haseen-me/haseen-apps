@@ -55,6 +55,10 @@ type Message struct {
 	Starred     bool           `json:"starred"`
 	Labels      []string       `json:"labels"`
 	Encrypted   bool           `json:"encrypted"`
+	// E2E envelope fields
+	EncryptedSubject     string            `json:"encryptedSubject,omitempty"`
+	EncryptedBody        string            `json:"encryptedBody,omitempty"`
+	EncryptedSessionKeys map[string]string  `json:"encryptedSessionKeys,omitempty"`
 }
 
 // ---------- Thread ----------
@@ -74,12 +78,16 @@ type Thread struct {
 // ---------- API Requests ----------
 
 type SendMessageRequest struct {
-	To               []EmailAddress `json:"to"`
-	Cc               []EmailAddress `json:"cc"`
-	Bcc              []EmailAddress `json:"bcc"`
-	Subject          string         `json:"subject"`
-	BodyHtml         string         `json:"bodyHtml"`
-	ReplyToMessageID string         `json:"replyToMessageId,omitempty"`
+	To               []EmailAddress        `json:"to"`
+	Cc               []EmailAddress        `json:"cc"`
+	Bcc              []EmailAddress        `json:"bcc"`
+	Subject          string                `json:"subject"`
+	BodyHtml         string                `json:"bodyHtml"`
+	ReplyToMessageID string                `json:"replyToMessageId,omitempty"`
+	// E2E envelope fields (optional — stored alongside plaintext)
+	EncryptedSubject     string            `json:"encryptedSubject,omitempty"`
+	EncryptedBody        string            `json:"encryptedBody,omitempty"`
+	EncryptedSessionKeys map[string]string  `json:"encryptedSessionKeys,omitempty"`
 }
 
 type UpdateMessageRequest struct {

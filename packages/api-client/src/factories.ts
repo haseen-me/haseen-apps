@@ -13,10 +13,13 @@ export function createAuthApi(client: ApiClient): AuthApi {
 
 export function createMailApi(client: ApiClient): MailApi {
   return {
-    getMailbox: () => client.get('/mail/mailbox'),
+    getMailbox: (label) => client.get(`/mail/mailbox${label ? `/${label}` : ''}`),
     getMessage: (id) => client.get(`/mail/messages/${id}`),
     sendMessage: (params) => client.post('/mail/messages/send', params),
     deleteMessage: (id) => client.del(`/mail/messages/${id}`),
+    moveMessage: (id, label) => client.post(`/mail/messages/${id}/move`, { label }),
+    updateMessage: (id, params) => client.put(`/mail/messages/${id}`, params),
+    search: (query) => client.post('/mail/search', { query }),
   };
 }
 
@@ -42,7 +45,7 @@ export function createKeysApi(client: ApiClient): KeysApi {
   return {
     getPublicKey: (userID) => client.get(`/keys/keys/${userID}`),
     publishKey: (params) => client.post('/keys/keys/publish', params),
-    lookupKeys: (emails) => client.post('/keys/keys/lookup', { userIds: emails }),
+    lookupKeys: (userIDs) => client.post('/keys/keys/lookup', { userIds: userIDs }),
   };
 }
 

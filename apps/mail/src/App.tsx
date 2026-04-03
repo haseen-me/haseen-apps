@@ -39,42 +39,7 @@ export function App() {
       .getMailbox()
       .then((data) => {
         if (!cancelled) {
-          // Transform API response to Thread format
-          const threads = data.messages.map((msg) => ({
-            id: msg.threadID,
-            subject: msg.encryptedSubject,
-            snippet: msg.encryptedBody.slice(0, 100),
-            lastMessageDate: msg.createdAt,
-            unreadCount: msg.read ? 0 : 1,
-            labels: [msg.label],
-            from: { name: msg.from, address: msg.from },
-            hasAttachments: false,
-            messages: [
-              {
-                id: msg.id,
-                threadId: msg.threadID,
-                from: { name: msg.from, address: msg.from },
-                to: msg.to.map((addr) => ({ address: addr })),
-                cc: [],
-                bcc: [],
-                subject: msg.encryptedSubject,
-                bodyHtml: msg.encryptedBody,
-                bodyText: msg.encryptedBody,
-                attachments: [],
-                date: msg.createdAt,
-                read: msg.read,
-                starred: false,
-                labels: [msg.label],
-                encrypted: true,
-                encryptionInfo: {
-                  sessionKeyEncrypted: msg.encryptedSessionKey,
-                  senderSigningKey: '',
-                  signatureValid: true,
-                },
-              },
-            ],
-          }));
-          setThreads(threads);
+          setThreads(data.threads);
         }
       })
       .catch(() => {

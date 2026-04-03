@@ -2,6 +2,7 @@ package store
 
 import (
 	"context"
+	"encoding/json"
 	"strings"
 	"time"
 
@@ -15,6 +16,18 @@ func (s *Store) CreateMessage(ctx context.Context, mailboxID, threadID string, m
 	bccAddrs := FormatAddresses(msg.Bcc)
 	bodyText := stripHTML(msg.BodyHtml)
 
+	// Serialize encrypted envelope fields
+	encSubject := []byte(msg.EncryptedSubject)
+	encBody := []byte(msg.EncryptedBody)
+	encSessionKey := []byte{}
+	if len(msg.EncryptedSessionKeys) > 0 {
+		if data, err := json.Marshal(msg.EncryptedSessionKeys); err == nil {
+			encSessionKey = data
+		}
+	}
+
+	isEncrypted := len(msg.EncryptedSubject) > 0
+
 	var id string
 	err := s.DB.QueryRow(ctx,
 		`INSERT INTO mail_messages
@@ -24,10 +37,11 @@ func (s *Store) CreateMessage(ctx context.Context, mailboxID, threadID string, m
 		 VALUES ($1,$2,$3,$4,$5,$6, $7,$8,$9, $10,$11,$12, $13,$14,$15)
 		 RETURNING id`,
 		threadID, mailboxID, FormatAddress(fromAddr), toAddrs, ccAddrs, bccAddrs,
-		[]byte{}, []byte{}, []byte{}, // encrypted fields placeholder
+		encSubject, encBody, encSessionKey,
 		msg.Subject, msg.BodyHtml, bodyText,
 		true, false, labelID,
 	).Scan(&id)
+	_ = isEncrypted // reserved for future per-message flag
 	return id, err
 }
 
@@ -52,24 +66,30 @@ func (s *Store) CreateInboundMessage(ctx context.Context, mailboxID, threadID, l
 // GetMessage returns a single message with its attachments.
 func (s *Store) GetMessage(ctx context.Context, mailboxID, messageID string) (*model.Message, error) {
 	var (
-		fromRaw  string
-		toRaw    []string
-		ccRaw    []string
-		bccRaw   []string
-		labelID  *string
-		created  time.Time
+		fromRaw       string
+		toRaw         []string
+		ccRaw         []string
+		bccRaw        []string
+		labelID       *string
+		created       time.Time
+		encSubject    []byte
+		encBody       []byte
+		encSessionKey []byte
 	)
 	msg := &model.Message{}
 	err := s.DB.QueryRow(ctx,
 		`SELECT id, thread_id, from_address, to_addresses, COALESCE(cc_addresses, '{}'),
 		        COALESCE(bcc_addresses, '{}'), subject, COALESCE(body_html,''), COALESCE(body_text,''),
-		        is_read, starred, label_id, created_at
+		        is_read, starred, label_id, created_at,
+		        COALESCE(encrypted_subject, ''), COALESCE(encrypted_body, ''),
+		        COALESCE(encrypted_session_key, '')
 		 FROM mail_messages WHERE id = $1 AND mailbox_id = $2`,
 		messageID, mailboxID,
 	).Scan(
 		&msg.ID, &msg.ThreadID, &fromRaw, &toRaw, &ccRaw, &bccRaw,
 		&msg.Subject, &msg.BodyHtml, &msg.BodyText,
 		&msg.Read, &msg.Starred, &labelID, &created,
+		&encSubject, &encBody, &encSessionKey,
 	)
 	if err != nil {
 		return nil, err
@@ -79,9 +99,22 @@ func (s *Store) GetMessage(ctx context.Context, mailboxID, messageID string) (*m
 	msg.Cc = ParseAddresses(ccRaw)
 	msg.Bcc = ParseAddresses(bccRaw)
 	msg.Date = created.Format(time.RFC3339)
-	msg.Encrypted = true
+	msg.Encrypted = len(encSubject) > 0
 	if labelID != nil {
 		msg.Labels = []string{*labelID}
+	}
+	// Populate encrypted envelope fields
+	if len(encSubject) > 0 {
+		msg.EncryptedSubject = string(encSubject)
+	}
+	if len(encBody) > 0 {
+		msg.EncryptedBody = string(encBody)
+	}
+	if len(encSessionKey) > 0 {
+		var keys map[string]string
+		if err := json.Unmarshal(encSessionKey, &keys); err == nil {
+			msg.EncryptedSessionKeys = keys
+		}
 	}
 
 	atts, err := s.GetAttachmentsByMessage(ctx, messageID)
@@ -139,7 +172,9 @@ func (s *Store) GetMessagesByThread(ctx context.Context, threadID string) ([]mod
 	rows, err := s.DB.Query(ctx,
 		`SELECT id, thread_id, from_address, to_addresses, COALESCE(cc_addresses,'{}'),
 		        COALESCE(bcc_addresses,'{}'), subject, COALESCE(body_html,''), COALESCE(body_text,''),
-		        is_read, starred, label_id, created_at
+		        is_read, starred, label_id, created_at,
+		        COALESCE(encrypted_subject, ''), COALESCE(encrypted_body, ''),
+		        COALESCE(encrypted_session_key, '')
 		 FROM mail_messages WHERE thread_id = $1
 		 ORDER BY created_at ASC`,
 		threadID,
@@ -152,18 +187,22 @@ func (s *Store) GetMessagesByThread(ctx context.Context, threadID string) ([]mod
 	var msgs []model.Message
 	for rows.Next() {
 		var (
-			fromRaw string
-			toRaw   []string
-			ccRaw   []string
-			bccRaw  []string
-			labelID *string
-			created time.Time
+			fromRaw       string
+			toRaw         []string
+			ccRaw         []string
+			bccRaw        []string
+			labelID       *string
+			created       time.Time
+			encSubject    []byte
+			encBody       []byte
+			encSessionKey []byte
 		)
 		m := model.Message{}
 		if err := rows.Scan(
 			&m.ID, &m.ThreadID, &fromRaw, &toRaw, &ccRaw, &bccRaw,
 			&m.Subject, &m.BodyHtml, &m.BodyText,
 			&m.Read, &m.Starred, &labelID, &created,
+			&encSubject, &encBody, &encSessionKey,
 		); err != nil {
 			return nil, err
 		}
@@ -172,9 +211,21 @@ func (s *Store) GetMessagesByThread(ctx context.Context, threadID string) ([]mod
 		m.Cc = ParseAddresses(ccRaw)
 		m.Bcc = ParseAddresses(bccRaw)
 		m.Date = created.Format(time.RFC3339)
-		m.Encrypted = true
+		m.Encrypted = len(encSubject) > 0
 		if labelID != nil {
 			m.Labels = []string{*labelID}
+		}
+		if len(encSubject) > 0 {
+			m.EncryptedSubject = string(encSubject)
+		}
+		if len(encBody) > 0 {
+			m.EncryptedBody = string(encBody)
+		}
+		if len(encSessionKey) > 0 {
+			var keys map[string]string
+			if err := json.Unmarshal(encSessionKey, &keys); err == nil {
+				m.EncryptedSessionKeys = keys
+			}
 		}
 
 		atts, _ := s.GetAttachmentsByMessage(ctx, m.ID)

@@ -1,31 +1,83 @@
 /** Auth service API types */
 export interface AuthApi {
-  register(params: { email: string; srpSalt: string; srpVerifier: string; publicKey: string; signingPublicKey: string }): Promise<{ userID: string; sessionToken: string }>;
+  register(params: { email: string; srpSalt: string; srpVerifier: string; publicKey: string; signingKey: string; signature?: string }): Promise<{ userId: string; sessionToken: string; recoveryKey: string }>;
   loginInit(params: { email: string; srpA: string }): Promise<{ srpB: string; srpSalt: string }>;
-  loginVerify(params: { email: string; srpM1: string }): Promise<{ sessionToken: string; srpM2: string }>;
+  loginVerify(params: { email: string; srpM1: string }): Promise<{ sessionToken: string; srpM2: string; user: { id: string; email: string }; mfaRequired?: boolean }>;
   logout(): Promise<void>;
   getAccount(): Promise<{ userID: string; email: string; createdAt: string }>;
 }
 
+/** Email address type matching backend model */
+export interface EmailAddress {
+  name?: string;
+  address: string;
+}
+
+/** Attachment metadata */
+export interface Attachment {
+  id: string;
+  filename: string;
+  contentType: string;
+  size: number;
+}
+
 /** Mail service API types */
 export interface MailApi {
-  getMailbox(): Promise<{ messages: MailMessage[] }>;
+  getMailbox(label?: string): Promise<MailboxResponse>;
   getMessage(messageID: string): Promise<MailMessage>;
-  sendMessage(params: { to: string[]; encryptedSubject: string; encryptedBody: string; encryptedSessionKeys: Record<string, string> }): Promise<{ messageID: string }>;
+  sendMessage(params: SendMessageParams): Promise<{ id: string }>;
   deleteMessage(messageID: string): Promise<void>;
+  moveMessage(messageID: string, label: string): Promise<MailMessage>;
+  updateMessage(messageID: string, params: { read?: boolean; starred?: boolean }): Promise<MailMessage>;
+  search(query: string): Promise<{ threads: MailThread[] }>;
+}
+
+export interface SendMessageParams {
+  to: EmailAddress[];
+  cc?: EmailAddress[];
+  bcc?: EmailAddress[];
+  subject: string;
+  bodyHtml: string;
+  replyToMessageId?: string;
+  // E2E encrypted envelope fields (optional — if present, backend stores them alongside plaintext fields)
+  encryptedSubject?: string;
+  encryptedBody?: string;
+  encryptedSessionKeys?: Record<string, string>;
 }
 
 export interface MailMessage {
   id: string;
-  threadID: string;
-  from: string;
-  to: string[];
-  encryptedSubject: string;
-  encryptedBody: string;
-  encryptedSessionKey: string;
-  createdAt: string;
+  threadId: string;
+  from: EmailAddress;
+  to: EmailAddress[];
+  cc: EmailAddress[];
+  bcc: EmailAddress[];
+  subject: string;
+  bodyHtml: string;
+  bodyText: string;
+  attachments: Attachment[];
+  date: string;
   read: boolean;
-  label: string;
+  starred: boolean;
+  labels: string[];
+  encrypted: boolean;
+}
+
+export interface MailThread {
+  id: string;
+  subject: string;
+  messages: MailMessage[];
+  lastMessageDate: string;
+  unreadCount: number;
+  labels: string[];
+  snippet: string;
+  from: EmailAddress;
+  hasAttachments: boolean;
+}
+
+export interface MailboxResponse {
+  threads: MailThread[];
+  total: number;
 }
 
 /** Drive service API types */
@@ -49,9 +101,19 @@ export interface DriveFile {
 
 /** Key server API types */
 export interface KeysApi {
-  getPublicKey(userID: string): Promise<{ publicKey: string; signingPublicKey: string }>;
-  publishKey(params: { publicKey: string; signingPublicKey: string; signature: string }): Promise<void>;
-  lookupKeys(emails: string[]): Promise<Record<string, { publicKey: string; signingPublicKey: string }>>;
+  getPublicKey(userID: string): Promise<PublicKeyBundle>;
+  publishKey(params: { encryptionPublicKey: string; signingPublicKey: string; selfSignature?: string }): Promise<PublicKeyBundle>;
+  lookupKeys(userIDs: string[]): Promise<{ keys: Record<string, PublicKeyBundle> }>;
+}
+
+export interface PublicKeyBundle {
+  id: string;
+  userId: string;
+  encryptionPublicKey: string;
+  signingPublicKey: string;
+  selfSignature: string;
+  isActive: boolean;
+  createdAt: string;
 }
 
 /** Calendar service API types */

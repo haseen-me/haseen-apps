@@ -29,11 +29,10 @@ export interface Message {
   starred: boolean;
   labels: string[];        // system + user label IDs
   encrypted: boolean;
-  encryptionInfo?: {
-    sessionKeyEncrypted: string;
-    senderSigningKey: string;
-    signatureValid: boolean;
-  };
+  // E2E envelope fields
+  encryptedSubject?: string;
+  encryptedBody?: string;
+  encryptedSessionKeys?: Record<string, string>;
 }
 
 /* ——— Thread ——— */

@@ -3,7 +3,6 @@ import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
-import type { EncryptedEnvelope } from '@haseen-me/crypto';
 import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
 import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp } from 'lucide-react';
@@ -58,21 +57,21 @@ export function ComposePanel() {
   const handleSend = async () => {
     setSending(true);
     try {
-      const recipients = to.split(',').map((e) => e.trim()).filter(Boolean);
+      const recipientAddrs = to.split(',').map((e) => ({ address: e.trim() })).filter((a) => a.address);
+      const ccAddrs = cc ? cc.split(',').map((e) => ({ address: e.trim() })).filter((a) => a.address) : [];
+      const bccAddrs = bcc ? bcc.split(',').map((e) => ({ address: e.trim() })).filter((a) => a.address) : [];
 
       if (encrypted && encryptionKeyPair && signingKeyPair) {
         // Look up recipient public keys from keyserver
+        const allEmails = [...recipientAddrs, ...ccAddrs, ...bccAddrs].map((a) => a.address);
         const recipientPubKeys: Uint8Array[] = [encryptionKeyPair.publicKey]; // always encrypt to self
         try {
-          const keyMap = await keysApi.lookupKeys(recipients);
-          for (const email of recipients) {
-            const keys = keyMap[email];
-            if (keys?.publicKey) {
-              const hex = keys.publicKey;
-              const bytes = new Uint8Array(hex.length / 2);
-              for (let i = 0; i < hex.length; i += 2) {
-                bytes[i / 2] = parseInt(hex.substring(i, i + 2), 16);
-              }
+          const result = await keysApi.lookupKeys(allEmails);
+          for (const uid of Object.keys(result.keys)) {
+            const bundle = result.keys[uid];
+            if (bundle?.encryptionPublicKey) {
+              // Backend returns base64-encoded []byte
+              const bytes = Uint8Array.from(atob(bundle.encryptionPublicKey), (c) => c.charCodeAt(0));
               recipientPubKeys.push(bytes);
             }
           }
@@ -100,7 +99,11 @@ export function ComposePanel() {
         }
 
         await mailApi.sendMessage({
-          to: recipients,
+          to: recipientAddrs,
+          cc: ccAddrs,
+          bcc: bccAddrs,
+          subject: subject || '(no subject)',
+          bodyHtml: body || '',
           encryptedSubject: JSON.stringify(subjectEnvelope),
           encryptedBody: JSON.stringify(bodyEnvelope),
           encryptedSessionKeys: sessionKeys,
@@ -108,10 +111,11 @@ export function ComposePanel() {
       } else {
         // Unencrypted fallback
         await mailApi.sendMessage({
-          to: recipients,
-          encryptedSubject: subject,
-          encryptedBody: body,
-          encryptedSessionKeys: {},
+          to: recipientAddrs,
+          cc: ccAddrs,
+          bcc: bccAddrs,
+          subject: subject || '(no subject)',
+          bodyHtml: body || '',
         });
       }
     } catch (err) {

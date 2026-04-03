@@ -14,12 +14,6 @@ import {
 } from '@haseen-me/crypto';
 import { authApi } from '@/api/auth';
 
-function bytesToHex(bytes: Uint8Array): string {
-  return Array.from(bytes)
-    .map((b) => b.toString(16).padStart(2, '0'))
-    .join('');
-}
-
 function toBase64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes));
 }
@@ -78,21 +72,21 @@ export function SignUpPage() {
       // 4. Create self-signature (sign public key with signing key)
       const selfSig = sign(encKP.publicKey, sigKP.secretKey).signature;
 
-      // 5. Register with server
+      // 5. Register with server (Go []byte fields expect base64 in JSON)
       setStatus('Creating account...');
       const response = await authApi.register({
         email: email.toLowerCase(),
         srpSalt,
         srpVerifier,
-        publicKey: bytesToHex(encKP.publicKey),
-        signingKey: bytesToHex(sigKP.publicKey),
-        encryptedPrivateKey: toBase64(encryptedKeys),
+        publicKey: btoa(String.fromCharCode(...encKP.publicKey)),
+        signingKey: btoa(String.fromCharCode(...sigKP.publicKey)),
+        signature: btoa(String.fromCharCode(...selfSig)),
       });
 
       // 6. Store auth state with persistence
       loginSuccess(
         {
-          id: response.user?.id ?? response.token,
+          id: response.user.id,
           email: email.toLowerCase(),
           displayName: name,
           mfaEnabled: false,
@@ -105,7 +99,7 @@ export function SignUpPage() {
         setRecoveryKey(response.recoveryKey);
       }
 
-      // 7. Publish public keys to keyserver
+      // 7. Publish public keys to keyserver (base64 for Go []byte)
       setStatus('Publishing keys...');
       try {
         await fetch('/api/v1/keys/keys/publish', {
@@ -115,9 +109,9 @@ export function SignUpPage() {
             Authorization: `Bearer ${response.token}`,
           },
           body: JSON.stringify({
-            publicKey: bytesToHex(encKP.publicKey),
-            signingPublicKey: bytesToHex(sigKP.publicKey),
-            signature: bytesToHex(selfSig),
+            encryptionPublicKey: btoa(String.fromCharCode(...encKP.publicKey)),
+            signingPublicKey: btoa(String.fromCharCode(...sigKP.publicKey)),
+            selfSignature: btoa(String.fromCharCode(...selfSig)),
           }),
         });
       } catch {

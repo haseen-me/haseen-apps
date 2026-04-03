@@ -23,7 +23,7 @@ export interface RegisterPayload {
   srpSalt: string;
   publicKey: string;
   signingKey: string;
-  encryptedPrivateKey: string;
+  signature?: string;
 }
 
 export interface LoginInitPayload {
@@ -66,6 +66,7 @@ export interface AuthResponse {
     createdAt: string;
   };
   recoveryKey?: string;
+  mfaRequired?: boolean;
 }
 
 export const authApi = {
@@ -76,8 +77,9 @@ export const authApi = {
         email: data.email,
         srpSalt: data.srpSalt,
         srpVerifier: data.srpVerifier,
-        publicKey: Array.from(new TextEncoder().encode(data.publicKey)),
-        signingKey: Array.from(new TextEncoder().encode(data.signingKey)),
+        publicKey: data.publicKey,
+        signingKey: data.signingKey,
+        signature: data.signature ?? '',
       }),
     });
     return {
@@ -96,7 +98,7 @@ export const authApi = {
       body: JSON.stringify(data),
     });
     if (res.mfaRequired) {
-      return { token: '', user: { id: '', email: data.email, displayName: '', mfaEnabled: true, createdAt: '' } };
+      return { token: '', user: { id: '', email: data.email, displayName: '', mfaEnabled: true, createdAt: '' }, mfaRequired: true };
     }
     return {
       token: res.sessionToken,

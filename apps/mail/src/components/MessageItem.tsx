@@ -178,15 +178,15 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                 fontWeight: 500,
               }}
             >
-              {message.encryptionInfo?.signatureValid !== false ? (
+              {message.encrypted ? (
                 <>
                   <ShieldCheck size={13} />
-                  E2E encrypted · Signature verified
+                  E2E encrypted
                 </>
               ) : (
                 <>
                   <ShieldAlert size={13} />
-                  E2E encrypted · Signature invalid
+                  Not encrypted
                 </>
               )}
             </div>

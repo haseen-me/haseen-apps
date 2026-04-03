@@ -76,7 +76,7 @@ export function SignInPage() {
       });
 
       // Check if MFA is required
-      if (result.user?.mfaEnabled && !result.token) {
+      if (result.mfaRequired && !result.token) {
         setMfaRequired(true);
         setStatus('');
         setLoading(false);
@@ -89,16 +89,13 @@ export function SignInPage() {
       if (encryptedKeysBase64) {
         try {
           await decryptPrivateKeys(password, fromBase64(encryptedKeysBase64));
-          // Keys decrypted successfully — they'll be re-derived by crypto stores when needed
         } catch {
-          // Keys can't be decrypted — user might be on a new device, download from server later
           console.warn('[Auth] Could not decrypt local keys');
         }
       }
 
       // Step 6: Verify server proof M2
       if (result.user && result.token) {
-        // Optionally verify M2 — if the server provides srpM2
         loginSuccess(
           {
             id: result.user.id,

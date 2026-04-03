@@ -66,9 +66,9 @@ export const useCryptoStore = create<CryptoState>((set) => ({
     // Publish keys to keyserver (fire-and-forget)
     const selfSig = sign(enc.publicKey, sig.secretKey).signature;
     keysApi.publishKey({
-      publicKey: toHex(enc.publicKey),
-      signingPublicKey: toHex(sig.publicKey),
-      signature: toHex(selfSig),
+      encryptionPublicKey: btoa(String.fromCharCode(...enc.publicKey)),
+      signingPublicKey: btoa(String.fromCharCode(...sig.publicKey)),
+      selfSignature: btoa(String.fromCharCode(...selfSig)),
     }).catch(() => {});
   },
 }));
