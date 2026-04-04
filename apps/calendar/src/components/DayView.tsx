@@ -87,14 +87,10 @@ export function DayView() {
 
       {/* Time grid */}
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr', position: 'relative' }}>
-          {HOURS.map((h) => {
-            const hourEvents = dayEvents.filter((e) => {
-              if (e.allDay) return false;
-              return new Date(e.startTime).getHours() === h;
-            });
-
-            return (
+        <div style={{ position: 'relative' }}>
+          {/* Grid lines + click targets */}
+          <div style={{ display: 'grid', gridTemplateColumns: '60px 1fr' }}>
+            {HOURS.map((h) => (
               <div key={h} style={{ display: 'contents' }}>
                 <div
                   style={{
@@ -119,50 +115,76 @@ export function DayView() {
                   style={{
                     height: 60,
                     borderBottom: '1px solid var(--cal-border-subtle)',
-                    position: 'relative',
                     cursor: 'pointer',
                   }}
-                >
-                  {hourEvents.map((evt) => {
-                    const start = new Date(evt.startTime);
-                    const end = new Date(evt.endTime);
-                    const durationHours = (end.getTime() - start.getTime()) / 3600000;
-                    const topOffset = (start.getMinutes() / 60) * 60;
-                    return (
-                      <div
-                        key={evt.id}
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          openEditEvent(evt);
-                        }}
-                        style={{
-                          position: 'absolute',
-                          top: topOffset,
-                          left: 4,
-                          right: 4,
-                          height: Math.max(durationHours * 60, 24),
-                          background: evt.color + '20',
-                          borderLeft: `3px solid ${evt.color}`,
-                          borderRadius: 4,
-                          padding: '4px 8px',
-                          fontSize: 12,
-                          cursor: 'pointer',
-                          zIndex: 1,
-                        }}
-                      >
-                        <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
-                        {!evt.allDay && (
-                          <div style={{ fontSize: 10, color: 'var(--cal-text-muted)' }}>
-                            {evt.location}
-                          </div>
-                        )}
-                      </div>
-                    );
-                  })}
-                </div>
+                />
               </div>
-            );
-          })}
+            ))}
+          </div>
+
+          {/* Events overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 60,
+              right: 0,
+              height: 24 * 60,
+              pointerEvents: 'none',
+            }}
+          >
+            {dayEvents
+              .filter((e) => !e.allDay)
+              .map((evt) => {
+                const start = new Date(evt.startTime);
+                const end = new Date(evt.endTime);
+                const dayStart = new Date(
+                  currentDate.getFullYear(),
+                  currentDate.getMonth(),
+                  currentDate.getDate(),
+                );
+                const dayEnd = new Date(dayStart);
+                dayEnd.setDate(dayEnd.getDate() + 1);
+                const clampedStart = start < dayStart ? dayStart : start;
+                const clampedEnd = end > dayEnd ? dayEnd : end;
+                const startMins = (clampedStart.getTime() - dayStart.getTime()) / 60000;
+                const durationMins = (clampedEnd.getTime() - clampedStart.getTime()) / 60000;
+                const top = (startMins / 60) * 60;
+                const height = Math.max((durationMins / 60) * 60, 24);
+
+                return (
+                  <div
+                    key={evt.id}
+                    onClick={(e) => {
+                      e.stopPropagation();
+                      openEditEvent(evt);
+                    }}
+                    style={{
+                      position: 'absolute',
+                      top,
+                      left: 4,
+                      right: 4,
+                      height,
+                      background: evt.color + '20',
+                      borderLeft: `3px solid ${evt.color}`,
+                      borderRadius: 4,
+                      padding: '4px 8px',
+                      fontSize: 12,
+                      cursor: 'pointer',
+                      pointerEvents: 'auto',
+                      zIndex: 1,
+                    }}
+                  >
+                    <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
+                    {evt.location && (
+                      <div style={{ fontSize: 10, color: 'var(--cal-text-muted)' }}>
+                        {evt.location}
+                      </div>
+                    )}
+                  </div>
+                );
+              })}
+          </div>
         </div>
       </div>
     </div>

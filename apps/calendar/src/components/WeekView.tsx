@@ -100,38 +100,31 @@ export function WeekView() {
 
       {/* Time grid */}
       <div style={{ flex: 1, overflow: 'auto' }}>
-        <div
-          style={{
-            display: 'grid',
-            gridTemplateColumns: '60px repeat(7, 1fr)',
-            position: 'relative',
-          }}
-        >
-          {/* Time labels + rows */}
-          {HOURS.map((h) => (
-            <div key={h} style={{ display: 'contents' }}>
-              <div
-                style={{
-                  padding: '0 8px',
-                  height: 48,
-                  display: 'flex',
-                  alignItems: 'flex-start',
-                  justifyContent: 'flex-end',
-                  fontSize: 10,
-                  color: 'var(--cal-text-muted)',
-                  transform: 'translateY(-6px)',
-                }}
-              >
-                {h > 0 ? formatHour(h) : ''}
-              </div>
-              {weekDates.map((date, di) => {
-                const dayEvts = eventsForDay(events, date, visibleCalendarIds);
-                const hourEvents = dayEvts.filter((e) => {
-                  const eh = new Date(e.startTime).getHours();
-                  return eh === h;
-                });
-
-                return (
+        <div style={{ position: 'relative' }}>
+          {/* Grid lines + click targets */}
+          <div
+            style={{
+              display: 'grid',
+              gridTemplateColumns: '60px repeat(7, 1fr)',
+            }}
+          >
+            {HOURS.map((h) => (
+              <div key={h} style={{ display: 'contents' }}>
+                <div
+                  style={{
+                    padding: '0 8px',
+                    height: 48,
+                    display: 'flex',
+                    alignItems: 'flex-start',
+                    justifyContent: 'flex-end',
+                    fontSize: 10,
+                    color: 'var(--cal-text-muted)',
+                    transform: 'translateY(-6px)',
+                  }}
+                >
+                  {h > 0 ? formatHour(h) : ''}
+                </div>
+                {weekDates.map((date, di) => (
                   <div
                     key={di}
                     onClick={() => {
@@ -143,48 +136,79 @@ export function WeekView() {
                       height: 48,
                       borderBottom: '1px solid var(--cal-border-subtle)',
                       borderRight: di < 6 ? '1px solid var(--cal-border-subtle)' : undefined,
-                      position: 'relative',
                       cursor: 'pointer',
                     }}
-                  >
-                    {hourEvents.map((evt) => {
-                      const start = new Date(evt.startTime);
-                      const end = new Date(evt.endTime);
-                      const durationHours = (end.getTime() - start.getTime()) / 3600000;
-                      const topOffset = (start.getMinutes() / 60) * 48;
-                      return (
-                        <div
-                          key={evt.id}
-                          onClick={(e) => {
-                            e.stopPropagation();
-                            openEditEvent(evt);
-                          }}
-                          style={{
-                            position: 'absolute',
-                            top: topOffset,
-                            left: 2,
-                            right: 2,
-                            height: Math.max(durationHours * 48, 20),
-                            background: evt.color + '20',
-                            borderLeft: `3px solid ${evt.color}`,
-                            borderRadius: 4,
-                            padding: '2px 4px',
-                            fontSize: 11,
-                            lineHeight: '14px',
-                            overflow: 'hidden',
-                            cursor: 'pointer',
-                            zIndex: 1,
-                          }}
-                        >
-                          <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
-                        </div>
-                      );
-                    })}
-                  </div>
-                );
-              })}
-            </div>
-          ))}
+                  />
+                ))}
+              </div>
+            ))}
+          </div>
+
+          {/* Events overlay */}
+          <div
+            style={{
+              position: 'absolute',
+              top: 0,
+              left: 60,
+              right: 0,
+              height: 24 * 48,
+              pointerEvents: 'none',
+              display: 'grid',
+              gridTemplateColumns: 'repeat(7, 1fr)',
+            }}
+          >
+            {weekDates.map((date, di) => {
+              const dayEvts = eventsForDay(events, date, visibleCalendarIds).filter(
+                (e) => !e.allDay,
+              );
+              return (
+                <div key={di} style={{ position: 'relative' }}>
+                  {dayEvts.map((evt) => {
+                    const start = new Date(evt.startTime);
+                    const end = new Date(evt.endTime);
+                    const dayStart = new Date(date.getFullYear(), date.getMonth(), date.getDate());
+                    const dayEnd = new Date(dayStart);
+                    dayEnd.setDate(dayEnd.getDate() + 1);
+                    const clampedStart = start < dayStart ? dayStart : start;
+                    const clampedEnd = end > dayEnd ? dayEnd : end;
+                    const startMins = (clampedStart.getTime() - dayStart.getTime()) / 60000;
+                    const durationMins = (clampedEnd.getTime() - clampedStart.getTime()) / 60000;
+                    const top = (startMins / 60) * 48;
+                    const height = Math.max((durationMins / 60) * 48, 20);
+
+                    return (
+                      <div
+                        key={evt.id}
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          openEditEvent(evt);
+                        }}
+                        style={{
+                          position: 'absolute',
+                          top,
+                          left: 2,
+                          right: 2,
+                          height,
+                          background: evt.color + '20',
+                          borderLeft: `3px solid ${evt.color}`,
+                          borderRadius: 4,
+                          padding: '2px 4px',
+                          fontSize: 11,
+                          lineHeight: '14px',
+                          overflow: 'hidden',
+                          cursor: 'pointer',
+                          pointerEvents: 'auto',
+                          zIndex: 1,
+                        }}
+                      >
+                        <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+              );
+            })}
+          </div>
         </div>
       </div>
     </div>

@@ -42,6 +42,14 @@ interface DriveState {
   // New folder
   newFolderOpen: boolean;
   setNewFolderOpen: (v: boolean) => void;
+
+  // File preview
+  previewFileId: string | null;
+  setPreviewFileId: (id: string | null) => void;
+
+  // Share dialog
+  shareDialogFileId: string | null;
+  setShareDialogFileId: (id: string | null) => void;
 }
 
 export const useDriveStore = create<DriveState>((set, get) => ({
@@ -85,4 +93,10 @@ export const useDriveStore = create<DriveState>((set, get) => ({
 
   newFolderOpen: false,
   setNewFolderOpen: (newFolderOpen) => set({ newFolderOpen }),
+
+  previewFileId: null,
+  setPreviewFileId: (previewFileId) => set({ previewFileId }),
+
+  shareDialogFileId: null,
+  setShareDialogFileId: (shareDialogFileId) => set({ shareDialogFileId }),
 }));

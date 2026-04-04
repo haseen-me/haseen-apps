@@ -19,15 +19,15 @@ import (
 )
 
 type Session struct {
-	conn       net.Conn
-	server     *Server
-	log        zerolog.Logger
-	reader     *bufio.Reader
-	writer     *bufio.Writer
-	helo       string
-	mailFrom   string
-	rcptTo     []string
-	tls        bool
+	conn     net.Conn
+	server   *Server
+	log      zerolog.Logger
+	reader   *bufio.Reader
+	writer   *bufio.Writer
+	helo     string
+	mailFrom string
+	rcptTo   []string
+	tls      bool
 }
 
 func (s *Session) serve() {

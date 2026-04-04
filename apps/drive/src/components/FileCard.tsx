@@ -48,12 +48,13 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 }
 
 export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean }) {
-  const { selectedIds, toggleSelected } = useDriveStore();
+  const { selectedIds, toggleSelected, setPreviewFileId } = useDriveStore();
   const selected = selectedIds.has(file.id);
 
   return (
     <div
       onClick={() => toggleSelected(file.id)}
+      onDoubleClick={() => setPreviewFileId(file.id)}
       style={{
         padding: 16,
         borderRadius: 'var(--drive-radius)',
@@ -120,7 +121,7 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
 }
 
 export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean }) {
-  const { selectedIds, toggleSelected } = useDriveStore();
+  const { selectedIds, toggleSelected, setPreviewFileId } = useDriveStore();
   const selected = selectedIds.has(file.id);
 
   const date = new Date(file.updatedAt);
@@ -129,6 +130,7 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
   return (
     <div
       onClick={() => toggleSelected(file.id)}
+      onDoubleClick={() => setPreviewFileId(file.id)}
       style={{
         display: 'flex',
         alignItems: 'center',

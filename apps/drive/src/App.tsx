@@ -6,6 +6,8 @@ import { DriveHeader } from '@/components/DriveHeader';
 import { DriveContent } from '@/components/DriveContent';
 import { UploadDialog } from '@/components/UploadDialog';
 import { NewFolderDialog } from '@/components/NewFolderDialog';
+import { FilePreviewPanel } from '@/components/FilePreviewPanel';
+import { ShareDialog } from '@/components/ShareDialog';
 import { SearchOverlay } from '@/components/SearchOverlay';
 import { useDriveStore } from '@/store/drive';
 import { useCryptoStore } from '@/store/crypto';
@@ -144,6 +146,8 @@ export default function App() {
       <DriveContent />
       <UploadDialog />
       <NewFolderDialog />
+      <FilePreviewPanel />
+      <ShareDialog />
       <SearchOverlay />
       <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
     </DriveLayout>

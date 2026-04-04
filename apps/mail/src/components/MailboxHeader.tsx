@@ -2,12 +2,15 @@ import {
   Archive,
   Check,
   CheckSquare,
+  MailOpen,
   MoreHorizontal,
   RefreshCw,
   Square,
   Star,
+  Tag,
   Trash2,
 } from 'lucide-react';
+import { useState, useRef, useEffect } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useToastStore } from '@/store/toast';
 import { mailApi } from '@/api/client';
@@ -23,8 +26,11 @@ export function MailboxHeader() {
     loading,
     setLoading,
     setThreads,
+    userLabels,
   } = useMailStore();
   const toast = useToastStore();
+  const [labelMenuOpen, setLabelMenuOpen] = useState(false);
+  const labelRef = useRef<HTMLDivElement>(null);
 
   const labelName =
     SYSTEM_LABELS.find((l) => l.id === activeLabel)?.name ?? activeLabel;
@@ -82,6 +88,53 @@ export function MailboxHeader() {
       toast.show('Failed to move to trash');
     }
   };
+
+  const handleBulkMarkRead = async () => {
+    try {
+      const updates = selectedThreads.flatMap((t) =>
+        t.messages.map((m) => mailApi.updateMessage(m.id, { read: true })),
+      );
+      await Promise.all(updates);
+      setThreads(
+        threads.map((t) =>
+          selectedIds.has(t.id)
+            ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) }
+            : t,
+        ),
+      );
+      clearSelection();
+      toast.show(`${selectedIds.size} marked as read`);
+    } catch {
+      toast.show('Failed to mark as read');
+    }
+  };
+
+  const handleBulkApplyLabel = async (labelId: string) => {
+    setLabelMenuOpen(false);
+    try {
+      const moves = selectedThreads.flatMap((t) =>
+        t.messages.map((m) => mailApi.moveMessage(m.id, labelId)),
+      );
+      await Promise.all(moves);
+      clearSelection();
+      const labelName = userLabels.find((l) => l.id === labelId)?.name ?? labelId;
+      toast.show(`Moved ${selectedIds.size} to ${labelName}`);
+    } catch {
+      toast.show('Failed to apply label');
+    }
+  };
+
+  // Close label menu on outside click
+  useEffect(() => {
+    if (!labelMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (labelRef.current && !labelRef.current.contains(e.target as Node)) {
+        setLabelMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [labelMenuOpen]);
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -152,6 +205,62 @@ export function MailboxHeader() {
           <HeaderButton icon={<Archive size={16} />} label="Archive" onClick={handleBulkArchive} />
           <HeaderButton icon={<Star size={16} />} label="Star" onClick={handleBulkStar} />
           <HeaderButton icon={<Trash2 size={16} />} label="Delete" onClick={handleBulkTrash} />
+          <HeaderButton icon={<MailOpen size={16} />} label="Mark read" onClick={handleBulkMarkRead} />
+          {userLabels.length > 0 && (
+            <div ref={labelRef} style={{ position: 'relative' }}>
+              <HeaderButton icon={<Tag size={16} />} label="Move to label" onClick={() => setLabelMenuOpen(!labelMenuOpen)} />
+              {labelMenuOpen && (
+                <div
+                  style={{
+                    position: 'absolute',
+                    top: '100%',
+                    right: 0,
+                    marginTop: 4,
+                    background: 'var(--mail-bg)',
+                    border: '1px solid var(--mail-border)',
+                    borderRadius: 'var(--mail-radius)',
+                    boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                    zIndex: 100,
+                    minWidth: 160,
+                    overflow: 'hidden',
+                  }}
+                >
+                  {userLabels.map((label) => (
+                    <button
+                      key={label.id}
+                      onClick={() => handleBulkApplyLabel(label.id)}
+                      style={{
+                        display: 'flex',
+                        alignItems: 'center',
+                        gap: 8,
+                        width: '100%',
+                        padding: '8px 12px',
+                        background: 'none',
+                        border: 'none',
+                        color: 'var(--mail-text)',
+                        fontSize: 13,
+                        cursor: 'pointer',
+                        textAlign: 'left',
+                      }}
+                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
+                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+                    >
+                      <span
+                        style={{
+                          width: 10,
+                          height: 10,
+                          borderRadius: '50%',
+                          background: label.color,
+                          flexShrink: 0,
+                        }}
+                      />
+                      {label.name}
+                    </button>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
         </div>
       )}
 

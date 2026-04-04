@@ -20,8 +20,8 @@ type mockStore struct {
 	sessions   map[string]*model.Session
 	mfaEnabled map[string]bool
 
-	createUserFn  func(ctx context.Context, email, srpSalt, srpVerifier string) (*model.User, error)
-	createSessFn  func(ctx context.Context, userID, ua, ip string) (string, error)
+	createUserFn   func(ctx context.Context, email, srpSalt, srpVerifier string) (*model.User, error)
+	createSessFn   func(ctx context.Context, userID, ua, ip string) (string, error)
 	getUserByEmail func(ctx context.Context, email string) (*model.User, error)
 	getUserByID    func(ctx context.Context, id string) (*model.User, error)
 	isMFAEnabled   func(ctx context.Context, userID string) (bool, error)

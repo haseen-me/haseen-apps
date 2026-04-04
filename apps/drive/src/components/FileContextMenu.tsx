@@ -24,7 +24,7 @@ export function FileContextMenu({ file, isTrash }: Props) {
   const [newName, setNewName] = useState(file.name);
   const menuRef = useRef<HTMLDivElement>(null);
   const toast = useToastStore();
-  const { files, setFiles } = useDriveStore();
+  const { files, setFiles, setShareDialogFileId } = useDriveStore();
 
   // Close on click outside
   useEffect(() => {
@@ -101,16 +101,9 @@ export function FileContextMenu({ file, isTrash }: Props) {
     }
   };
 
-  const handleShare = async () => {
+  const handleShare = () => {
     setOpen(false);
-    const email = window.prompt('Share with (email):');
-    if (!email) return;
-    try {
-      await driveApi.shareFile(file.id, { email, permission: 'read' });
-      toast.show(`Shared with ${email}`);
-    } catch {
-      toast.show('Share failed');
-    }
+    setShareDialogFileId(file.id);
   };
 
   if (renaming) {

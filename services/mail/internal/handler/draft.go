@@ -133,10 +133,10 @@ func (h *Handler) SendDraft(w http.ResponseWriter, r *http.Request) {
 	senderEmail, _ := h.Store.GetUserEmail(ctx, userID)
 	fromAddr := model.EmailAddress{Address: senderEmail}
 	req := model.SendMessageRequest{
-		To:      msg.To,
-		Cc:      msg.Cc,
-		Bcc:     msg.Bcc,
-		Subject: msg.Subject,
+		To:       msg.To,
+		Cc:       msg.Cc,
+		Bcc:      msg.Bcc,
+		Subject:  msg.Subject,
 		BodyHtml: msg.BodyHtml,
 	}
 	go h.deliverToRecipients(req, fromAddr, senderEmail)

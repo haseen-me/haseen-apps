@@ -188,59 +188,59 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (string, error
 }
 
 func (s *Store) ListTrash(ctx context.Context, ownerID string) ([]model.File, error) {
-rows, err := s.DB.Query(ctx,
-`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at, deleted_at
+	rows, err := s.DB.Query(ctx,
+		`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at, deleted_at
  FROM drive_files WHERE owner_id = $1 AND deleted_at IS NOT NULL
  ORDER BY deleted_at DESC LIMIT 200`,
-ownerID,
-)
-if err != nil {
-return nil, err
-}
-defer rows.Close()
+		ownerID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-var files []model.File
-for rows.Next() {
-var f model.File
-if err := rows.Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt, &f.DeletedAt); err != nil {
-return nil, err
-}
-files = append(files, f)
-}
-if files == nil {
-files = []model.File{}
-}
-return files, rows.Err()
+	var files []model.File
+	for rows.Next() {
+		var f model.File
+		if err := rows.Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt, &f.DeletedAt); err != nil {
+			return nil, err
+		}
+		files = append(files, f)
+	}
+	if files == nil {
+		files = []model.File{}
+	}
+	return files, rows.Err()
 }
 
 func (s *Store) RestoreFile(ctx context.Context, ownerID, fileID string) (*model.File, error) {
-f := &model.File{}
-err := s.DB.QueryRow(ctx,
-`UPDATE drive_files SET deleted_at = NULL, updated_at = NOW()
+	f := &model.File{}
+	err := s.DB.QueryRow(ctx,
+		`UPDATE drive_files SET deleted_at = NULL, updated_at = NOW()
  WHERE id = $1 AND owner_id = $2 AND deleted_at IS NOT NULL
  RETURNING id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at`,
-fileID, ownerID,
-).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
-return f, err
+		fileID, ownerID,
+	).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
+	return f, err
 }
 
 func (s *Store) EmptyTrash(ctx context.Context, ownerID string) ([]string, error) {
-rows, err := s.DB.Query(ctx,
-`DELETE FROM drive_files WHERE owner_id = $1 AND deleted_at IS NOT NULL RETURNING blob_path`,
-ownerID,
-)
-if err != nil {
-return nil, err
-}
-defer rows.Close()
+	rows, err := s.DB.Query(ctx,
+		`DELETE FROM drive_files WHERE owner_id = $1 AND deleted_at IS NOT NULL RETURNING blob_path`,
+		ownerID,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
 
-var paths []string
-for rows.Next() {
-var p string
-if err := rows.Scan(&p); err != nil {
-return nil, err
-}
-paths = append(paths, p)
-}
-return paths, rows.Err()
+	var paths []string
+	for rows.Next() {
+		var p string
+		if err := rows.Scan(&p); err != nil {
+			return nil, err
+		}
+		paths = append(paths, p)
+	}
+	return paths, rows.Err()
 }

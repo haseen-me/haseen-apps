@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useDecrypt } from '@/hooks/useDecrypt';
 import { useToastStore } from '@/store/toast';
@@ -15,13 +15,15 @@ import {
   Mail,
   MailOpen,
   Star,
+  Tag,
 } from 'lucide-react';
 
 export function ThreadView() {
-  const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId, setForwardFromThreadId, setThreads } =
+  const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId, setForwardFromThreadId, setThreads, userLabels } =
     useMailStore();
   const toast = useToastStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const menuRef = useRef<HTMLDivElement>(null);
 
   const thread = threads.find((t) => t.id === activeThreadId);
   const decryptedSubject = useDecrypt(thread?.subject ?? '');
@@ -117,6 +119,31 @@ export function ThreadView() {
 
   const allRead = thread.messages.every((m) => m.read);
 
+  const handleMoveToLabel = async (labelId: string) => {
+    setMenuOpen(false);
+    try {
+      await Promise.all(thread.messages.map((m) => mailApi.moveMessage(m.id, labelId)));
+      setThreads(threads.filter((t) => t.id !== thread.id));
+      setActiveThreadId(null);
+      const labelName = userLabels.find((l) => l.id === labelId)?.name ?? labelId;
+      toast.show(`Moved to ${labelName}`);
+    } catch {
+      toast.show('Failed to move');
+    }
+  };
+
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
       {/* Thread header */}
@@ -169,7 +196,7 @@ export function ThreadView() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0, position: 'relative' }}>
+        <div ref={menuRef} style={{ display: 'flex', gap: 2, flexShrink: 0, position: 'relative' }}>
           <ActionButton icon={<Archive size={16} />} label="Archive" onClick={handleArchive} />
           <ActionButton icon={<Trash2 size={16} />} label="Delete" onClick={handleTrash} />
           <ActionButton
@@ -209,6 +236,22 @@ export function ThreadView() {
                   handleToggleStar();
                 }}
               />
+              {userLabels.length > 0 && (
+                <>
+                  <div style={{ height: 1, background: 'var(--mail-border)', margin: '4px 0' }} />
+                  <div style={{ padding: '4px 12px', fontSize: 11, color: 'var(--mail-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+                    Move to label
+                  </div>
+                  {userLabels.map((label) => (
+                    <MenuButton
+                      key={label.id}
+                      icon={<span style={{ width: 12, height: 12, borderRadius: '50%', background: label.color, display: 'inline-block' }} />}
+                      label={label.name}
+                      onClick={() => handleMoveToLabel(label.id)}
+                    />
+                  ))}
+                </>
+              )}
             </div>
           )}
         </div>
