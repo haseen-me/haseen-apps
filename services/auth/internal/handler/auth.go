@@ -5,6 +5,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/go-chi/chi/v5"
 	"github.com/haseen-me/haseen-apps/services/auth/internal/model"
 	"github.com/haseen-me/haseen-apps/services/auth/internal/srp"
 	"github.com/haseen-me/haseen-apps/services/auth/internal/store"
@@ -263,6 +264,46 @@ func (h *Handler) SessionDelete(w http.ResponseWriter, r *http.Request) {
 	}
 	if err := h.Store.DeleteUserSessions(r.Context(), userID); err != nil {
 		h.Log.Error().Err(err).Msg("failed to delete sessions")
+		h.Error(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	h.JSON(w, http.StatusOK, model.OkResponse{OK: true})
+}
+
+// ListSessions handles GET /v1/sessions — returns active sessions for the user.
+func (h *Handler) ListSessions(w http.ResponseWriter, r *http.Request) {
+	userID := h.UserID(r)
+	if userID == "" {
+		h.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	sessions, err := h.Store.ListUserSessions(r.Context(), userID)
+	if err != nil {
+		h.Log.Error().Err(err).Msg("failed to list sessions")
+		h.Error(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+	h.JSON(w, http.StatusOK, sessions)
+}
+
+// RevokeSession handles DELETE /v1/sessions/{sessionID} — revokes a specific session.
+func (h *Handler) RevokeSession(w http.ResponseWriter, r *http.Request) {
+	userID := h.UserID(r)
+	if userID == "" {
+		h.Error(w, http.StatusUnauthorized, "unauthorized")
+		return
+	}
+	sessionID := chi.URLParam(r, "sessionID")
+	if sessionID == "" {
+		h.Error(w, http.StatusBadRequest, "missing session ID")
+		return
+	}
+	if err := h.Store.RevokeSession(r.Context(), sessionID, userID); err != nil {
+		if err == store.ErrNotFound {
+			h.Error(w, http.StatusNotFound, "session not found")
+			return
+		}
+		h.Log.Error().Err(err).Msg("failed to revoke session")
 		h.Error(w, http.StatusInternalServerError, "internal error")
 		return
 	}

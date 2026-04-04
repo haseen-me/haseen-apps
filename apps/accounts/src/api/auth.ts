@@ -131,7 +131,7 @@ export const authApi = {
     }),
 
   setupMfa: (token: string) =>
-    request<{ secret: string; qrUri: string }>('/mfa/setup', {
+    request<{ secret: string; qrCode: string; otpAuthUrl: string }>('/mfa/setup', {
       method: 'POST',
       headers: { Authorization: `Bearer ${token}` },
     }),
@@ -152,6 +152,17 @@ export const authApi = {
   generateRecoveryKey: (token: string) =>
     request<{ recoveryKey: string }>('/account/recovery-key', {
       method: 'POST',
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  listSessions: (token: string) =>
+    request<Array<{ id: string; userAgent: string; ipAddress: string; expiresAt: string; createdAt: string }>>('/sessions', {
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  revokeSession: (token: string, sessionID: string) =>
+    request<{ ok: boolean }>(`/sessions/${sessionID}`, {
+      method: 'DELETE',
       headers: { Authorization: `Bearer ${token}` },
     }),
 };

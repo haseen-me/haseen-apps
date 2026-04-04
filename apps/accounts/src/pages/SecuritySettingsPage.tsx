@@ -1,5 +1,5 @@
-import { useState } from 'react';
-import { Shield, Smartphone, Key, AlertTriangle, Check, Trash2 } from 'lucide-react';
+import { useState, useEffect } from 'react';
+import { Shield, Smartphone, Key, AlertTriangle, Check, Trash2, Monitor, X } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
 import { Button, FormField, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
@@ -11,6 +11,7 @@ export function SecuritySettingsPage() {
   const [mfaStep, setMfaStep] = useState<'idle' | 'setup' | 'verify'>('idle');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaSecret, setMfaSecret] = useState('');
+  const [mfaOtpAuthUrl, setMfaOtpAuthUrl] = useState('');
   const [mfaLoading, setMfaLoading] = useState(false);
   const [mfaError, setMfaError] = useState<string | null>(null);
   const [showPasswordChange, setShowPasswordChange] = useState(false);
@@ -20,14 +21,18 @@ export function SecuritySettingsPage() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
+  const [sessions, setSessions] = useState<Array<{ id: string; userAgent: string; ipAddress: string; createdAt: string }>>([]);
+  const [sessionsLoading, setSessionsLoading] = useState(false);
+  const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const handleEnableMfa = async () => {
     if (!token) return;
     setMfaLoading(true);
     setMfaError(null);
     try {
-      const { secret } = await authApi.setupMfa(token);
+      const { secret, otpAuthUrl } = await authApi.setupMfa(token);
       setMfaSecret(secret);
+      setMfaOtpAuthUrl(otpAuthUrl);
       setMfaStep('setup');
     } catch (err) {
       setMfaError(err instanceof Error ? err.message : 'Failed to setup MFA');
@@ -86,6 +91,36 @@ export function SecuritySettingsPage() {
       setPwLoading(false);
     }
   };
+
+  const loadSessions = async () => {
+    if (!token) return;
+    setSessionsLoading(true);
+    try {
+      const data = await authApi.listSessions(token);
+      setSessions(data);
+    } catch {
+      // silently fail — sessions will show empty
+    } finally {
+      setSessionsLoading(false);
+    }
+  };
+
+  const handleRevokeSession = async (sessionID: string) => {
+    if (!token) return;
+    setRevokingId(sessionID);
+    try {
+      await authApi.revokeSession(token, sessionID);
+      setSessions((prev) => prev.filter((s) => s.id !== sessionID));
+    } catch {
+      // ignore
+    } finally {
+      setRevokingId(null);
+    }
+  };
+
+  useEffect(() => {
+    loadSessions();
+  }, [token]);
 
   return (
     <SettingsLayout activeTab="/settings/security">
@@ -206,23 +241,37 @@ export function SecuritySettingsPage() {
             <Alert type="info">
               Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
             </Alert>
-            <div
-              style={{
-                width: 200,
-                height: 200,
-                background: 'var(--acc-bg)',
-                border: '1px solid var(--acc-border)',
-                borderRadius: 'var(--acc-radius-sm)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                margin: '16px 0',
-                fontSize: 12,
-                color: 'var(--acc-text-muted)',
-              }}
-            >
-              QR code placeholder
-            </div>
+            {mfaOtpAuthUrl ? (
+              <img
+                src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mfaOtpAuthUrl)}`}
+                alt="MFA QR Code"
+                width={200}
+                height={200}
+                style={{
+                  border: '1px solid var(--acc-border)',
+                  borderRadius: 'var(--acc-radius-sm)',
+                  margin: '16px 0',
+                }}
+              />
+            ) : (
+              <div
+                style={{
+                  width: 200,
+                  height: 200,
+                  background: 'var(--acc-bg)',
+                  border: '1px solid var(--acc-border)',
+                  borderRadius: 'var(--acc-radius-sm)',
+                  display: 'flex',
+                  alignItems: 'center',
+                  justifyContent: 'center',
+                  margin: '16px 0',
+                  fontSize: 12,
+                  color: 'var(--acc-text-muted)',
+                }}
+              >
+                Loading QR code...
+              </div>
+            )}
             <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', marginBottom: 12 }}>
               Manual entry key: <code style={{ background: 'var(--acc-bg)', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' }}>{mfaSecret || 'Loading...'}</code>
             </p>
@@ -274,39 +323,57 @@ export function SecuritySettingsPage() {
           <h3 style={{ fontSize: 16, fontWeight: 600 }}>Active Sessions</h3>
         </div>
         <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
-          You are currently signed in on this device.
+          Manage your active sessions across devices.
         </p>
-        <div
-          style={{
-            padding: '12px 16px',
-            borderRadius: 'var(--acc-radius-sm)',
-            background: 'var(--acc-bg)',
-            border: '1px solid var(--acc-border)',
-            display: 'flex',
-            justifyContent: 'space-between',
-            alignItems: 'center',
-            fontSize: 13,
-          }}
-        >
-          <div>
-            <strong>Current session</strong>
-            <p style={{ color: 'var(--acc-text-muted)', fontSize: 12, marginTop: 2 }}>
-              Web browser · Active now
-            </p>
+        {sessionsLoading ? (
+          <p style={{ fontSize: 13, color: 'var(--acc-text-muted)' }}>Loading sessions...</p>
+        ) : sessions.length === 0 ? (
+          <p style={{ fontSize: 13, color: 'var(--acc-text-muted)' }}>No active sessions found.</p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {sessions.map((session) => (
+              <div
+                key={session.id}
+                style={{
+                  padding: '12px 16px',
+                  borderRadius: 'var(--acc-radius-sm)',
+                  background: 'var(--acc-bg)',
+                  border: '1px solid var(--acc-border)',
+                  display: 'flex',
+                  justifyContent: 'space-between',
+                  alignItems: 'center',
+                  fontSize: 13,
+                }}
+              >
+                <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                  <Monitor size={16} style={{ color: 'var(--acc-text-muted)' }} />
+                  <div>
+                    <strong>{session.userAgent || 'Unknown device'}</strong>
+                    <p style={{ color: 'var(--acc-text-muted)', fontSize: 12, marginTop: 2 }}>
+                      {session.ipAddress || 'Unknown IP'} · Created {new Date(session.createdAt).toLocaleDateString()}
+                    </p>
+                  </div>
+                </div>
+                <button
+                  onClick={() => handleRevokeSession(session.id)}
+                  disabled={revokingId === session.id}
+                  title="Revoke session"
+                  style={{
+                    background: 'none',
+                    border: 'none',
+                    cursor: 'pointer',
+                    color: 'var(--acc-danger, #dc3545)',
+                    padding: 4,
+                    borderRadius: 4,
+                    opacity: revokingId === session.id ? 0.5 : 1,
+                  }}
+                >
+                  <X size={16} />
+                </button>
+              </div>
+            ))}
           </div>
-          <span
-            style={{
-              fontSize: 11,
-              color: 'var(--acc-success)',
-              fontWeight: 600,
-              background: 'rgba(48,164,108,0.08)',
-              padding: '3px 8px',
-              borderRadius: 8,
-            }}
-          >
-            Current
-          </span>
-        </div>
+        )}
       </div>
     </SettingsLayout>
   );

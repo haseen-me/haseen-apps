@@ -18,7 +18,7 @@ import { Toast } from '@haseen-me/ui';
 
 export default function App() {
   const [authed, setAuthed] = useState(false);
-  const { viewMode, setCalendars, setEvents, setLoading } = useCalendarStore();
+  const { viewMode, setCalendars, setEvents, setLoading, setViewMode, openNewEvent, goToday, goPrev, goNext } = useCalendarStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const encryptionKeyPair = useCryptoStore((s) => s.encryptionKeyPair);
@@ -111,6 +111,51 @@ export default function App() {
   }, [setCalendars, setEvents, setLoading]);
 
   const ViewComponent = viewMode === 'month' ? MonthView : viewMode === 'week' ? WeekView : DayView;
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+      switch (e.key) {
+        case 'n':
+          e.preventDefault();
+          openNewEvent(new Date());
+          break;
+        case 't':
+          e.preventDefault();
+          goToday();
+          break;
+        case 'm':
+          e.preventDefault();
+          setViewMode('month');
+          break;
+        case 'w':
+          e.preventDefault();
+          setViewMode('week');
+          break;
+        case 'd':
+          e.preventDefault();
+          setViewMode('day');
+          break;
+        case 'ArrowLeft':
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            goPrev();
+          }
+          break;
+        case 'ArrowRight':
+          if (!e.ctrlKey && !e.metaKey) {
+            e.preventDefault();
+            goNext();
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [openNewEvent, goToday, setViewMode, goPrev, goNext]);
 
   if (!authed) return null;
 

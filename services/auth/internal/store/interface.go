@@ -21,6 +21,8 @@ type DataStore interface {
 	DeleteSession(ctx context.Context, token string) error
 	DeleteUserSessions(ctx context.Context, userID string) error
 	RefreshSession(ctx context.Context, token string) error
+	ListUserSessions(ctx context.Context, userID string) ([]model.Session, error)
+	RevokeSession(ctx context.Context, sessionID, userID string) error
 
 	GetMFASecret(ctx context.Context, userID string) (string, bool, error)
 	UpsertMFASecret(ctx context.Context, userID, secret string) error

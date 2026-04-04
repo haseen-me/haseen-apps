@@ -345,6 +345,12 @@ export function ComposePanel() {
         contentEditable
         suppressContentEditableWarning
         onInput={(e) => setBody(e.currentTarget.innerHTML)}
+        onKeyDown={(e) => {
+          if ((e.ctrlKey || e.metaKey) && e.key === 'Enter') {
+            e.preventDefault();
+            if (!sending && to.length > 0) handleSend();
+          }
+        }}
         style={{
           flex: 1,
           minHeight: 200,

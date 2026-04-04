@@ -79,6 +79,8 @@ func main() {
 			r.Use(authMW)
 
 			r.Delete("/session", h.SessionDelete)
+			r.Get("/sessions", h.ListSessions)
+			r.Delete("/sessions/{sessionID}", h.RevokeSession)
 			r.Post("/keys/upload", h.UploadKeys)
 
 			// MFA management

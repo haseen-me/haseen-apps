@@ -1,10 +1,13 @@
+import { useState } from 'react';
 import { Calendar as CalIcon, Eye, EyeOff, Plus } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
 import { MiniCalendar } from '@/components/MiniCalendar';
+import { AddCalendarDialog } from '@/components/AddCalendarDialog';
 
 export function Sidebar() {
   const { calendars, visibleCalendarIds, toggleCalendarVisibility, openNewEvent } =
     useCalendarStore();
+  const [showAddCalendar, setShowAddCalendar] = useState(false);
 
   return (
     <aside
@@ -70,9 +73,28 @@ export function Sidebar() {
             letterSpacing: '0.05em',
             color: 'var(--cal-text-muted)',
             marginBottom: 8,
+            display: 'flex',
+            justifyContent: 'space-between',
+            alignItems: 'center',
           }}
         >
           My calendars
+          <button
+            onClick={() => setShowAddCalendar(true)}
+            title="Add calendar"
+            style={{
+              background: 'none',
+              border: 'none',
+              cursor: 'pointer',
+              color: 'var(--cal-text-muted)',
+              padding: 2,
+              borderRadius: 4,
+              display: 'flex',
+              alignItems: 'center',
+            }}
+          >
+            <Plus size={14} />
+          </button>
         </div>
         {calendars.map((cal) => {
           const visible = visibleCalendarIds.has(cal.id);
@@ -112,6 +134,7 @@ export function Sidebar() {
           );
         })}
       </div>
+      <AddCalendarDialog open={showAddCalendar} onClose={() => setShowAddCalendar(false)} />
     </aside>
   );
 }

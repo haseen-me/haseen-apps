@@ -15,7 +15,7 @@ import { Toast } from '@haseen-me/ui';
 
 export function App() {
   const [authed, setAuthed] = useState(false);
-  const { activeLabel, activeThreadId, threads, setThreads, setLoading, setUserLabels } = useMailStore();
+  const { activeLabel, activeThreadId, threads, setThreads, setLoading, setUserLabels, setComposeOpen, setActiveThreadId, setReplyToThreadId, setForwardFromThreadId } = useMailStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
@@ -91,6 +91,44 @@ export function App() {
       ),
     );
   }, [activeThreadId]);
+
+  // Global keyboard shortcuts
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      // Skip if user is typing in an input/textarea/contentEditable
+      const target = e.target as HTMLElement;
+      if (target.tagName === 'INPUT' || target.tagName === 'TEXTAREA' || target.isContentEditable) return;
+
+      switch (e.key) {
+        case 'c':
+          e.preventDefault();
+          setComposeOpen(true);
+          break;
+        case 'r':
+          if (activeThreadId) {
+            e.preventDefault();
+            setReplyToThreadId(activeThreadId);
+            setComposeOpen(true);
+          }
+          break;
+        case 'f':
+          if (activeThreadId) {
+            e.preventDefault();
+            setForwardFromThreadId(activeThreadId);
+            setComposeOpen(true);
+          }
+          break;
+        case 'Escape':
+          if (activeThreadId) {
+            e.preventDefault();
+            setActiveThreadId(null);
+          }
+          break;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [activeThreadId, setComposeOpen, setActiveThreadId, setReplyToThreadId, setForwardFromThreadId]);
 
   if (!authed) return null;
 

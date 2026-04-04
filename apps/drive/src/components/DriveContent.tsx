@@ -34,8 +34,26 @@ export function DriveContent() {
 
   if (loading) {
     return (
-      <div style={{ flex: 1, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
-        <div style={{ color: 'var(--drive-text-muted)', fontSize: 14 }}>Loading...</div>
+      <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+        {/* Folder skeletons */}
+        <div style={{ marginBottom: 24 }}>
+          <div style={{ width: 60, height: 12, borderRadius: 4, background: 'var(--drive-bg-hover, #f0f0f0)', marginBottom: 12, animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
+            {Array.from({ length: 3 }).map((_, i) => (
+              <div key={`f${i}`} style={{ height: 56, borderRadius: 'var(--drive-radius-sm, 8px)', background: 'var(--drive-bg-hover, #f0f0f0)', animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+            ))}
+          </div>
+        </div>
+        {/* File skeletons */}
+        <div>
+          <div style={{ width: 40, height: 12, borderRadius: 4, background: 'var(--drive-bg-hover, #f0f0f0)', marginBottom: 12, animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+          <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(180px, 1fr))' : '1fr', gap: 10 }}>
+            {Array.from({ length: 6 }).map((_, i) => (
+              <div key={`fi${i}`} style={{ height: viewMode === 'grid' ? 140 : 44, borderRadius: 'var(--drive-radius-sm, 8px)', background: 'var(--drive-bg-hover, #f0f0f0)', animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+            ))}
+          </div>
+        </div>
+        <style>{`@keyframes driveSkelPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
       </div>
     );
   }
