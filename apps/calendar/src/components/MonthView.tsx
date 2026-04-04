@@ -167,6 +167,11 @@ export function MonthView() {
                         cursor: 'pointer',
                       }}
                     >
+                      {!evt.allDay && (
+                        <span style={{ opacity: 0.7, marginRight: 2 }}>
+                          {new Date(evt.startTime).toLocaleTimeString([], { hour: 'numeric', minute: '2-digit' })}
+                        </span>
+                      )}
                       {evt.title}
                     </div>
                   ))}

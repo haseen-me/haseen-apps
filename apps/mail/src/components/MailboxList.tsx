@@ -1,12 +1,44 @@
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { useMailStore } from '@/store/mail';
 import { MailboxHeader } from './MailboxHeader';
 import { ThreadRow } from './ThreadRow';
 import { EmptyState } from './EmptyState';
 
+const PAGE_SIZE = 25;
+
 export function MailboxList() {
   const { activeLabel, threads, loading } = useMailStore();
+  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const filtered = threads.filter((t) => t.labels.includes(activeLabel));
+  const filtered = threads
+    .filter((t) => t.labels.includes(activeLabel))
+    .sort((a, b) => new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime());
+
+  const hasMore = visibleCount < filtered.length;
+
+  // Reset visible count when label changes
+  useEffect(() => {
+    setVisibleCount(PAGE_SIZE);
+  }, [activeLabel]);
+
+  // IntersectionObserver for infinite scroll
+  const observerCallback = useCallback(
+    (entries: IntersectionObserverEntry[]) => {
+      if (entries[0]?.isIntersecting && hasMore) {
+        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filtered.length));
+      }
+    },
+    [hasMore, filtered.length],
+  );
+
+  useEffect(() => {
+    const el = sentinelRef.current;
+    if (!el) return;
+    const observer = new IntersectionObserver(observerCallback, { rootMargin: '200px' });
+    observer.observe(el);
+    return () => observer.disconnect();
+  }, [observerCallback]);
 
   return (
     <div
@@ -49,9 +81,19 @@ export function MailboxList() {
         ) : filtered.length === 0 ? (
           <EmptyState label={activeLabel} />
         ) : (
-          filtered
-            .sort((a, b) => new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime())
-            .map((thread) => <ThreadRow key={thread.id} thread={thread} />)
+          <>
+            {filtered
+              .slice(0, visibleCount)
+              .map((thread) => <ThreadRow key={thread.id} thread={thread} />)}
+            {hasMore && (
+              <div
+                ref={sentinelRef}
+                style={{ padding: '12px 16px', textAlign: 'center', fontSize: 12, color: 'var(--mail-text-muted)' }}
+              >
+                Loading more...
+              </div>
+            )}
+          </>
         )}
       </div>
     </div>

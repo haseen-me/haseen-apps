@@ -13,6 +13,7 @@ export function UploadDialog() {
   const [dragOver, setDragOver] = useState(false);
   const [selectedFiles, setSelectedFiles] = useState<File[]>([]);
   const [uploading, setUploading] = useState(false);
+  const [uploadIndex, setUploadIndex] = useState(0);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const handleDrop = useCallback((e: React.DragEvent) => {
@@ -30,8 +31,11 @@ export function UploadDialog() {
 
   const handleUpload = useCallback(async () => {
     setUploading(true);
+    setUploadIndex(0);
     try {
-      for (const file of selectedFiles) {
+      for (let fi = 0; fi < selectedFiles.length; fi++) {
+        setUploadIndex(fi + 1);
+        const file = selectedFiles[fi]!;
         const buffer = await file.arrayBuffer();
 
         if (encryptionKeyPair) {
@@ -66,6 +70,7 @@ export function UploadDialog() {
       toast.show('Upload failed — backend unavailable');
     } finally {
       setUploading(false);
+      setUploadIndex(0);
       setSelectedFiles([]);
       setUploadOpen(false);
     }
@@ -225,9 +230,21 @@ export function UploadDialog() {
           >
             {encryptionKeyPair && <Lock size={12} />}
             <Upload size={14} />
-            {uploading ? 'Encrypting...' : `Upload${selectedFiles.length > 0 ? ` (${selectedFiles.length})` : ''}`}
+            {uploading ? `Uploading ${uploadIndex}/${selectedFiles.length}...` : `Upload${selectedFiles.length > 0 ? ` (${selectedFiles.length})` : ''}`}
           </button>
         </div>
+
+        {/* Upload progress bar */}
+        {uploading && selectedFiles.length > 0 && (
+          <div style={{ marginTop: 12 }}>
+            <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginBottom: 4 }}>
+              Encrypting and uploading file {uploadIndex} of {selectedFiles.length}...
+            </div>
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--drive-border)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 2, background: 'var(--drive-brand)', transition: 'width 0.3s', width: `${(uploadIndex / selectedFiles.length) * 100}%` }} />
+            </div>
+          </div>
+        )}
       </div>
     </div>
   );

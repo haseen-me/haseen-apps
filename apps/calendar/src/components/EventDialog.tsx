@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, MapPin, AlignLeft, Repeat, Palette, Users } from 'lucide-react';
+import { X, Clock, MapPin, AlignLeft, Repeat, Palette, Users, Bell } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
@@ -26,6 +26,8 @@ export function EventDialog() {
   const [color, setColor] = useState('#4285f4');
   const [attendees, setAttendees] = useState<string[]>([]);
   const [attendeeInput, setAttendeeInput] = useState('');
+  const [existingAttendeeIds, setExistingAttendeeIds] = useState<Map<string, string>>(new Map());
+  const [reminder, setReminder] = useState('');
 
   useEffect(() => {
     if (editingEvent) {
@@ -39,6 +41,17 @@ export function EventDialog() {
       setCalendarId(editingEvent.calendarId);
       setColor(editingEvent.color || '#4285f4');
       setAttendees([]);
+      setExistingAttendeeIds(new Map());
+      setReminder('');
+      // Load attendees and reminders from API
+      calendarApi.listAttendees(editingEvent.id).then((res) => {
+        const emails = res.attendees.map((a) => a.email);
+        setAttendees(emails);
+        setExistingAttendeeIds(new Map(res.attendees.map((a) => [a.email, a.id])));
+      }).catch(() => {});
+      calendarApi.listReminders(editingEvent.id).then((res) => {
+        if (res.reminders.length > 0) setReminder(String(res.reminders[0]!.minutesBefore));
+      }).catch(() => {});
     } else if (selectedDate) {
       setTitle('');
       setDescription('');
@@ -55,6 +68,8 @@ export function EventDialog() {
       setColor('#4285f4');
       setAttendees([]);
       setAttendeeInput('');
+      setExistingAttendeeIds(new Map());
+      setReminder('');
     }
   }, [editingEvent, selectedDate, calendars]);
 
@@ -115,8 +130,26 @@ export function EventDialog() {
           recurrenceRule: recurrence || null,
         });
         toast.show('Event updated');
+        // Sync attendees for existing event
+        const currentEmails = new Set(attendees);
+        // Remove attendees that were deleted
+        for (const [email, id] of existingAttendeeIds) {
+          if (!currentEmails.has(email)) {
+            await calendarApi.removeAttendee(editingEvent.id, id).catch(() => {});
+          }
+        }
+        // Add new attendees
+        for (const email of attendees) {
+          if (!existingAttendeeIds.has(email)) {
+            await calendarApi.addAttendee(editingEvent.id, email).catch(() => {});
+          }
+        }
+        // Set reminder
+        if (reminder) {
+          await calendarApi.setReminder(editingEvent.id, Number(reminder)).catch(() => {});
+        }
       } else {
-        await calendarApi.createEvent({
+        const created = await calendarApi.createEvent({
           calendarId,
           title: encTitle,
           description: encDesc,
@@ -128,6 +161,14 @@ export function EventDialog() {
           recurrenceRule: recurrence || null,
         });
         toast.show('Event created');
+        // Add attendees for new event
+        for (const email of attendees) {
+          await calendarApi.addAttendee(created.id, email).catch(() => {});
+        }
+        // Set reminder for new event
+        if (reminder) {
+          await calendarApi.setReminder(created.id, Number(reminder)).catch(() => {});
+        }
       }
     } catch (err) {
       console.warn('[Calendar] Save failed:', err);
@@ -432,6 +473,25 @@ export function EventDialog() {
                 ))}
               </div>
             )}
+          </div>
+
+          {/* Reminder */}
+          <div>
+            <label style={labelStyle}>
+              <Bell size={14} /> Reminder
+            </label>
+            <select
+              value={reminder}
+              onChange={(e) => setReminder(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              <option value="">No reminder</option>
+              <option value="5">5 minutes before</option>
+              <option value="15">15 minutes before</option>
+              <option value="30">30 minutes before</option>
+              <option value="60">1 hour before</option>
+              <option value="1440">1 day before</option>
+            </select>
           </div>
         </div>
 

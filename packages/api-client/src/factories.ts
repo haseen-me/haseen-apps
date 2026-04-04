@@ -99,6 +99,12 @@ export function createCalendarApi(client: ApiClient): CalendarApi {
     createEvent: (params) => client.post('/calendar/events', params),
     updateEvent: (id, params) => client.put(`/calendar/events/${id}`, params),
     deleteEvent: (id) => client.del(`/calendar/events/${id}`),
+    listAttendees: (eventId) => client.get(`/calendar/events/${eventId}/attendees`),
+    addAttendee: (eventId, email) => client.post(`/calendar/events/${eventId}/attendees`, { email }),
+    removeAttendee: (eventId, attendeeId) => client.del(`/calendar/events/${eventId}/attendees/${attendeeId}`),
+    listReminders: (eventId) => client.get(`/calendar/events/${eventId}/reminders`),
+    setReminder: (eventId, minutesBefore) => client.post(`/calendar/events/${eventId}/reminders`, { minutesBefore }),
+    deleteReminder: (eventId, reminderId) => client.del(`/calendar/events/${eventId}/reminders/${reminderId}`),
   };
 }
 

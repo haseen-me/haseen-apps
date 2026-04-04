@@ -24,6 +24,8 @@ export type {
   CalendarApi,
   CalendarItem,
   CalendarEvent,
+  Attendee,
+  Reminder,
   ContactsApi,
   Contact,
 } from './services';

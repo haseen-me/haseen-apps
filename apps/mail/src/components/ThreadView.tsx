@@ -16,6 +16,7 @@ import {
   MailOpen,
   Star,
   Tag,
+  AlertOctagon,
 } from 'lucide-react';
 
 export function ThreadView() {
@@ -132,6 +133,18 @@ export function ThreadView() {
     }
   };
 
+  const handleMoveToSystem = async (label: string, displayName: string) => {
+    setMenuOpen(false);
+    try {
+      await Promise.all(thread.messages.map((m) => mailApi.moveMessage(m.id, label)));
+      setThreads(threads.filter((t) => t.id !== thread.id));
+      setActiveThreadId(null);
+      toast.show(`Moved to ${displayName}`);
+    } catch {
+      toast.show(`Failed to move to ${displayName}`);
+    }
+  };
+
   // Close menu on outside click
   useEffect(() => {
     if (!menuOpen) return;
@@ -235,6 +248,18 @@ export function ThreadView() {
                   setMenuOpen(false);
                   handleToggleStar();
                 }}
+              />
+              <div style={{ height: 1, background: 'var(--mail-border)', margin: '4px 0' }} />
+              <MenuButton
+                icon={<Archive size={15} />}
+                label="Move to archive"
+                onClick={() => handleMoveToSystem('archive', 'Archive')}
+              />
+              <MenuButton
+                icon={<AlertOctagon size={15} />}
+                label="Report spam"
+                onClick={() => handleMoveToSystem('spam', 'Spam')}
+                danger
               />
               {userLabels.length > 0 && (
                 <>
@@ -347,7 +372,7 @@ function ActionButton({ icon, label, onClick }: { icon: React.ReactNode; label: 
   );
 }
 
-function MenuButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+function MenuButton({ icon, label, onClick, danger }: { icon: React.ReactNode; label: string; onClick: () => void; danger?: boolean }) {
   return (
     <button
       onClick={onClick}
@@ -359,7 +384,7 @@ function MenuButton({ icon, label, onClick }: { icon: React.ReactNode; label: st
         padding: '8px 12px',
         background: 'none',
         border: 'none',
-        color: 'var(--mail-text)',
+        color: danger ? 'var(--mail-danger, #e5484d)' : 'var(--mail-text)',
         fontSize: 13,
         cursor: 'pointer',
         textAlign: 'left',

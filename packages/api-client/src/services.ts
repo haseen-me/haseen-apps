@@ -153,6 +153,25 @@ export interface CalendarApi {
   createEvent(params: { calendarId: string; title: string; description: string; startTime: string; endTime: string; allDay: boolean; location: string; color: string; recurrenceRule?: string | null }): Promise<CalendarEvent>;
   updateEvent(id: string, params: Partial<CalendarEvent>): Promise<CalendarEvent>;
   deleteEvent(id: string): Promise<void>;
+  listAttendees(eventId: string): Promise<{ attendees: Attendee[] }>;
+  addAttendee(eventId: string, email: string): Promise<Attendee>;
+  removeAttendee(eventId: string, attendeeId: string): Promise<void>;
+  listReminders(eventId: string): Promise<{ reminders: Reminder[] }>;
+  setReminder(eventId: string, minutesBefore: number): Promise<Reminder>;
+  deleteReminder(eventId: string, reminderId: string): Promise<void>;
+}
+
+export interface Attendee {
+  id: string;
+  eventId: string;
+  email: string;
+  status: string;
+}
+
+export interface Reminder {
+  id: string;
+  eventId: string;
+  minutesBefore: number;
 }
 
 export interface CalendarItem {
