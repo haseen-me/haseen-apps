@@ -1,15 +1,40 @@
+import { useState, useEffect, useRef } from 'react';
 import { useContactsStore } from '@/store/contacts';
+import { contactsApi } from '@/api/client';
+import type { Contact } from '@haseen-me/api-client';
 
 export function ContactList() {
   const { contacts, searchQuery, selectedContactId, setSelectedContactId, loading } = useContactsStore();
+  const [remoteResults, setRemoteResults] = useState<Contact[] | null>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
-  const filtered = contacts
-    .filter((c) => {
+  // Debounced remote search
+  useEffect(() => {
+    if (!searchQuery.trim()) {
+      setRemoteResults(null);
+      return;
+    }
+    debounceRef.current = setTimeout(async () => {
+      try {
+        const res = await contactsApi.searchContacts(searchQuery.trim());
+        setRemoteResults(res.contacts);
+      } catch {
+        // API unavailable — fall back to client-side filter
+        setRemoteResults(null);
+      }
+    }, 300);
+    return () => clearTimeout(debounceRef.current);
+  }, [searchQuery]);
+
+  const clientFiltered = contacts
+    .filter((c: Contact) => {
       if (!searchQuery) return true;
       const q = searchQuery.toLowerCase();
       return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
-    })
-    .sort((a, b) => (a.name || a.email).localeCompare(b.name || b.email));
+    });
+
+  const filtered = (remoteResults ?? clientFiltered)
+    .sort((a: Contact, b: Contact) => (a.name || a.email).localeCompare(b.name || b.email));
 
   if (loading) {
     return (
@@ -42,7 +67,7 @@ export function ContactList() {
   }
 
   // Group by first letter
-  const groups: Map<string, typeof filtered> = new Map();
+  const groups: Map<string, Contact[]> = new Map();
   for (const c of filtered) {
     const letter = (c.name || c.email)[0]?.toUpperCase() ?? '#';
     const group = groups.get(letter) ?? [];

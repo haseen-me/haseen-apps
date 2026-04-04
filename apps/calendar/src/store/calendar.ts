@@ -27,7 +27,8 @@ interface CalendarState {
   eventDialogOpen: boolean;
   editingEvent: CalendarEvent | null;
   selectedDate: Date | null;
-  openNewEvent: (date: Date) => void;
+  selectedEndDate: Date | null;
+  openNewEvent: (date: Date, endDate?: Date) => void;
   openEditEvent: (event: CalendarEvent) => void;
   closeEventDialog: () => void;
 }
@@ -73,7 +74,8 @@ export const useCalendarStore = create<CalendarState>((set, get) => ({
   eventDialogOpen: false,
   editingEvent: null,
   selectedDate: null,
-  openNewEvent: (date) => set({ eventDialogOpen: true, editingEvent: null, selectedDate: date }),
-  openEditEvent: (event) => set({ eventDialogOpen: true, editingEvent: event, selectedDate: null }),
-  closeEventDialog: () => set({ eventDialogOpen: false, editingEvent: null, selectedDate: null }),
+  selectedEndDate: null,
+  openNewEvent: (date, endDate) => set({ eventDialogOpen: true, editingEvent: null, selectedDate: date, selectedEndDate: endDate ?? null }),
+  openEditEvent: (event) => set({ eventDialogOpen: true, editingEvent: event, selectedDate: null, selectedEndDate: null }),
+  closeEventDialog: () => set({ eventDialogOpen: false, editingEvent: null, selectedDate: null, selectedEndDate: null }),
 }));

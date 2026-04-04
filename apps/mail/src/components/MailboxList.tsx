@@ -7,13 +7,24 @@ import { EmptyState } from './EmptyState';
 const PAGE_SIZE = 25;
 
 export function MailboxList() {
-  const { activeLabel, threads, loading } = useMailStore();
+  const { activeLabel, threads, loading, sortBy } = useMailStore();
   const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
   const sentinelRef = useRef<HTMLDivElement>(null);
 
   const filtered = threads
     .filter((t) => t.labels.includes(activeLabel))
-    .sort((a, b) => new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime());
+    .sort((a, b) => {
+      if (sortBy === 'sender') {
+        const aFrom = a.messages[0]?.from?.name || a.messages[0]?.from?.address || '';
+        const bFrom = b.messages[0]?.from?.name || b.messages[0]?.from?.address || '';
+        return aFrom.localeCompare(bFrom);
+      }
+      if (sortBy === 'subject') {
+        return a.subject.localeCompare(b.subject);
+      }
+      // default: date desc
+      return new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime();
+    });
 
   const hasMore = visibleCount < filtered.length;
 

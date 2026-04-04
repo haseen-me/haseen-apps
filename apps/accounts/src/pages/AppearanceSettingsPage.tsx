@@ -18,12 +18,14 @@ function getStoredTheme(): Theme {
 
 function applyTheme(theme: Theme) {
   const root = document.documentElement;
+  let isDark: boolean;
   if (theme === 'system') {
-    const prefersDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
-    root.setAttribute('data-theme', prefersDark ? 'dark' : 'light');
+    isDark = window.matchMedia('(prefers-color-scheme: dark)').matches;
   } else {
-    root.setAttribute('data-theme', theme);
+    isDark = theme === 'dark';
   }
+  root.setAttribute('data-theme', isDark ? 'dark' : 'light');
+  document.body.classList.toggle('dark', isDark);
   localStorage.setItem('haseen-theme', theme);
 }
 

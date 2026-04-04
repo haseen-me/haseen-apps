@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { useCalendarStore } from '@/store/calendar';
 import type { CalendarEvent } from '@/types/calendar';
 
@@ -37,6 +38,11 @@ export function DayView() {
     useCalendarStore();
 
   const dayEvents = eventsForDay(events, currentDate, visibleCalendarIds);
+
+  // Drag-to-create state
+  const [dragStartHour, setDragStartHour] = useState<number | null>(null);
+  const [dragEndHour, setDragEndHour] = useState<number | null>(null);
+  const isDragging = useRef(false);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -107,15 +113,48 @@ export function DayView() {
                   {h > 0 ? formatHour(h) : ''}
                 </div>
                 <div
-                  onClick={() => {
-                    const d = new Date(currentDate);
-                    d.setHours(h, 0, 0, 0);
-                    openNewEvent(d);
+                  onMouseDown={(e) => {
+                    e.preventDefault();
+                    isDragging.current = true;
+                    setDragStartHour(h);
+                    setDragEndHour(h);
+                  }}
+                  onMouseEnter={() => {
+                    if (isDragging.current) {
+                      setDragEndHour(h);
+                    }
+                  }}
+                  onMouseUp={() => {
+                    if (isDragging.current && dragStartHour !== null) {
+                      isDragging.current = false;
+                      const endH = dragEndHour ?? h;
+                      const minH = Math.min(dragStartHour, endH);
+                      const maxH = Math.max(dragStartHour, endH);
+                      const startDate = new Date(currentDate);
+                      startDate.setHours(minH, 0, 0, 0);
+                      const endDate = new Date(currentDate);
+                      endDate.setHours(maxH + 1, 0, 0, 0);
+                      setDragStartHour(null);
+                      setDragEndHour(null);
+                      if (minH === maxH) {
+                        openNewEvent(startDate);
+                      } else {
+                        openNewEvent(startDate, endDate);
+                      }
+                    }
                   }}
                   style={{
                     height: 60,
                     borderBottom: '1px solid var(--cal-border-subtle)',
                     cursor: 'pointer',
+                    background:
+                      dragStartHour !== null &&
+                      dragEndHour !== null &&
+                      h >= Math.min(dragStartHour, dragEndHour) &&
+                      h <= Math.max(dragStartHour, dragEndHour)
+                        ? 'var(--cal-brand-subtle, rgba(66,133,244,0.15))'
+                        : undefined,
+                    transition: 'background 0.05s',
                   }}
                 />
               </div>

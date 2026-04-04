@@ -2,6 +2,7 @@ import {
   Archive,
   Check,
   CheckSquare,
+  ArrowDownAZ,
   MailOpen,
   MoreHorizontal,
   RefreshCw,
@@ -27,10 +28,14 @@ export function MailboxHeader() {
     setLoading,
     setThreads,
     userLabels,
+    sortBy,
+    setSortBy,
   } = useMailStore();
   const toast = useToastStore();
   const [labelMenuOpen, setLabelMenuOpen] = useState(false);
+  const [sortMenuOpen, setSortMenuOpen] = useState(false);
   const labelRef = useRef<HTMLDivElement>(null);
+  const sortRef = useRef<HTMLDivElement>(null);
 
   const labelName =
     SYSTEM_LABELS.find((l) => l.id === activeLabel)?.name ?? activeLabel;
@@ -135,6 +140,42 @@ export function MailboxHeader() {
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
   }, [labelMenuOpen]);
+
+  // Close sort menu on outside click
+  useEffect(() => {
+    if (!sortMenuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
+        setSortMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [sortMenuOpen]);
+
+  const handleMarkAllRead = async () => {
+    const unread = filteredThreads.filter((t) => t.unreadCount > 0);
+    if (unread.length === 0) {
+      toast.show('All messages already read');
+      return;
+    }
+    try {
+      const updates = unread.flatMap((t) =>
+        t.messages.filter((m) => !m.read).map((m) => mailApi.updateMessage(m.id, { read: true })),
+      );
+      await Promise.all(updates);
+      setThreads(
+        threads.map((t) =>
+          t.labels.includes(activeLabel)
+            ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) }
+            : t,
+        ),
+      );
+      toast.show(`Marked ${unread.length} threads as read`);
+    } catch {
+      toast.show('Failed to mark all as read');
+    }
+  };
 
   const handleRefresh = async () => {
     setLoading(true);
@@ -263,6 +304,91 @@ export function MailboxHeader() {
           )}
         </div>
       )}
+
+      {/* Sort dropdown + Mark all read */}
+      <div ref={sortRef} style={{ position: 'relative' }}>
+        <button
+          onClick={() => setSortMenuOpen(!sortMenuOpen)}
+          style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--mail-text-muted)',
+            padding: '4px 8px',
+            borderRadius: 4,
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 12,
+            cursor: 'pointer',
+          }}
+          title="Sort by"
+        >
+          <ArrowDownAZ size={14} />
+          {sortBy === 'date' ? 'Date' : sortBy === 'sender' ? 'Sender' : 'Subject'}
+        </button>
+        {sortMenuOpen && (
+          <div
+            style={{
+              position: 'absolute',
+              top: '100%',
+              right: 0,
+              marginTop: 4,
+              background: 'var(--mail-bg)',
+              border: '1px solid var(--mail-border)',
+              borderRadius: 'var(--mail-radius)',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+              zIndex: 100,
+              minWidth: 120,
+              overflow: 'hidden',
+            }}
+          >
+            {(['date', 'sender', 'subject'] as const).map((opt) => (
+              <button
+                key={opt}
+                onClick={() => { setSortBy(opt); setSortMenuOpen(false); }}
+                style={{
+                  display: 'flex',
+                  alignItems: 'center',
+                  gap: 8,
+                  width: '100%',
+                  padding: '8px 12px',
+                  background: sortBy === opt ? 'var(--mail-bg-hover)' : 'none',
+                  border: 'none',
+                  color: 'var(--mail-text)',
+                  fontSize: 13,
+                  cursor: 'pointer',
+                  textAlign: 'left',
+                  fontWeight: sortBy === opt ? 600 : 400,
+                }}
+                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
+                onMouseLeave={(e) => (e.currentTarget.style.background = sortBy === opt ? 'var(--mail-bg-hover)' : 'none')}
+              >
+                {opt.charAt(0).toUpperCase() + opt.slice(1)}
+                {sortBy === opt && <Check size={12} />}
+              </button>
+            ))}
+          </div>
+        )}
+      </div>
+
+      <button
+        onClick={handleMarkAllRead}
+        style={{
+          background: 'none',
+          border: 'none',
+          color: 'var(--mail-text-muted)',
+          padding: '4px 8px',
+          borderRadius: 4,
+          display: 'flex',
+          alignItems: 'center',
+          gap: 4,
+          fontSize: 12,
+          cursor: 'pointer',
+        }}
+        title="Mark all as read"
+      >
+        <MailOpen size={14} />
+      </button>
 
       {/* Refresh */}
       <button

@@ -12,7 +12,7 @@ function toLocalDatetimeStr(d: Date): string {
 }
 
 export function EventDialog() {
-  const { eventDialogOpen, editingEvent, selectedDate, closeEventDialog, calendars, events, setEvents } =
+  const { eventDialogOpen, editingEvent, selectedDate, selectedEndDate, closeEventDialog, calendars, events, setEvents } =
     useCalendarStore();
 
   const [title, setTitle] = useState('');
@@ -56,9 +56,9 @@ export function EventDialog() {
       setTitle('');
       setDescription('');
       const s = new Date(selectedDate);
-      if (s.getHours() === 0) s.setHours(9, 0, 0, 0);
-      const e = new Date(s);
-      e.setHours(s.getHours() + 1);
+      if (s.getHours() === 0 && !selectedEndDate) s.setHours(9, 0, 0, 0);
+      const e = selectedEndDate ? new Date(selectedEndDate) : new Date(s);
+      if (!selectedEndDate) e.setHours(s.getHours() + 1);
       setStart(toLocalDatetimeStr(s));
       setEnd(toLocalDatetimeStr(e));
       setLocation('');
@@ -71,7 +71,7 @@ export function EventDialog() {
       setExistingAttendeeIds(new Map());
       setReminder('');
     }
-  }, [editingEvent, selectedDate, calendars]);
+  }, [editingEvent, selectedDate, selectedEndDate, calendars]);
 
   if (!eventDialogOpen) return null;
 

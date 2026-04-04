@@ -43,6 +43,10 @@ interface MailboxState {
   /* Sidebar */
   sidebarCollapsed: boolean;
   toggleSidebar: () => void;
+
+  /* Sort preference */
+  sortBy: 'date' | 'sender' | 'subject';
+  setSortBy: (v: 'date' | 'sender' | 'subject') => void;
 }
 
 export const useMailStore = create<MailboxState>((set, get) => ({
@@ -84,4 +88,7 @@ export const useMailStore = create<MailboxState>((set, get) => ({
 
   sidebarCollapsed: false,
   toggleSidebar: () => set((s) => ({ sidebarCollapsed: !s.sidebarCollapsed })),
+
+  sortBy: 'date',
+  setSortBy: (sortBy) => set({ sortBy }),
 }));

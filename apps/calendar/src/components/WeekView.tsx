@@ -1,3 +1,4 @@
+import { useState, useRef } from 'react';
 import { useCalendarStore } from '@/store/calendar';
 import type { CalendarEvent } from '@/types/calendar';
 
@@ -50,6 +51,11 @@ export function WeekView() {
     useCalendarStore();
   const weekDates = getWeekDates(currentDate);
   const today = new Date();
+
+  // Drag-to-create state
+  const [dragStart, setDragStart] = useState<{ day: number; hour: number } | null>(null);
+  const [dragEnd, setDragEnd] = useState<{ day: number; hour: number } | null>(null);
+  const isDragging = useRef(false);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -124,22 +130,58 @@ export function WeekView() {
                 >
                   {h > 0 ? formatHour(h) : ''}
                 </div>
-                {weekDates.map((date, di) => (
-                  <div
-                    key={di}
-                    onClick={() => {
-                      const d = new Date(date);
-                      d.setHours(h);
-                      openNewEvent(d);
-                    }}
-                    style={{
-                      height: 48,
-                      borderBottom: '1px solid var(--cal-border-subtle)',
-                      borderRight: di < 6 ? '1px solid var(--cal-border-subtle)' : undefined,
-                      cursor: 'pointer',
-                    }}
-                  />
-                ))}
+                {weekDates.map((_date, di) => {
+                  const isInDrag =
+                    dragStart &&
+                    dragEnd &&
+                    di === dragStart.day &&
+                    di === dragEnd.day &&
+                    h >= Math.min(dragStart.hour, dragEnd.hour) &&
+                    h <= Math.max(dragStart.hour, dragEnd.hour);
+                  return (
+                    <div
+                      key={di}
+                      onMouseDown={(e) => {
+                        e.preventDefault();
+                        isDragging.current = true;
+                        setDragStart({ day: di, hour: h });
+                        setDragEnd({ day: di, hour: h });
+                      }}
+                      onMouseEnter={() => {
+                        if (isDragging.current && dragStart && dragStart.day === di) {
+                          setDragEnd({ day: di, hour: h });
+                        }
+                      }}
+                      onMouseUp={() => {
+                        if (isDragging.current && dragStart) {
+                          isDragging.current = false;
+                          const endH = dragEnd ? dragEnd.hour : h;
+                          const minH = Math.min(dragStart.hour, endH);
+                          const maxH = Math.max(dragStart.hour, endH);
+                          const startDate = new Date(weekDates[dragStart.day]!);
+                          startDate.setHours(minH, 0, 0, 0);
+                          const endDate = new Date(weekDates[dragStart.day]!);
+                          endDate.setHours(maxH + 1, 0, 0, 0);
+                          setDragStart(null);
+                          setDragEnd(null);
+                          if (minH === maxH) {
+                            openNewEvent(startDate);
+                          } else {
+                            openNewEvent(startDate, endDate);
+                          }
+                        }
+                      }}
+                      style={{
+                        height: 48,
+                        borderBottom: '1px solid var(--cal-border-subtle)',
+                        borderRight: di < 6 ? '1px solid var(--cal-border-subtle)' : undefined,
+                        cursor: 'pointer',
+                        background: isInDrag ? 'var(--cal-brand-subtle, rgba(66,133,244,0.15))' : undefined,
+                        transition: 'background 0.05s',
+                      }}
+                    />
+                  );
+                })}
               </div>
             ))}
           </div>

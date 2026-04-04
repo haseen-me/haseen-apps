@@ -1,5 +1,5 @@
-import { useEffect } from 'react';
-import { Search, Plus, Users } from 'lucide-react';
+import { useEffect, useRef } from 'react';
+import { Search, Plus, Users, Upload, Download } from 'lucide-react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { ProductRail } from '@/components/ProductRail';
 import { ContactList } from '@/components/ContactList';
@@ -8,15 +8,52 @@ import { ContactDialog } from '@/components/ContactDialog';
 import { useContactsStore } from '@/store/contacts';
 import { useToastStore } from '@/store/toast';
 import { contactsApi } from '@/api/client';
+import type { Contact } from '@haseen-me/api-client';
+
+function csvEscape(value: string): string {
+  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
+    return `"${value.replace(/"/g, '""')}"`;
+  }
+  return value;
+}
+
+function parseCsvLine(line: string): string[] {
+  const fields: string[] = [];
+  let current = '';
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i++) {
+    const ch = line[i];
+    if (inQuotes) {
+      if (ch === '"' && line[i + 1] === '"') {
+        current += '"';
+        i++;
+      } else if (ch === '"') {
+        inQuotes = false;
+      } else {
+        current += ch;
+      }
+    } else if (ch === '"') {
+      inQuotes = true;
+    } else if (ch === ',') {
+      fields.push(current);
+      current = '';
+    } else {
+      current += ch;
+    }
+  }
+  fields.push(current);
+  return fields;
+}
 
 function ContactsApp() {
-  const { setContacts, setLoading, searchQuery, setSearchQuery, setDialogOpen, setEditingContact } = useContactsStore();
+  const { contacts, setContacts, setLoading, searchQuery, setSearchQuery, setDialogOpen, setEditingContact } = useContactsStore();
   const toast = useToastStore();
+  const fileInputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
     setLoading(true);
     contactsApi.listContacts()
-      .then((res) => setContacts(res.contacts))
+      .then((res: { contacts: Contact[] }) => setContacts(res.contacts))
       .catch(() => {
         // Graceful fallback — show empty state
       })
@@ -26,6 +63,59 @@ function ContactsApp() {
   const handleNew = () => {
     setEditingContact(null);
     setDialogOpen(true);
+  };
+
+  const handleExport = () => {
+    if (contacts.length === 0) {
+      toast.show('No contacts to export');
+      return;
+    }
+    const header = 'Name,Email,Notes';
+    const rows = contacts.map((c: Contact) => {
+      const name = csvEscape(c.name);
+      const email = csvEscape(c.email);
+      const notes = csvEscape(c.notes || '');
+      return `${name},${email},${notes}`;
+    });
+    const csv = [header, ...rows].join('\n');
+    const blob = new Blob([csv], { type: 'text/csv' });
+    const url = URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.href = url;
+    a.download = 'contacts.csv';
+    a.click();
+    URL.revokeObjectURL(url);
+    toast.show(`Exported ${contacts.length} contacts`);
+  };
+
+  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0];
+    if (!file) return;
+    e.target.value = '';
+    const text = await file.text();
+    const lines = text.split(/\r?\n/).filter((l) => l.trim());
+    if (lines.length < 2) {
+      toast.show('CSV file is empty or has no data rows');
+      return;
+    }
+    // Skip header row
+    const headerLower = lines[0]!.toLowerCase();
+    const startIdx = headerLower.includes('name') || headerLower.includes('email') ? 1 : 0;
+    let imported = 0;
+    for (let i = startIdx; i < lines.length; i++) {
+      const fields = parseCsvLine(lines[i]!);
+      const name = fields[0]?.trim();
+      const email = fields[1]?.trim();
+      if (!email) continue;
+      try {
+        const created = await contactsApi.createContact({ name: name || email, email, notes: fields[2]?.trim() || '' });
+        setContacts([...useContactsStore.getState().contacts, created]);
+        imported++;
+      } catch {
+        // Skip duplicate or failed entries
+      }
+    }
+    toast.show(imported > 0 ? `Imported ${imported} contacts` : 'No new contacts imported');
   };
 
   return (
@@ -57,6 +147,32 @@ function ContactsApp() {
               }}
             >
               <Plus size={14} /> New
+            </button>
+          </div>
+
+          {/* Import / Export row */}
+          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
+            <label
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '5px 10px', borderRadius: 'var(--ct-radius-sm)',
+                border: '1px solid var(--ct-border)', background: 'none',
+                color: 'var(--ct-text-muted)', fontSize: 11, cursor: 'pointer',
+              }}
+            >
+              <Upload size={12} /> Import CSV
+              <input ref={fileInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleImport} />
+            </label>
+            <button
+              onClick={handleExport}
+              style={{
+                display: 'flex', alignItems: 'center', gap: 4,
+                padding: '5px 10px', borderRadius: 'var(--ct-radius-sm)',
+                border: '1px solid var(--ct-border)', background: 'none',
+                color: 'var(--ct-text-muted)', fontSize: 11, cursor: 'pointer',
+              }}
+            >
+              <Download size={12} /> Export CSV
             </button>
           </div>
           <div style={{ position: 'relative' }}>

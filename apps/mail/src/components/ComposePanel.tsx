@@ -5,7 +5,7 @@ import { useToastStore } from '@/store/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
 import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
-import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp, Save, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Link, Code, RemoveFormatting } from 'lucide-react';
+import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp, Save, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Link, Code, RemoveFormatting, Pen } from 'lucide-react';
 import { RecipientInput } from './RecipientInput';
 
 interface Recipient {
@@ -29,6 +29,7 @@ export function ComposePanel() {
   const [sending, setSending] = useState(false);
   const [encrypted, setEncrypted] = useState(true);
   const [draftId, setDraftId] = useState<string | null>(null);
+  const [showSignatureEditor, setShowSignatureEditor] = useState(false);
   const bodyRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { initializeKeys, encryptionKeyPair, signingKeyPair, initialized } = useCryptoStore();
@@ -140,6 +141,18 @@ export function ComposePanel() {
       bodyRef.current.innerHTML = body;
     }
   }, [body]);
+
+  // Auto-insert signature for new compose (not reply/forward)
+  useEffect(() => {
+    if (composeOpen && !replyToThreadId && !forwardFromThreadId) {
+      const sig = localStorage.getItem('haseen-mail-signature');
+      if (sig) {
+        const sigHtml = `<br><div class="haseen-signature" style="color:var(--mail-text-muted);border-top:1px solid var(--mail-border);padding-top:8px;margin-top:16px;font-size:13px">${sig}</div>`;
+        setBody(sigHtml);
+        if (bodyRef.current) bodyRef.current.innerHTML = sigHtml;
+      }
+    }
+  }, [composeOpen, replyToThreadId, forwardFromThreadId]);
 
   if (!composeOpen) return null;
 
@@ -516,6 +529,26 @@ export function ComposePanel() {
         <div style={{ flex: 1 }} />
 
         <button
+          onClick={() => setShowSignatureEditor(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 4,
+            fontSize: 12,
+            color: localStorage.getItem('haseen-mail-signature') ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
+            background: 'none',
+            border: 'none',
+            cursor: 'pointer',
+            padding: '4px 8px',
+            borderRadius: 4,
+          }}
+          title="Edit signature"
+        >
+          <Pen size={13} />
+          Signature
+        </button>
+
+        <button
           onClick={() => setEncrypted(!encrypted)}
           style={{
             display: 'flex',
@@ -550,6 +583,11 @@ export function ComposePanel() {
           Discard
         </button>
       </div>
+
+      {/* Signature editor modal */}
+      {showSignatureEditor && (
+        <SignatureEditor onClose={() => setShowSignatureEditor(false)} />
+      )}
     </div>
   );
 }
@@ -644,5 +682,112 @@ function ToolbarBtn({
     >
       {icon}
     </button>
+  );
+}
+
+function SignatureEditor({ onClose }: { onClose: () => void }) {
+  const [text, setText] = useState(() => localStorage.getItem('haseen-mail-signature') || '');
+
+  const handleSave = () => {
+    if (text.trim()) {
+      localStorage.setItem('haseen-mail-signature', text.trim());
+    } else {
+      localStorage.removeItem('haseen-mail-signature');
+    }
+    onClose();
+  };
+
+  return (
+    <div
+      style={{
+        position: 'absolute',
+        inset: 0,
+        background: 'rgba(0,0,0,0.3)',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        zIndex: 110,
+        borderRadius: '12px 12px 0 0',
+      }}
+      onClick={(e) => { if (e.target === e.currentTarget) onClose(); }}
+    >
+      <div
+        style={{
+          background: 'var(--mail-bg)',
+          borderRadius: 12,
+          padding: 20,
+          width: 400,
+          maxHeight: 320,
+          display: 'flex',
+          flexDirection: 'column',
+          gap: 12,
+          boxShadow: 'var(--mail-shadow-lg)',
+        }}
+      >
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--mail-text)' }}>Email Signature</span>
+          <button
+            onClick={onClose}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mail-text-muted)', display: 'flex' }}
+          >
+            <X size={16} />
+          </button>
+        </div>
+        <textarea
+          value={text}
+          onChange={(e) => setText(e.target.value)}
+          placeholder="Enter your signature (plain text or HTML)..."
+          style={{
+            flex: 1,
+            minHeight: 120,
+            padding: 10,
+            border: '1px solid var(--mail-border)',
+            borderRadius: 8,
+            fontSize: 13,
+            fontFamily: 'inherit',
+            resize: 'vertical',
+            outline: 'none',
+            background: 'var(--mail-bg)',
+            color: 'var(--mail-text)',
+          }}
+        />
+        <div style={{ fontSize: 11, color: 'var(--mail-text-muted)' }}>
+          Supports HTML. Signature is auto-appended to new messages.
+        </div>
+        <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
+          {text.trim() && (
+            <button
+              onClick={() => { setText(''); localStorage.removeItem('haseen-mail-signature'); }}
+              style={{
+                padding: '6px 14px',
+                borderRadius: 6,
+                border: '1px solid var(--mail-border)',
+                background: 'none',
+                color: 'var(--mail-text-muted)',
+                fontSize: 13,
+                cursor: 'pointer',
+              }}
+            >
+              Remove
+            </button>
+          )}
+          <button
+            onClick={handleSave}
+            style={{
+              padding: '6px 14px',
+              borderRadius: 6,
+              border: 'none',
+              background: 'var(--mail-brand)',
+              color: '#fff',
+              fontSize: 13,
+              fontWeight: 600,
+              cursor: 'pointer',
+            }}
+          >
+            Save
+          </button>
+        </div>
+      </div>
+    </div>
   );
 }

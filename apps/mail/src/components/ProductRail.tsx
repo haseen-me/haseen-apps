@@ -28,7 +28,11 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
 
   useEffect(() => {
     document.body.classList.toggle('dark', dark);
-    localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+    // Only write explicit light/dark; don't overwrite if currently 'system'
+    const current = localStorage.getItem(THEME_KEY);
+    if (current !== 'system') {
+      localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+    }
   }, [dark]);
 
   const handleLogout = () => {
