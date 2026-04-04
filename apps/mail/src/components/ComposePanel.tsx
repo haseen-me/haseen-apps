@@ -1,11 +1,11 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
 import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
-import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp, Save } from 'lucide-react';
 import { RecipientInput } from './RecipientInput';
 
 interface Recipient {
@@ -28,9 +28,33 @@ export function ComposePanel() {
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [sending, setSending] = useState(false);
   const [encrypted, setEncrypted] = useState(true);
+  const [draftId, setDraftId] = useState<string | null>(null);
   const bodyRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { initializeKeys, encryptionKeyPair, signingKeyPair, initialized } = useCryptoStore();
+
+  const hasContent = to.length > 0 || subject.trim() !== '' || body.trim() !== '';
+
+  const saveDraft = useCallback(async () => {
+    if (!hasContent) return;
+    const params = {
+      to: to.map((r) => ({ address: r.address })),
+      cc: cc.map((r) => ({ address: r.address })),
+      bcc: bcc.map((r) => ({ address: r.address })),
+      subject: subject || '(no subject)',
+      bodyHtml: body || '',
+    };
+    try {
+      if (draftId) {
+        await mailApi.updateDraft(draftId, params);
+      } else {
+        const res = await mailApi.saveDraft(params);
+        setDraftId(res.id);
+      }
+    } catch {
+      // Backend unavailable — silently skip
+    }
+  }, [to, cc, bcc, subject, body, draftId, hasContent]);
 
   // Auto-fill reply info
   useEffect(() => {
@@ -51,7 +75,10 @@ export function ComposePanel() {
 
   if (!composeOpen) return null;
 
-  const handleClose = () => {
+  const handleClose = (discard?: boolean) => {
+    if (!discard && hasContent) {
+      saveDraft(); // fire and forget
+    }
     setComposeOpen(false);
     setReplyToThreadId(null);
     setTo([]);
@@ -61,11 +88,17 @@ export function ComposePanel() {
     setBody('');
     setAttachments([]);
     setShowCcBcc(false);
+    setDraftId(null);
   };
 
   const handleSend = async () => {
     setSending(true);
     try {
+      // Clean up draft if one was auto-saved
+      if (draftId) {
+        mailApi.deleteMessage(draftId).catch(() => {});
+      }
+
       const recipientAddrs = to.map((r) => ({ address: r.address }));
       const ccAddrs = cc.map((r) => ({ address: r.address }));
       const bccAddrs = bcc.map((r) => ({ address: r.address }));
@@ -142,7 +175,7 @@ export function ComposePanel() {
       toast.show('Message could not be sent — backend unavailable');
     } finally {
       setSending(false);
-      handleClose();
+      handleClose(true); // don't save draft — message was sent
       toast.show(encrypted ? 'Encrypted message sent' : 'Message sent');
     }
   };
@@ -229,7 +262,7 @@ export function ComposePanel() {
           <Minus size={14} />
         </button>
         <button
-          onClick={handleClose}
+          onClick={() => handleClose()}
           style={{ background: 'none', border: 'none', color: '#fff', padding: 2, display: 'flex', cursor: 'pointer' }}
         >
           <X size={14} />
@@ -398,7 +431,7 @@ export function ComposePanel() {
         </button>
 
         <button
-          onClick={handleClose}
+          onClick={() => handleClose(true)}
           style={{
             background: 'none',
             border: 'none',

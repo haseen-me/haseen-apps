@@ -38,6 +38,9 @@ export function createMailApi(client: ApiClient): MailApi {
       return res.json();
     },
     getAttachmentUrl: (attachmentID) => `/api/v1/mail/attachments/${attachmentID}`,
+    saveDraft: (params) => client.post('/mail/drafts', params),
+    updateDraft: (draftID, params) => client.put(`/mail/drafts/${draftID}`, params),
+    sendDraft: (draftID) => client.post(`/mail/drafts/${draftID}/send`, {}),
   };
 }
 

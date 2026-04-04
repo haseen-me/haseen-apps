@@ -152,6 +152,41 @@ func (s *Store) DeleteMessage(ctx context.Context, mailboxID, messageID string) 
 	return nil
 }
 
+// UpdateDraftContent replaces the editable content of a draft message.
+func (s *Store) UpdateDraftContent(ctx context.Context, mailboxID, messageID string, req *model.SendMessageRequest) error {
+	toAddrs := FormatAddresses(req.To)
+	ccAddrs := FormatAddresses(req.Cc)
+	bccAddrs := FormatAddresses(req.Bcc)
+	bodyText := stripHTML(req.BodyHtml)
+
+	encSubject := []byte(req.EncryptedSubject)
+	encBody := []byte(req.EncryptedBody)
+	encSessionKey := []byte{}
+	if len(req.EncryptedSessionKeys) > 0 {
+		if data, err := json.Marshal(req.EncryptedSessionKeys); err == nil {
+			encSessionKey = data
+		}
+	}
+
+	tag, err := s.DB.Exec(ctx,
+		`UPDATE mail_messages SET
+		   to_addresses = $3, cc_addresses = $4, bcc_addresses = $5,
+		   subject = $6, body_html = $7, body_text = $8,
+		   encrypted_subject = $9, encrypted_body = $10, encrypted_session_key = $11
+		 WHERE id = $1 AND mailbox_id = $2`,
+		messageID, mailboxID, toAddrs, ccAddrs, bccAddrs,
+		req.Subject, req.BodyHtml, bodyText,
+		encSubject, encBody, encSessionKey,
+	)
+	if err != nil {
+		return err
+	}
+	if tag.RowsAffected() == 0 {
+		return ErrNotFound
+	}
+	return nil
+}
+
 // MoveMessage changes the label (folder) of a message.
 func (s *Store) MoveMessage(ctx context.Context, mailboxID, messageID, labelID string) (*model.Message, error) {
 	tag, err := s.DB.Exec(ctx,

@@ -87,6 +87,11 @@ func main() {
 
 		// Search
 		r.Post("/search", h.Search)
+
+		// Drafts
+		r.Post("/drafts", h.SaveDraft)
+		r.Put("/drafts/{messageID}", h.UpdateDraft)
+		r.Post("/drafts/{messageID}/send", h.SendDraft)
 	})
 
 	// SMTP Server (inbound)
