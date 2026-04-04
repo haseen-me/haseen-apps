@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, MapPin, AlignLeft, Repeat } from 'lucide-react';
+import { X, Clock, MapPin, AlignLeft, Repeat, Palette, Users } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
@@ -23,6 +23,9 @@ export function EventDialog() {
   const [allDay, setAllDay] = useState(false);
   const [recurrence, setRecurrence] = useState('');
   const [calendarId, setCalendarId] = useState('');
+  const [color, setColor] = useState('#4285f4');
+  const [attendees, setAttendees] = useState<string[]>([]);
+  const [attendeeInput, setAttendeeInput] = useState('');
 
   useEffect(() => {
     if (editingEvent) {
@@ -34,6 +37,8 @@ export function EventDialog() {
       setAllDay(editingEvent.allDay);
       setRecurrence(editingEvent.recurrenceRule ?? '');
       setCalendarId(editingEvent.calendarId);
+      setColor(editingEvent.color || '#4285f4');
+      setAttendees([]);
     } else if (selectedDate) {
       setTitle('');
       setDescription('');
@@ -47,6 +52,9 @@ export function EventDialog() {
       setAllDay(false);
       setRecurrence('');
       setCalendarId(calendars[0]?.id ?? '');
+      setColor('#4285f4');
+      setAttendees([]);
+      setAttendeeInput('');
     }
   }, [editingEvent, selectedDate, calendars]);
 
@@ -116,7 +124,7 @@ export function EventDialog() {
           endTime: new Date(end).toISOString(),
           location: encLoc,
           allDay,
-          color: '',
+          color,
           recurrenceRule: recurrence || null,
         });
         toast.show('Event created');
@@ -348,6 +356,82 @@ export function EventDialog() {
               rows={3}
               style={{ ...inputStyle, resize: 'vertical' }}
             />
+          </div>
+
+          {/* Color */}
+          <div>
+            <label style={labelStyle}>
+              <Palette size={14} /> Color
+            </label>
+            <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap' }}>
+              {['#4285f4','#ea4335','#fbbc04','#34a853','#ff6d01','#46bdc6','#7b1fa2','#795548','#616161'].map((c) => (
+                <button
+                  key={c}
+                  onClick={() => setColor(c)}
+                  style={{
+                    width: 26,
+                    height: 26,
+                    borderRadius: '50%',
+                    background: c,
+                    border: color === c ? '2px solid var(--cal-text)' : '2px solid transparent',
+                    cursor: 'pointer',
+                    padding: 0,
+                    outline: color === c ? '2px solid var(--cal-bg)' : 'none',
+                    outlineOffset: -3,
+                  }}
+                />
+              ))}
+            </div>
+          </div>
+
+          {/* Attendees */}
+          <div>
+            <label style={labelStyle}>
+              <Users size={14} /> Attendees
+            </label>
+            <div style={{ display: 'flex', gap: 6 }}>
+              <input
+                value={attendeeInput}
+                onChange={(e) => setAttendeeInput(e.target.value)}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && attendeeInput.trim()) {
+                    e.preventDefault();
+                    const email = attendeeInput.trim().toLowerCase();
+                    if (!attendees.includes(email)) setAttendees([...attendees, email]);
+                    setAttendeeInput('');
+                  }
+                }}
+                placeholder="Add email and press Enter"
+                style={{ ...inputStyle, flex: 1 }}
+              />
+            </div>
+            {attendees.length > 0 && (
+              <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
+                {attendees.map((email) => (
+                  <span
+                    key={email}
+                    style={{
+                      display: 'inline-flex',
+                      alignItems: 'center',
+                      gap: 4,
+                      padding: '2px 8px',
+                      borderRadius: 12,
+                      background: 'var(--cal-bg-muted, #f1f3f4)',
+                      fontSize: 12,
+                      color: 'var(--cal-text-secondary)',
+                    }}
+                  >
+                    {email}
+                    <button
+                      onClick={() => setAttendees(attendees.filter((a) => a !== email))}
+                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', lineHeight: 1 }}
+                    >
+                      <X size={12} />
+                    </button>
+                  </span>
+                ))}
+              </div>
+            )}
           </div>
         </div>
 

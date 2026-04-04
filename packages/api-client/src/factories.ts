@@ -50,6 +50,7 @@ export function createMailApi(client: ApiClient): MailApi {
 export function createDriveApi(client: ApiClient): DriveApi {
   return {
     listFiles: (folderID) => client.get(`/drive/files${folderID ? `?folder=${folderID}` : ''}`),
+    listFolder: (folderID) => client.get(`/drive/folders/${folderID ?? 'root'}`),
     uploadFile: (params) => client.post('/drive/files/upload', params),
     downloadFile: async (fileID) => {
       const token = typeof localStorage !== 'undefined'

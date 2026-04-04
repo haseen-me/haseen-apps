@@ -6,7 +6,7 @@ import { EmptyState } from './EmptyState';
 export function MailboxList() {
   const { activeLabel, threads, loading } = useMailStore();
 
-  const filtered = threads;
+  const filtered = threads.filter((t) => t.labels.includes(activeLabel));
 
   return (
     <div

@@ -3,8 +3,8 @@ import type { Thread, SystemLabel, UserLabel } from '@/types/mail';
 
 interface MailboxState {
   /* Current view */
-  activeLabel: SystemLabel;
-  setActiveLabel: (label: SystemLabel) => void;
+  activeLabel: string;
+  setActiveLabel: (label: string) => void;
 
   /* Threads */
   threads: Thread[];

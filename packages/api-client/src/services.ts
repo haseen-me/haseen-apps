@@ -91,6 +91,7 @@ export interface MailboxResponse {
 /** Drive service API types */
 export interface DriveApi {
   listFiles(folderID?: string): Promise<{ files: DriveFile[] }>;
+  listFolder(folderID?: string): Promise<{ folder: DriveFolder | null; folders: DriveFolder[]; files: DriveFile[]; path: DriveFolder[] }>;
   uploadFile(params: { name: string; encryptedData: ArrayBuffer; encryptedKey: string; folderID?: string }): Promise<{ fileID: string }>;
   downloadFile(fileID: string): Promise<ArrayBuffer>;
   deleteFile(fileID: string): Promise<void>;

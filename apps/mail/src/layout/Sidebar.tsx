@@ -45,6 +45,9 @@ export function Sidebar() {
     (t) => t.labels.includes('inbox') && t.unreadCount > 0
   ).length;
 
+  const countForLabel = (labelId: string) =>
+    threads.filter((t) => t.labels.includes(labelId) && t.unreadCount > 0).length;
+
   return (
     <>
     <aside
@@ -145,7 +148,7 @@ export function Sidebar() {
       <nav style={{ flex: 1, overflow: 'auto', padding: '4px 8px' }}>
         {SYSTEM_LABELS.map((label) => {
           const isActive = activeLabel === label.id;
-          const unread = label.id === 'inbox' ? inboxUnread : 0;
+          const unread = countForLabel(label.id);
           return (
             <button
               key={label.id}
@@ -230,14 +233,16 @@ export function Sidebar() {
             {userLabels.map((label) => (
               <button
                 key={label.id}
+                onClick={() => setActiveLabel(label.id)}
                 style={{
                   width: '100%',
                   padding: '6px 10px',
                   borderRadius: 'var(--mail-radius-sm)',
-                  background: 'transparent',
-                  color: 'var(--mail-text-secondary)',
+                  background: activeLabel === label.id ? 'var(--mail-brand-subtle)' : 'transparent',
+                  color: activeLabel === label.id ? 'var(--mail-brand)' : 'var(--mail-text-secondary)',
                   border: 'none',
                   fontSize: 13,
+                  fontWeight: activeLabel === label.id ? 500 : 400,
                   display: 'flex',
                   alignItems: 'center',
                   gap: 8,

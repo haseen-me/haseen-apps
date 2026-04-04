@@ -5,7 +5,7 @@ import { useToastStore } from '@/store/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
 import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
-import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp, Save } from 'lucide-react';
+import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp, Save, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Link, Code, RemoveFormatting } from 'lucide-react';
 import { RecipientInput } from './RecipientInput';
 
 interface Recipient {
@@ -339,6 +339,37 @@ export function ComposePanel() {
         <ComposeField label="Subject" value={subject} onChange={setSubject} />
       </div>
 
+      {/* Rich text toolbar */}
+      <div
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 1,
+          padding: '4px 16px',
+          borderBottom: '1px solid var(--mail-border)',
+          flexShrink: 0,
+        }}
+      >
+        <ToolbarBtn icon={<Bold size={14} />} label="Bold" cmd="bold" />
+        <ToolbarBtn icon={<Italic size={14} />} label="Italic" cmd="italic" />
+        <ToolbarBtn icon={<Underline size={14} />} label="Underline" cmd="underline" />
+        <ToolbarBtn icon={<Strikethrough size={14} />} label="Strikethrough" cmd="strikeThrough" />
+        <div style={{ width: 1, height: 18, background: 'var(--mail-border)', margin: '0 4px' }} />
+        <ToolbarBtn icon={<List size={14} />} label="Bullet list" cmd="insertUnorderedList" />
+        <ToolbarBtn icon={<ListOrdered size={14} />} label="Numbered list" cmd="insertOrderedList" />
+        <div style={{ width: 1, height: 18, background: 'var(--mail-border)', margin: '0 4px' }} />
+        <ToolbarBtn
+          icon={<Link size={14} />}
+          label="Insert link"
+          onClick={() => {
+            const url = window.prompt('Enter URL:');
+            if (url) document.execCommand('createLink', false, url);
+          }}
+        />
+        <ToolbarBtn icon={<Code size={14} />} label="Inline code" cmd="formatBlock" cmdValue="pre" />
+        <ToolbarBtn icon={<RemoveFormatting size={14} />} label="Clear formatting" cmd="removeFormat" />
+      </div>
+
       {/* Body */}
       <div
         ref={bodyRef}
@@ -539,5 +570,47 @@ function ComposeField({
       />
       {rightAction}
     </div>
+  );
+}
+
+function ToolbarBtn({
+  icon,
+  label,
+  cmd,
+  cmdValue,
+  onClick,
+}: {
+  icon: React.ReactNode;
+  label: string;
+  cmd?: string;
+  cmdValue?: string;
+  onClick?: () => void;
+}) {
+  return (
+    <button
+      title={label}
+      onMouseDown={(e) => {
+        e.preventDefault(); // keep focus in contentEditable
+        if (onClick) {
+          onClick();
+        } else if (cmd) {
+          document.execCommand(cmd, false, cmdValue);
+        }
+      }}
+      style={{
+        background: 'none',
+        border: 'none',
+        color: 'var(--mail-text-muted)',
+        padding: '4px 6px',
+        borderRadius: 4,
+        display: 'flex',
+        alignItems: 'center',
+        cursor: 'pointer',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+    >
+      {icon}
+    </button>
   );
 }

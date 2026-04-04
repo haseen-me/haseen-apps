@@ -57,6 +57,8 @@ export function ThreadRow({ thread }: { thread: Thread }) {
           ? 'var(--mail-brand-subtle)'
           : isSelected
           ? 'var(--mail-bg-active)'
+          : isUnread
+          ? 'var(--mail-bg-unread, rgba(45,184,175,0.04))'
           : 'var(--mail-bg)',
         cursor: 'pointer',
         transition: 'background 0.1s',
@@ -65,7 +67,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
         if (!isActive && !isSelected) e.currentTarget.style.background = 'var(--mail-bg-hover)';
       }}
       onMouseLeave={(e) => {
-        if (!isActive && !isSelected) e.currentTarget.style.background = 'var(--mail-bg)';
+        if (!isActive && !isSelected) e.currentTarget.style.background = isUnread ? 'var(--mail-bg-unread, rgba(45,184,175,0.04))' : 'var(--mail-bg)';
       }}
     >
       {/* Checkbox / Avatar */}

@@ -11,9 +11,9 @@ import {
   ChevronRight,
   ChevronDown,
 } from 'lucide-react';
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
-import { MOCK_FOLDERS } from '@/data/mock';
+import { driveApi } from '@/api/client';
 
 interface NavItem {
   id: string;
@@ -39,8 +39,18 @@ export function Sidebar() {
 
   const [collapsed, setCollapsed] = useState(false);
   const [foldersExpanded, setFoldersExpanded] = useState(true);
+  const [rootFolders, setRootFolders] = useState<Array<{ id: string; name: string; parentId: string | null; createdAt: string }>>([]);
 
-  const rootFolders = MOCK_FOLDERS.filter((f) => f.parentId === null);
+  // Load root folders on mount
+  useEffect(() => {
+    let cancelled = false;
+    driveApi.listFolder().then((data) => {
+      if (!cancelled) setRootFolders(data.folders.map((f) => ({ id: f.id, name: f.name, parentId: f.parentId, createdAt: f.createdAt })));
+    }).catch(() => {
+      // silently fail — sidebar will show no folders
+    });
+    return () => { cancelled = true; };
+  }, []);
 
   return (
     <aside
@@ -243,35 +253,54 @@ export function Sidebar() {
 
       {/* Storage indicator */}
       {!collapsed && (
-        <div
-          style={{
-            padding: '12px 16px',
-            borderTop: '1px solid var(--drive-border)',
-            flexShrink: 0,
-          }}
-        >
-          <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginBottom: 6 }}>
-            2.4 GB of 15 GB used
-          </div>
-          <div
-            style={{
-              height: 4,
-              borderRadius: 2,
-              background: 'var(--drive-border)',
-              overflow: 'hidden',
-            }}
-          >
-            <div
-              style={{
-                width: '16%',
-                height: '100%',
-                borderRadius: 2,
-                background: 'var(--drive-brand)',
-              }}
-            />
-          </div>
-        </div>
+        <StorageIndicator />
       )}
     </aside>
+  );
+}
+
+function formatBytes(bytes: number): string {
+  if (bytes < 1024) return `${bytes} B`;
+  if (bytes < 1024 * 1024) return `${(bytes / 1024).toFixed(1)} KB`;
+  if (bytes < 1024 * 1024 * 1024) return `${(bytes / (1024 * 1024)).toFixed(1)} MB`;
+  return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
+}
+
+function StorageIndicator() {
+  const { files } = useDriveStore();
+  const totalQuota = 15 * 1024 * 1024 * 1024; // 15 GB
+  const used = files.reduce((sum, f) => sum + f.size, 0);
+  const pct = Math.min((used / totalQuota) * 100, 100);
+
+  return (
+    <div
+      style={{
+        padding: '12px 16px',
+        borderTop: '1px solid var(--drive-border)',
+        flexShrink: 0,
+      }}
+    >
+      <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginBottom: 6 }}>
+        {formatBytes(used)} of {formatBytes(totalQuota)} used
+      </div>
+      <div
+        style={{
+          height: 4,
+          borderRadius: 2,
+          background: 'var(--drive-border)',
+          overflow: 'hidden',
+        }}
+      >
+        <div
+          style={{
+            width: `${Math.max(pct, 0.5)}%`,
+            height: '100%',
+            borderRadius: 2,
+            background: pct > 90 ? '#dc3545' : 'var(--drive-brand)',
+            transition: 'width 0.3s ease',
+          }}
+        />
+      </div>
+    </div>
   );
 }

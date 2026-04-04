@@ -77,7 +77,7 @@ export default function App() {
             setPath([]);
           }
         } else {
-          const data = await driveApi.listFiles(
+          const data = await driveApi.listFolder(
             currentFolderId === 'root' ? undefined : currentFolderId,
           );
           if (!cancelled) {
@@ -93,8 +93,22 @@ export default function App() {
                 updatedAt: f.updatedAt,
               })),
             );
-            setFolders([]);
-            setPath([]);
+            setFolders(
+              data.folders.map((f) => ({
+                id: f.id,
+                parentId: f.parentId,
+                name: f.name,
+                createdAt: f.createdAt,
+              })),
+            );
+            setPath(
+              data.path.map((f) => ({
+                id: f.id,
+                parentId: f.parentId,
+                name: f.name,
+                createdAt: f.createdAt,
+              })),
+            );
           }
         }
       } catch {
