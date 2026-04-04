@@ -41,6 +41,8 @@ export function createMailApi(client: ApiClient): MailApi {
     saveDraft: (params) => client.post('/mail/drafts', params),
     updateDraft: (draftID, params) => client.put(`/mail/drafts/${draftID}`, params),
     sendDraft: (draftID) => client.post(`/mail/drafts/${draftID}/send`, {}),
+    createLabel: (params) => client.post('/mail/labels', params),
+    deleteLabel: (labelID) => client.del(`/mail/labels/${labelID}`),
   };
 }
 

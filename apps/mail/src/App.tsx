@@ -15,7 +15,7 @@ import { Toast } from '@haseen-me/ui';
 
 export function App() {
   const [authed, setAuthed] = useState(false);
-  const { setThreads, setLoading } = useMailStore();
+  const { activeLabel, setThreads, setLoading } = useMailStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
@@ -36,7 +36,7 @@ export function App() {
     setLoading(true);
 
     mailApi
-      .getMailbox()
+      .getMailbox(activeLabel)
       .then((data) => {
         if (!cancelled) {
           setThreads(data.threads);
@@ -55,7 +55,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [setThreads, setLoading]);
+  }, [activeLabel, setThreads, setLoading]);
 
   if (!authed) return null;
 

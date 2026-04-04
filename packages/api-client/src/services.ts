@@ -35,6 +35,8 @@ export interface MailApi {
   saveDraft(params: SendMessageParams): Promise<{ id: string }>;
   updateDraft(draftID: string, params: SendMessageParams): Promise<void>;
   sendDraft(draftID: string): Promise<{ id: string }>;
+  createLabel(params: { name: string; color: string }): Promise<{ id: string; name: string; color: string }>;
+  deleteLabel(labelID: string): Promise<void>;
 }
 
 export interface SendMessageParams {

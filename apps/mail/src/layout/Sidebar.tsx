@@ -12,9 +12,11 @@ import {
   PanelLeftClose,
   PanelLeftOpen,
 } from 'lucide-react';
+import { useState } from 'react';
 import { useMailStore } from '@/store/mail';
 import type { SystemLabel } from '@/types/mail';
 import { SYSTEM_LABELS } from '@/types/mail';
+import { LabelDialog } from '@/components/LabelDialog';
 
 const LABEL_ICONS: Record<SystemLabel, React.ReactNode> = {
   inbox: <Inbox size={18} />,
@@ -37,12 +39,14 @@ export function Sidebar() {
     userLabels,
     setSearchOpen,
   } = useMailStore();
+  const [labelDialogOpen, setLabelDialogOpen] = useState(false);
 
   const inboxUnread = threads.filter(
     (t) => t.labels.includes('inbox') && t.unreadCount > 0
   ).length;
 
   return (
+    <>
     <aside
       style={{
         width: sidebarCollapsed ? 'var(--mail-sidebar-collapsed)' : 'var(--mail-sidebar-width)',
@@ -190,7 +194,7 @@ export function Sidebar() {
         })}
 
         {/* User labels */}
-        {userLabels.length > 0 && !sidebarCollapsed && (
+        {!sidebarCollapsed && (
           <div style={{ marginTop: 16 }}>
             <div
               style={{
@@ -207,6 +211,21 @@ export function Sidebar() {
               }}
             >
               <Tag size={11} /> Labels
+              <div style={{ flex: 1 }} />
+              <button
+                onClick={() => setLabelDialogOpen(true)}
+                style={{
+                  background: 'none',
+                  border: 'none',
+                  color: 'var(--mail-text-muted)',
+                  padding: 0,
+                  cursor: 'pointer',
+                  display: 'flex',
+                }}
+                title="Manage labels"
+              >
+                <Plus size={12} />
+              </button>
             </div>
             {userLabels.map((label) => (
               <button
@@ -256,5 +275,7 @@ export function Sidebar() {
         </div>
       )}
     </aside>
+    <LabelDialog open={labelDialogOpen} onClose={() => setLabelDialogOpen(false)} />
+    </>
   );
 }

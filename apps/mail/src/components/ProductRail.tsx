@@ -1,4 +1,5 @@
-import { Mail, HardDrive, CalendarDays, Settings } from 'lucide-react';
+import { Mail, HardDrive, CalendarDays, Settings, LogOut } from 'lucide-react';
+import { useState } from 'react';
 
 const PRODUCTS = [
   { id: 'mail', label: 'Mail', icon: Mail, port: 3001 },
@@ -12,6 +13,15 @@ function getProductUrl(port: number): string {
 }
 
 export function ProductRail({ activeProduct }: { activeProduct: string }) {
+  const [showLogout, setShowLogout] = useState(false);
+
+  const handleLogout = () => {
+    localStorage.removeItem('haseen-auth');
+    localStorage.removeItem('haseen-crypto-keys');
+    const { protocol, hostname } = window.location;
+    window.location.href = `${protocol}//${hostname}:3003/sign-in`;
+  };
+
   return (
     <nav
       style={{
@@ -107,24 +117,54 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
       >
         <Settings size={18} />
       </a>
-      <div
-        title="User"
-        style={{
-          width: 28,
-          height: 28,
-          borderRadius: '50%',
-          background: '#2db8af',
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          color: '#fff',
-          fontSize: 11,
-          fontWeight: 600,
-          marginBottom: 12,
-          cursor: 'default',
-        }}
-      >
-        U
+      <div style={{ position: 'relative' }}>
+        <button
+          onClick={() => setShowLogout(!showLogout)}
+          title="User menu"
+          style={{
+            width: 28,
+            height: 28,
+            borderRadius: '50%',
+            background: '#2db8af',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            color: '#fff',
+            fontSize: 11,
+            fontWeight: 600,
+            marginBottom: 12,
+            cursor: 'pointer',
+            border: 'none',
+          }}
+        >
+          U
+        </button>
+        {showLogout && (
+          <button
+            onClick={handleLogout}
+            style={{
+              position: 'absolute',
+              bottom: 8,
+              left: 44,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 14px',
+              borderRadius: 8,
+              background: '#1a1a2e',
+              color: '#fff',
+              border: '1px solid rgba(255,255,255,0.1)',
+              fontSize: 13,
+              whiteSpace: 'nowrap',
+              cursor: 'pointer',
+              boxShadow: '0 4px 12px rgba(0,0,0,0.3)',
+              zIndex: 100,
+            }}
+          >
+            <LogOut size={14} />
+            Sign out
+          </button>
+        )}
       </div>
     </nav>
   );
