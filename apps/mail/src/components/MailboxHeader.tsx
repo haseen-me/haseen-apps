@@ -9,6 +9,8 @@ import {
   Trash2,
 } from 'lucide-react';
 import { useMailStore } from '@/store/mail';
+import { useToastStore } from '@/store/toast';
+import { mailApi } from '@/api/client';
 import { SYSTEM_LABELS } from '@/types/mail';
 
 export function MailboxHeader() {
@@ -22,6 +24,7 @@ export function MailboxHeader() {
     setLoading,
     setThreads,
   } = useMailStore();
+  const toast = useToastStore();
 
   const labelName =
     SYSTEM_LABELS.find((l) => l.id === activeLabel)?.name ?? activeLabel;
@@ -29,6 +32,68 @@ export function MailboxHeader() {
   const filteredThreads = threads.filter((t) => t.labels.includes(activeLabel));
   const allSelected = filteredThreads.length > 0 && selectedIds.size === filteredThreads.length;
   const someSelected = selectedIds.size > 0;
+
+  const selectedThreads = threads.filter((t) => selectedIds.has(t.id));
+
+  const handleBulkArchive = async () => {
+    try {
+      const moves = selectedThreads.flatMap((t) =>
+        t.messages.map((m) => mailApi.moveMessage(m.id, 'archive')),
+      );
+      await Promise.all(moves);
+      setThreads(threads.filter((t) => !selectedIds.has(t.id)));
+      clearSelection();
+      toast.show(`${selectedIds.size} archived`);
+    } catch {
+      toast.show('Failed to archive');
+    }
+  };
+
+  const handleBulkStar = async () => {
+    try {
+      const updates = selectedThreads.flatMap((t) =>
+        t.messages.map((m) => mailApi.updateMessage(m.id, { starred: true })),
+      );
+      await Promise.all(updates);
+      setThreads(
+        threads.map((t) =>
+          selectedIds.has(t.id)
+            ? { ...t, messages: t.messages.map((m) => ({ ...m, starred: true })) }
+            : t,
+        ),
+      );
+      clearSelection();
+      toast.show(`${selectedIds.size} starred`);
+    } catch {
+      toast.show('Failed to star');
+    }
+  };
+
+  const handleBulkTrash = async () => {
+    try {
+      const moves = selectedThreads.flatMap((t) =>
+        t.messages.map((m) => mailApi.moveMessage(m.id, 'trash')),
+      );
+      await Promise.all(moves);
+      setThreads(threads.filter((t) => !selectedIds.has(t.id)));
+      clearSelection();
+      toast.show(`${selectedIds.size} moved to trash`);
+    } catch {
+      toast.show('Failed to move to trash');
+    }
+  };
+
+  const handleRefresh = async () => {
+    setLoading(true);
+    try {
+      const data = await mailApi.getMailbox(activeLabel);
+      setThreads(data.threads);
+    } catch {
+      // keep current data
+    } finally {
+      setLoading(false);
+    }
+  };
 
   return (
     <div
@@ -84,19 +149,15 @@ export function MailboxHeader() {
       {/* Bulk actions (show when selected) */}
       {someSelected && (
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <HeaderButton icon={<Archive size={16} />} label="Archive" />
-          <HeaderButton icon={<Star size={16} />} label="Star" />
-          <HeaderButton icon={<Trash2 size={16} />} label="Delete" />
-          <HeaderButton icon={<MoreHorizontal size={16} />} label="More" />
+          <HeaderButton icon={<Archive size={16} />} label="Archive" onClick={handleBulkArchive} />
+          <HeaderButton icon={<Star size={16} />} label="Star" onClick={handleBulkStar} />
+          <HeaderButton icon={<Trash2 size={16} />} label="Delete" onClick={handleBulkTrash} />
         </div>
       )}
 
       {/* Refresh */}
       <button
-        onClick={() => {
-          setLoading(true);
-          setTimeout(() => setLoading(false), 600);
-        }}
+        onClick={handleRefresh}
         style={{
           background: 'none',
           border: 'none',
@@ -104,6 +165,7 @@ export function MailboxHeader() {
           padding: 4,
           borderRadius: 4,
           display: 'flex',
+          cursor: 'pointer',
         }}
         title="Refresh"
       >
@@ -118,10 +180,11 @@ export function MailboxHeader() {
   );
 }
 
-function HeaderButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+function HeaderButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
     <button
       title={label}
+      onClick={onClick}
       style={{
         background: 'none',
         border: 'none',

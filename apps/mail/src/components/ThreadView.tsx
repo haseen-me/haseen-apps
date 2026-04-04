@@ -1,5 +1,8 @@
+import { useState } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useDecrypt } from '@/hooks/useDecrypt';
+import { useToastStore } from '@/store/toast';
+import { mailApi } from '@/api/client';
 import { MessageItem } from './MessageItem';
 import {
   ArrowLeft,
@@ -10,11 +13,15 @@ import {
   MoreHorizontal,
   Lock,
   Mail,
+  MailOpen,
+  Star,
 } from 'lucide-react';
 
 export function ThreadView() {
-  const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId } =
+  const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId, setThreads } =
     useMailStore();
+  const toast = useToastStore();
+  const [menuOpen, setMenuOpen] = useState(false);
 
   const thread = threads.find((t) => t.id === activeThreadId);
   const decryptedSubject = useDecrypt(thread?.subject ?? '');
@@ -45,6 +52,70 @@ export function ThreadView() {
     setReplyToThreadId(thread.id);
     setComposeOpen(true);
   };
+
+  const handleArchive = async () => {
+    try {
+      await Promise.all(thread.messages.map((m) => mailApi.moveMessage(m.id, 'archive')));
+      setThreads(threads.filter((t) => t.id !== thread.id));
+      setActiveThreadId(null);
+      toast.show('Conversation archived');
+    } catch {
+      toast.show('Failed to archive');
+    }
+  };
+
+  const handleTrash = async () => {
+    try {
+      await Promise.all(thread.messages.map((m) => mailApi.moveMessage(m.id, 'trash')));
+      setThreads(threads.filter((t) => t.id !== thread.id));
+      setActiveThreadId(null);
+      toast.show('Moved to trash');
+    } catch {
+      toast.show('Failed to move to trash');
+    }
+  };
+
+  const handleToggleRead = async () => {
+    const allRead = thread.messages.every((m) => m.read);
+    const newRead = !allRead;
+    try {
+      await Promise.all(thread.messages.map((m) => mailApi.updateMessage(m.id, { read: newRead })));
+      setThreads(
+        threads.map((t) =>
+          t.id === thread.id
+            ? {
+                ...t,
+                unreadCount: newRead ? 0 : t.messages.length,
+                messages: t.messages.map((m) => ({ ...m, read: newRead })),
+              }
+            : t,
+        ),
+      );
+      toast.show(newRead ? 'Marked as read' : 'Marked as unread');
+    } catch {
+      toast.show('Failed to update');
+    }
+  };
+
+  const handleToggleStar = async () => {
+    const allStarred = thread.messages.every((m) => m.starred);
+    const newStarred = !allStarred;
+    try {
+      await Promise.all(thread.messages.map((m) => mailApi.updateMessage(m.id, { starred: newStarred })));
+      setThreads(
+        threads.map((t) =>
+          t.id === thread.id
+            ? { ...t, messages: t.messages.map((m) => ({ ...m, starred: newStarred })) }
+            : t,
+        ),
+      );
+      toast.show(newStarred ? 'Starred' : 'Unstarred');
+    } catch {
+      toast.show('Failed to update');
+    }
+  };
+
+  const allRead = thread.messages.every((m) => m.read);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -98,10 +169,48 @@ export function ThreadView() {
           </div>
         </div>
 
-        <div style={{ display: 'flex', gap: 2, flexShrink: 0 }}>
-          <ActionButton icon={<Archive size={16} />} label="Archive" />
-          <ActionButton icon={<Trash2 size={16} />} label="Delete" />
-          <ActionButton icon={<MoreHorizontal size={16} />} label="More" />
+        <div style={{ display: 'flex', gap: 2, flexShrink: 0, position: 'relative' }}>
+          <ActionButton icon={<Archive size={16} />} label="Archive" onClick={handleArchive} />
+          <ActionButton icon={<Trash2 size={16} />} label="Delete" onClick={handleTrash} />
+          <ActionButton
+            icon={<MoreHorizontal size={16} />}
+            label="More"
+            onClick={() => setMenuOpen(!menuOpen)}
+          />
+          {menuOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                top: '100%',
+                right: 0,
+                marginTop: 4,
+                background: 'var(--mail-bg)',
+                border: '1px solid var(--mail-border)',
+                borderRadius: 'var(--mail-radius)',
+                boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+                zIndex: 100,
+                minWidth: 160,
+                overflow: 'hidden',
+              }}
+            >
+              <MenuButton
+                icon={allRead ? <MailOpen size={15} /> : <Mail size={15} />}
+                label={allRead ? 'Mark as unread' : 'Mark as read'}
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleToggleRead();
+                }}
+              />
+              <MenuButton
+                icon={<Star size={15} />}
+                label={thread.messages.every((m) => m.starred) ? 'Unstar' : 'Star'}
+                onClick={() => {
+                  setMenuOpen(false);
+                  handleToggleStar();
+                }}
+              />
+            </div>
+          )}
         </div>
       </div>
 
@@ -175,10 +284,11 @@ export function ThreadView() {
   );
 }
 
-function ActionButton({ icon, label }: { icon: React.ReactNode; label: string }) {
+function ActionButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
   return (
     <button
       title={label}
+      onClick={onClick}
       style={{
         background: 'none',
         border: 'none',
@@ -190,6 +300,32 @@ function ActionButton({ icon, label }: { icon: React.ReactNode; label: string })
       }}
     >
       {icon}
+    </button>
+  );
+}
+
+function MenuButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick: () => void }) {
+  return (
+    <button
+      onClick={onClick}
+      style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        width: '100%',
+        padding: '8px 12px',
+        background: 'none',
+        border: 'none',
+        color: 'var(--mail-text)',
+        fontSize: 13,
+        cursor: 'pointer',
+        textAlign: 'left',
+      }}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
+      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
+    >
+      {icon}
+      {label}
     </button>
   );
 }

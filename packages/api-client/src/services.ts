@@ -37,6 +37,7 @@ export interface MailApi {
   sendDraft(draftID: string): Promise<{ id: string }>;
   createLabel(params: { name: string; color: string }): Promise<{ id: string; name: string; color: string }>;
   deleteLabel(labelID: string): Promise<void>;
+  listLabels(): Promise<{ id: string; name: string; color: string; isSystem: boolean }[]>;
 }
 
 export interface SendMessageParams {
@@ -93,6 +94,9 @@ export interface DriveApi {
   uploadFile(params: { name: string; encryptedData: ArrayBuffer; encryptedKey: string; folderID?: string }): Promise<{ fileID: string }>;
   downloadFile(fileID: string): Promise<ArrayBuffer>;
   deleteFile(fileID: string): Promise<void>;
+  renameFile(fileID: string, name: string): Promise<DriveFile>;
+  moveFile(fileID: string, folderID: string): Promise<DriveFile>;
+  shareFile(fileID: string, params: { email: string; permission: 'read' | 'write' }): Promise<void>;
   search(query: string): Promise<{ files: DriveFile[]; folders: DriveFolder[] }>;
   listTrash(): Promise<{ files: DriveFile[] }>;
   restoreFile(fileID: string): Promise<DriveFile>;

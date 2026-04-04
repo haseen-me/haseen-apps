@@ -7,6 +7,28 @@ import (
 	"github.com/haseen-me/haseen-apps/services/mail/internal/model"
 )
 
+// ListLabels returns all labels for the current user's mailbox.
+func (h *Handler) ListLabels(w http.ResponseWriter, r *http.Request) {
+	ctx := r.Context()
+	userID := UserID(r)
+
+	mb, err := h.Store.GetMailboxByUser(ctx, userID)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "mailbox not found")
+		return
+	}
+
+	labels, err := h.Store.GetLabels(ctx, mb.ID)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "failed to list labels")
+		return
+	}
+	if labels == nil {
+		labels = []model.Label{}
+	}
+	h.JSON(w, http.StatusOK, labels)
+}
+
 // CreateLabel creates a new user label.
 func (h *Handler) CreateLabel(w http.ResponseWriter, r *http.Request) {
 	ctx := r.Context()

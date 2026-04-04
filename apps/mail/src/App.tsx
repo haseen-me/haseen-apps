@@ -15,7 +15,7 @@ import { Toast } from '@haseen-me/ui';
 
 export function App() {
   const [authed, setAuthed] = useState(false);
-  const { activeLabel, setThreads, setLoading } = useMailStore();
+  const { activeLabel, activeThreadId, threads, setThreads, setLoading, setUserLabels } = useMailStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
@@ -56,6 +56,41 @@ export function App() {
       cancelled = true;
     };
   }, [activeLabel, setThreads, setLoading]);
+
+  // Load user labels on mount
+  useEffect(() => {
+    mailApi
+      .listLabels()
+      .then((labels) => {
+        const userLabels = labels
+          .filter((l) => !l.isSystem)
+          .map((l) => ({ id: l.id, name: l.name, color: l.color }));
+        setUserLabels(userLabels);
+      })
+      .catch(() => {
+        // Labels API unavailable — keep empty
+      });
+  }, [setUserLabels]);
+
+  // Auto mark-as-read when opening a thread
+  useEffect(() => {
+    if (!activeThreadId) return;
+    const thread = threads.find((t) => t.id === activeThreadId);
+    if (!thread || thread.unreadCount === 0) return;
+
+    const unreadMsgs = thread.messages.filter((m) => !m.read);
+    if (unreadMsgs.length === 0) return;
+
+    Promise.all(unreadMsgs.map((m) => mailApi.updateMessage(m.id, { read: true }))).catch(() => {});
+    // Optimistic update
+    setThreads(
+      threads.map((t) =>
+        t.id === activeThreadId
+          ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) }
+          : t,
+      ),
+    );
+  }, [activeThreadId]);
 
   if (!authed) return null;
 

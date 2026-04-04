@@ -43,6 +43,7 @@ export function createMailApi(client: ApiClient): MailApi {
     sendDraft: (draftID) => client.post(`/mail/drafts/${draftID}/send`, {}),
     createLabel: (params) => client.post('/mail/labels', params),
     deleteLabel: (labelID) => client.del(`/mail/labels/${labelID}`),
+    listLabels: () => client.get('/mail/labels'),
   };
 }
 
@@ -61,6 +62,9 @@ export function createDriveApi(client: ApiClient): DriveApi {
       return response.arrayBuffer();
     },
     deleteFile: (id) => client.del(`/drive/files/${id}`),
+    renameFile: (id, name) => client.put(`/drive/files/${id}`, { name }),
+    moveFile: (id, folderID) => client.post(`/drive/files/${id}/move`, { folderID }),
+    shareFile: (id, params) => client.post(`/drive/files/${id}/share`, params),
     search: (query) => client.post('/drive/search', { query }),
     listTrash: () => client.get('/drive/trash'),
     restoreFile: (fileID) => client.post(`/drive/trash/${fileID}/restore`, {}),

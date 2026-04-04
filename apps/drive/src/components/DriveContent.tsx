@@ -26,10 +26,11 @@ function sortFolders(items: Folder[], dir: SortDir): Folder[] {
 }
 
 export function DriveContent() {
-  const { folders, files, loading, viewMode, sortField, sortDir } = useDriveStore();
+  const { folders, files, loading, viewMode, sortField, sortDir, currentFolderId } = useDriveStore();
 
   const sortedFolders = sortFolders(folders, sortDir);
   const sortedFiles = sortFiles(files, sortField, sortDir);
+  const isTrash = currentFolderId === '__trash';
 
   if (loading) {
     return (
@@ -94,7 +95,7 @@ export function DriveContent() {
               }}
             >
               {sortedFiles.map((file) => (
-                <FileCard key={file.id} file={file} />
+                <FileCard key={file.id} file={file} isTrash={isTrash} />
               ))}
             </div>
           ) : (
@@ -123,9 +124,10 @@ export function DriveContent() {
                 <span style={{ flex: 1 }}>Name</span>
                 <span style={{ width: 120, textAlign: 'right' }}>Modified</span>
                 <span style={{ width: 80, textAlign: 'right' }}>Size</span>
+                <span style={{ width: 28 }} />
               </div>
               {sortedFiles.map((file) => (
-                <FileRow key={file.id} file={file} />
+                <FileRow key={file.id} file={file} isTrash={isTrash} />
               ))}
             </div>
           )}

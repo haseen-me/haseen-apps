@@ -77,6 +77,7 @@ func main() {
 		r.Get("/threads/{threadID}", h.GetThread)
 
 		// Labels
+		r.Get("/labels", h.ListLabels)
 		r.Post("/labels", h.CreateLabel)
 		r.Put("/labels/{labelID}", h.UpdateLabel)
 		r.Delete("/labels/{labelID}", h.DeleteLabel)
