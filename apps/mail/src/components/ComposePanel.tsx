@@ -6,6 +6,12 @@ import { sealEnvelope } from '@haseen-me/crypto';
 import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
 import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp } from 'lucide-react';
+import { RecipientInput } from './RecipientInput';
+
+interface Recipient {
+  address: string;
+  name?: string;
+}
 
 export function ComposePanel() {
   const { composeOpen, setComposeOpen, replyToThreadId, setReplyToThreadId, threads } =
@@ -13,9 +19,9 @@ export function ComposePanel() {
   const toast = useToastStore();
 
   const [minimized, setMinimized] = useState(false);
-  const [to, setTo] = useState('');
-  const [cc, setCc] = useState('');
-  const [bcc, setBcc] = useState('');
+  const [to, setTo] = useState<Recipient[]>([]);
+  const [cc, setCc] = useState<Recipient[]>([]);
+  const [bcc, setBcc] = useState<Recipient[]>([]);
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
   const [attachments, setAttachments] = useState<File[]>([]);
@@ -32,7 +38,7 @@ export function ComposePanel() {
       const thread = threads.find((t) => t.id === replyToThreadId);
       if (thread) {
         const lastMsg = thread.messages[thread.messages.length - 1];
-        setTo(lastMsg.from.address);
+        setTo([{ address: lastMsg.from.address }]);
         setSubject(thread.subject.startsWith('Re:') ? thread.subject : `Re: ${thread.subject}`);
       }
     }
@@ -48,9 +54,9 @@ export function ComposePanel() {
   const handleClose = () => {
     setComposeOpen(false);
     setReplyToThreadId(null);
-    setTo('');
-    setCc('');
-    setBcc('');
+    setTo([]);
+    setCc([]);
+    setBcc([]);
     setSubject('');
     setBody('');
     setAttachments([]);
@@ -60,9 +66,9 @@ export function ComposePanel() {
   const handleSend = async () => {
     setSending(true);
     try {
-      const recipientAddrs = to.split(',').map((e) => ({ address: e.trim() })).filter((a) => a.address);
-      const ccAddrs = cc ? cc.split(',').map((e) => ({ address: e.trim() })).filter((a) => a.address) : [];
-      const bccAddrs = bcc ? bcc.split(',').map((e) => ({ address: e.trim() })).filter((a) => a.address) : [];
+      const recipientAddrs = to.map((r) => ({ address: r.address }));
+      const ccAddrs = cc.map((r) => ({ address: r.address }));
+      const bccAddrs = bcc.map((r) => ({ address: r.address }));
 
       if (encrypted && encryptionKeyPair && signingKeyPair) {
         // Look up recipient public keys from keyserver
@@ -232,9 +238,9 @@ export function ComposePanel() {
 
       {/* Fields */}
       <div style={{ padding: '0 16px', flexShrink: 0 }}>
-        <ComposeField
+        <RecipientInput
           label="To"
-          value={to}
+          recipients={to}
           onChange={setTo}
           rightAction={
             !showCcBcc ? (
@@ -256,8 +262,8 @@ export function ComposePanel() {
         />
         {showCcBcc && (
           <>
-            <ComposeField label="Cc" value={cc} onChange={setCc} />
-            <ComposeField label="Bcc" value={bcc} onChange={setBcc} />
+            <RecipientInput label="Cc" recipients={cc} onChange={setCc} />
+            <RecipientInput label="Bcc" recipients={bcc} onChange={setBcc} />
           </>
         )}
         <ComposeField label="Subject" value={subject} onChange={setSubject} />
@@ -324,19 +330,19 @@ export function ComposePanel() {
       >
         <button
           onClick={handleSend}
-          disabled={sending || !to.trim()}
+          disabled={sending || to.length === 0}
           style={{
             display: 'flex',
             alignItems: 'center',
             gap: 6,
             padding: '8px 20px',
             borderRadius: 'var(--mail-radius)',
-            background: sending || !to.trim() ? 'var(--mail-text-muted)' : 'var(--mail-brand)',
+            background: sending || to.length === 0 ? 'var(--mail-text-muted)' : 'var(--mail-brand)',
             color: '#fff',
             border: 'none',
             fontWeight: 600,
             fontSize: 14,
-            cursor: sending || !to.trim() ? 'default' : 'pointer',
+            cursor: sending || to.length === 0 ? 'default' : 'pointer',
             transition: 'background 0.15s',
           }}
         >

@@ -1,20 +1,69 @@
 import { Search, X, FolderIcon, FileText } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
-import { MOCK_FILES, MOCK_FOLDERS } from '@/data/mock';
+import { driveApi } from '@/api/client';
 import { getFileIcon, formatFileSize } from '@/types/drive';
+import type { DriveFile, Folder } from '@/types/drive';
 
 export function SearchOverlay() {
   const { searchOpen, setSearchOpen, setCurrentFolderId } = useDriveStore();
   const [query, setQuery] = useState('');
+  const [matchingFiles, setMatchingFiles] = useState<DriveFile[]>([]);
+  const [matchingFolders, setMatchingFolders] = useState<Folder[]>([]);
+  const [searching, setSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   useEffect(() => {
     if (searchOpen) {
       setQuery('');
+      setMatchingFiles([]);
+      setMatchingFolders([]);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [searchOpen]);
+
+  // Debounced API search
+  useEffect(() => {
+    if (!query.trim()) {
+      setMatchingFiles([]);
+      setMatchingFolders([]);
+      setSearching(false);
+      return;
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await driveApi.search(query.trim());
+        setMatchingFiles(
+          (data.files ?? []).map((f) => ({
+            id: f.id,
+            folderId: f.folderID,
+            name: f.name,
+            mimeType: f.mimeType,
+            size: f.size,
+            createdAt: f.createdAt,
+            updatedAt: f.updatedAt,
+          })),
+        );
+        setMatchingFolders(
+          (data.folders ?? []).map((f) => ({
+            id: f.id,
+            parentId: f.parentId,
+            name: f.name,
+            createdAt: f.createdAt,
+          })),
+        );
+      } catch {
+        setMatchingFiles([]);
+        setMatchingFolders([]);
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(debounceRef.current);
+  }, [query]);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -37,10 +86,6 @@ export function SearchOverlay() {
   }, [setSearchOpen]);
 
   if (!searchOpen) return null;
-
-  const lq = query.toLowerCase();
-  const matchingFolders = query ? MOCK_FOLDERS.filter((f) => f.name.toLowerCase().includes(lq)) : [];
-  const matchingFiles = query ? MOCK_FILES.filter((f) => f.name.toLowerCase().includes(lq)) : [];
 
   return (
     <div
@@ -121,7 +166,7 @@ export function SearchOverlay() {
             </div>
           )}
 
-          {query && matchingFolders.length === 0 && matchingFiles.length === 0 && (
+          {query && !searching && matchingFolders.length === 0 && matchingFiles.length === 0 && (
             <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--drive-text-muted)', fontSize: 13 }}>
               No results for &quot;{query}&quot;
             </div>

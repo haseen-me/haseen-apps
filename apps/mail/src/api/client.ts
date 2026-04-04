@@ -1,4 +1,4 @@
-import { createClient, createMailApi, createAuthApi, createKeysApi } from '@haseen-me/api-client';
+import { createClient, createMailApi, createAuthApi, createKeysApi, createContactsApi } from '@haseen-me/api-client';
 
 function getToken(): string | null {
   try {
@@ -13,4 +13,5 @@ const client = createClient({ getToken });
 export const mailApi = createMailApi(client);
 export const authApi = createAuthApi(client);
 export const keysApi = createKeysApi(client);
+export const contactsApi = createContactsApi(client);
 export { client };

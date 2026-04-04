@@ -18,6 +18,7 @@ export type {
   Attachment,
   DriveApi,
   DriveFile,
+  DriveFolder,
   KeysApi,
   PublicKeyBundle,
   CalendarApi,

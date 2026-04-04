@@ -1,12 +1,17 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMailStore } from '@/store/mail';
+import { mailApi } from '@/api/client';
 import { Search, X, Mail, ArrowRight } from 'lucide-react';
+import type { Thread } from '@/types/mail';
 
 export function SearchOverlay() {
   const { searchOpen, setSearchOpen, setSearchQuery, threads, setActiveThreadId, setActiveLabel } =
     useMailStore();
   const [query, setQuery] = useState('');
+  const [results, setResults] = useState<Thread[]>([]);
+  const [searching, setSearching] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
+  const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
   // Keyboard shortcut
   useEffect(() => {
@@ -27,28 +32,49 @@ export function SearchOverlay() {
   useEffect(() => {
     if (searchOpen) {
       setQuery('');
+      setResults([]);
       setTimeout(() => inputRef.current?.focus(), 50);
     }
   }, [searchOpen]);
 
-  if (!searchOpen) return null;
+  // Debounced search via API
+  useEffect(() => {
+    if (!query.trim()) {
+      setResults([]);
+      setSearching(false);
+      return;
+    }
+    clearTimeout(debounceRef.current);
+    debounceRef.current = setTimeout(async () => {
+      setSearching(true);
+      try {
+        const data = await mailApi.search(query.trim());
+        setResults(data.threads as Thread[]);
+      } catch {
+        // Backend unavailable — fall back to in-memory filter
+        const lowerQ = query.toLowerCase();
+        setResults(
+          threads.filter(
+            (t: Thread) =>
+              t.subject.toLowerCase().includes(lowerQ) ||
+              t.snippet.toLowerCase().includes(lowerQ) ||
+              t.from.address.toLowerCase().includes(lowerQ) ||
+              (t.from.name && t.from.name.toLowerCase().includes(lowerQ)),
+          ),
+        );
+      } finally {
+        setSearching(false);
+      }
+    }, 250);
+    return () => clearTimeout(debounceRef.current);
+  }, [query, threads]);
 
-  const lowerQ = query.toLowerCase();
-  const results = query.trim()
-    ? threads.filter(
-        (t) =>
-          t.subject.toLowerCase().includes(lowerQ) ||
-          t.snippet.toLowerCase().includes(lowerQ) ||
-          t.from.address.toLowerCase().includes(lowerQ) ||
-          (t.from.name && t.from.name.toLowerCase().includes(lowerQ))
-      )
-    : [];
+  if (!searchOpen) return null;
 
   const handleSelect = (threadId: string) => {
     setActiveThreadId(threadId);
     setSearchOpen(false);
-    // Switch to the label where the thread lives
-    const thread = threads.find((t) => t.id === threadId);
+    const thread = threads.find((t: Thread) => t.id === threadId);
     if (thread && thread.labels.length) {
       const primary = thread.labels[0];
       if (['inbox', 'sent', 'drafts', 'archive', 'spam', 'trash', 'starred'].includes(primary)) {
@@ -135,7 +161,7 @@ export function SearchOverlay() {
 
         {/* Results */}
         <div style={{ flex: 1, overflow: 'auto' }}>
-          {query.trim() && results.length === 0 && (
+          {query.trim() && !searching && results.length === 0 && (
             <div
               style={{
                 padding: 32,

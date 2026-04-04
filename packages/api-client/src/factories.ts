@@ -56,6 +56,7 @@ export function createDriveApi(client: ApiClient): DriveApi {
       return response.arrayBuffer();
     },
     deleteFile: (id) => client.del(`/drive/files/${id}`),
+    search: (query) => client.post('/drive/search', { query }),
   };
 }
 

@@ -88,6 +88,7 @@ export interface DriveApi {
   uploadFile(params: { name: string; encryptedData: ArrayBuffer; encryptedKey: string; folderID?: string }): Promise<{ fileID: string }>;
   downloadFile(fileID: string): Promise<ArrayBuffer>;
   deleteFile(fileID: string): Promise<void>;
+  search(query: string): Promise<{ files: DriveFile[]; folders: DriveFolder[] }>;
 }
 
 export interface DriveFile {
@@ -99,6 +100,13 @@ export interface DriveFile {
   encryptedKey: string;
   createdAt: string;
   updatedAt: string;
+}
+
+export interface DriveFolder {
+  id: string;
+  name: string;
+  parentId: string | null;
+  createdAt: string;
 }
 
 /** Key server API types */
