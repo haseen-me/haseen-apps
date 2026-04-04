@@ -10,7 +10,11 @@ import (
 )
 
 func (s *Store) ListEvents(ctx context.Context, ownerID string, start, end time.Time, calendarID *string) ([]model.Event, error) {
-	query := "SELECT id, calendar_id, owner_id, title, description, start_time, end_time, all_day, location, recurrence_rule, color, created_at, updated_at FROM events WHERE owner_id = $1 AND start_time < $3 AND end_time > $2"
+	// Query both: non-recurring events in window + recurring templates that started before window end
+	query := `SELECT id, calendar_id, owner_id, title, description, start_time, end_time, all_day, location, recurrence_rule, color, created_at, updated_at
+		FROM events WHERE owner_id = $1
+		AND ((recurrence_rule IS NULL AND start_time < $3 AND end_time > $2)
+		  OR (recurrence_rule IS NOT NULL AND start_time < $3))`
 	args := []interface{}{ownerID, start, end}
 
 	if calendarID != nil {
@@ -33,7 +37,14 @@ func (s *Store) ListEvents(ctx context.Context, ownerID string, start, end time.
 			&e.Color, &e.CreatedAt, &e.UpdatedAt); err != nil {
 			return nil, fmt.Errorf("scan event: %w", err)
 		}
-		events = append(events, e)
+
+		if e.RecurrenceRule != nil && *e.RecurrenceRule != "" {
+			// Expand recurring event into instances within the window
+			instances := expandRecurring(e, start, end)
+			events = append(events, instances...)
+		} else {
+			events = append(events, e)
+		}
 	}
 	return events, rows.Err()
 }

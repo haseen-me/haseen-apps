@@ -87,7 +87,7 @@ export default function App() {
               endTime: e.endTime,
               allDay: e.allDay,
               location: decryptField(e.location ?? ''),
-              recurrenceRule: null,
+              recurrenceRule: e.recurrenceRule ?? null,
               color: e.color,
               createdAt: e.createdAt ?? '',
               updatedAt: e.updatedAt ?? '',

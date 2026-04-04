@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react';
-import { X, Clock, MapPin, AlignLeft } from 'lucide-react';
+import { X, Clock, MapPin, AlignLeft, Repeat } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@/store/toast';
@@ -21,6 +21,7 @@ export function EventDialog() {
   const [end, setEnd] = useState('');
   const [location, setLocation] = useState('');
   const [allDay, setAllDay] = useState(false);
+  const [recurrence, setRecurrence] = useState('');
   const [calendarId, setCalendarId] = useState('');
 
   useEffect(() => {
@@ -31,6 +32,7 @@ export function EventDialog() {
       setEnd(toLocalDatetimeStr(new Date(editingEvent.endTime)));
       setLocation(decryptField(editingEvent.location));
       setAllDay(editingEvent.allDay);
+      setRecurrence(editingEvent.recurrenceRule ?? '');
       setCalendarId(editingEvent.calendarId);
     } else if (selectedDate) {
       setTitle('');
@@ -43,6 +45,7 @@ export function EventDialog() {
       setEnd(toLocalDatetimeStr(e));
       setLocation('');
       setAllDay(false);
+      setRecurrence('');
       setCalendarId(calendars[0]?.id ?? '');
     }
   }, [editingEvent, selectedDate, calendars]);
@@ -101,6 +104,7 @@ export function EventDialog() {
           endTime: new Date(end).toISOString(),
           location: encLoc,
           allDay,
+          recurrenceRule: recurrence || null,
         });
         toast.show('Event updated');
       } else {
@@ -113,6 +117,7 @@ export function EventDialog() {
           location: encLoc,
           allDay,
           color: '',
+          recurrenceRule: recurrence || null,
         });
         toast.show('Event created');
       }
@@ -260,6 +265,24 @@ export function EventDialog() {
               />
               All day
             </label>
+          </div>
+
+          {/* Recurrence */}
+          <div>
+            <label style={labelStyle}>
+              <Repeat size={14} /> Repeat
+            </label>
+            <select
+              value={recurrence}
+              onChange={(e) => setRecurrence(e.target.value)}
+              style={{ ...inputStyle, cursor: 'pointer' }}
+            >
+              <option value="">Does not repeat</option>
+              <option value="FREQ=DAILY">Daily</option>
+              <option value="FREQ=WEEKLY">Weekly</option>
+              <option value="FREQ=MONTHLY">Monthly</option>
+              <option value="FREQ=YEARLY">Yearly</option>
+            </select>
           </div>
 
           {/* Location */}
