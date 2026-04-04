@@ -5,9 +5,12 @@ import {
   ArrowUpDown,
   Upload,
   FolderPlus,
+  Trash2,
 } from 'lucide-react';
 import { useState, useRef, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
+import { driveApi } from '@/api/client';
+import { useToastStore } from '@/store/toast';
 import type { SortField, SortDir } from '@/types/drive';
 
 const SORT_OPTIONS: { field: SortField; label: string }[] = [
@@ -18,6 +21,7 @@ const SORT_OPTIONS: { field: SortField; label: string }[] = [
 
 export function DriveHeader() {
   const {
+    currentFolderId,
     path,
     setCurrentFolderId,
     viewMode,
@@ -29,7 +33,14 @@ export function DriveHeader() {
     setNewFolderOpen,
     selectedIds,
     clearSelection,
+    files,
+    setFiles,
   } = useDriveStore();
+  const toast = useToastStore();
+
+  const isTrash = currentFolderId === '__trash';
+  const isShared = currentFolderId === '__shared';
+  const isSpecial = isTrash || isShared;
 
   const [sortOpen, setSortOpen] = useState(false);
   const sortRef = useRef<HTMLDivElement>(null);
@@ -42,7 +53,11 @@ export function DriveHeader() {
     return () => document.removeEventListener('mousedown', handler);
   }, []);
 
-  const breadcrumbs = [{ id: 'root', name: 'My Drive' }, ...path];
+  const breadcrumbs = isTrash
+    ? [{ id: '__trash', name: 'Trash' }]
+    : isShared
+      ? [{ id: '__shared', name: 'Shared with me' }]
+      : [{ id: 'root', name: 'My Drive' }, ...path];
 
   return (
     <div
@@ -205,45 +220,79 @@ export function DriveHeader() {
       </div>
 
       {/* New folder */}
-      <button
-        onClick={() => setNewFolderOpen(true)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 12px',
-          borderRadius: 'var(--drive-radius-sm)',
-          border: '1px solid var(--drive-border)',
-          background: 'var(--drive-bg)',
-          color: 'var(--drive-text-secondary)',
-          fontSize: 13,
-        }}
-      >
-        <FolderPlus size={16} />
-      </button>
+      {!isSpecial && (
+        <button
+          onClick={() => setNewFolderOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 12px',
+            borderRadius: 'var(--drive-radius-sm)',
+            border: '1px solid var(--drive-border)',
+            background: 'var(--drive-bg)',
+            color: 'var(--drive-text-secondary)',
+            fontSize: 13,
+          }}
+        >
+          <FolderPlus size={16} />
+        </button>
+      )}
 
       {/* Upload */}
-      <button
-        onClick={() => setUploadOpen(true)}
-        style={{
-          display: 'flex',
-          alignItems: 'center',
-          gap: 6,
-          padding: '6px 14px',
-          borderRadius: 'var(--drive-radius-sm)',
-          border: 'none',
-          background: 'var(--drive-brand)',
-          color: '#fff',
-          fontSize: 13,
-          fontWeight: 600,
-          transition: 'background 0.15s',
-        }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-brand-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--drive-brand)')}
-      >
-        <Upload size={16} />
-        Upload
-      </button>
+      {!isSpecial && (
+        <button
+          onClick={() => setUploadOpen(true)}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 14px',
+            borderRadius: 'var(--drive-radius-sm)',
+            border: 'none',
+            background: 'var(--drive-brand)',
+            color: '#fff',
+            fontSize: 13,
+            fontWeight: 600,
+            transition: 'background 0.15s',
+          }}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-brand-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--drive-brand)')}
+        >
+          <Upload size={16} />
+          Upload
+        </button>
+      )}
+
+      {/* Empty Trash */}
+      {isTrash && files.length > 0 && (
+        <button
+          onClick={async () => {
+            try {
+              await driveApi.emptyTrash();
+              setFiles([]);
+              toast.show('Trash emptied');
+            } catch {
+              toast.show('Failed to empty trash');
+            }
+          }}
+          style={{
+            display: 'flex',
+            alignItems: 'center',
+            gap: 6,
+            padding: '6px 14px',
+            borderRadius: 'var(--drive-radius-sm)',
+            border: 'none',
+            background: '#dc2626',
+            color: '#fff',
+            fontSize: 13,
+            fontWeight: 600,
+          }}
+        >
+          <Trash2 size={14} />
+          Empty Trash
+        </button>
+      )}
     </div>
   );
 }

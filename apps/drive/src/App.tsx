@@ -36,27 +36,66 @@ export default function App() {
     let cancelled = false;
     setLoading(true);
 
-    driveApi
-      .listFiles(currentFolderId === 'root' ? undefined : currentFolderId)
-      .then((data) => {
-        if (!cancelled) {
-          setFiles(
-            data.files.map((f) => ({
-              id: f.id,
-              folderId: f.folderID,
-              name: f.name,
-              mimeType: f.mimeType,
-              size: f.size,
-              encryptedKey: f.encryptedKey,
-              createdAt: f.createdAt,
-              updatedAt: f.updatedAt,
-            })),
+    const loadData = async () => {
+      try {
+        if (currentFolderId === '__trash') {
+          const data = await driveApi.listTrash();
+          if (!cancelled) {
+            setFiles(
+              data.files.map((f) => ({
+                id: f.id,
+                folderId: f.folderID,
+                name: f.name,
+                mimeType: f.mimeType,
+                size: f.size,
+                encryptedKey: f.encryptedKey,
+                createdAt: f.createdAt,
+                updatedAt: f.updatedAt,
+              })),
+            );
+            setFolders([]);
+            setPath([]);
+          }
+        } else if (currentFolderId === '__shared') {
+          const data = await driveApi.sharedWithMe();
+          if (!cancelled) {
+            setFiles(
+              data.files.map((f) => ({
+                id: f.id,
+                folderId: f.folderID,
+                name: f.name,
+                mimeType: f.mimeType,
+                size: f.size,
+                encryptedKey: f.encryptedKey,
+                createdAt: f.createdAt,
+                updatedAt: f.updatedAt,
+              })),
+            );
+            setFolders([]);
+            setPath([]);
+          }
+        } else {
+          const data = await driveApi.listFiles(
+            currentFolderId === 'root' ? undefined : currentFolderId,
           );
-          setFolders([]);
-          setPath([]);
+          if (!cancelled) {
+            setFiles(
+              data.files.map((f) => ({
+                id: f.id,
+                folderId: f.folderID,
+                name: f.name,
+                mimeType: f.mimeType,
+                size: f.size,
+                encryptedKey: f.encryptedKey,
+                createdAt: f.createdAt,
+                updatedAt: f.updatedAt,
+              })),
+            );
+            setFolders([]);
+            setPath([]);
+          }
         }
-      })
-      .catch(() => {
+      } catch {
         // Backend unavailable — use mock data
         if (!cancelled) {
           const folders = MOCK_FOLDERS.filter((f) => {
@@ -84,10 +123,12 @@ export default function App() {
           setFiles(files);
           setPath(path);
         }
-      })
-      .finally(() => {
+      } finally {
         if (!cancelled) setLoading(false);
-      });
+      }
+    };
+
+    loadData();
 
     return () => {
       cancelled = true;

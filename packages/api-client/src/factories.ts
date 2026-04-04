@@ -57,6 +57,10 @@ export function createDriveApi(client: ApiClient): DriveApi {
     },
     deleteFile: (id) => client.del(`/drive/files/${id}`),
     search: (query) => client.post('/drive/search', { query }),
+    listTrash: () => client.get('/drive/trash'),
+    restoreFile: (fileID) => client.post(`/drive/trash/${fileID}/restore`, {}),
+    emptyTrash: () => client.del('/drive/trash'),
+    sharedWithMe: () => client.get('/drive/shared'),
   };
 }
 

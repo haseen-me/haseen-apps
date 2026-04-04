@@ -35,12 +35,12 @@ func (s *Store) GetSubfolders(ctx context.Context, ownerID string, parentID *str
 	var args []interface{}
 	if parentID != nil {
 		query = `SELECT id, owner_id, parent_id, name, created_at
-			 FROM drive_folders WHERE owner_id = $1 AND parent_id = $2
+			 FROM drive_folders WHERE owner_id = $1 AND parent_id = $2 AND deleted_at IS NULL
 			 ORDER BY name ASC`
 		args = []interface{}{ownerID, *parentID}
 	} else {
 		query = `SELECT id, owner_id, parent_id, name, created_at
-			 FROM drive_folders WHERE owner_id = $1 AND parent_id IS NULL
+			 FROM drive_folders WHERE owner_id = $1 AND parent_id IS NULL AND deleted_at IS NULL
 			 ORDER BY name ASC`
 		args = []interface{}{ownerID}
 	}

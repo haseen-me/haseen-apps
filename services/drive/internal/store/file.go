@@ -21,7 +21,7 @@ func (s *Store) GetFile(ctx context.Context, ownerID, fileID string) (*model.Fil
 	f := &model.File{}
 	err := s.DB.QueryRow(ctx,
 		`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at
-		 FROM drive_files WHERE id = $1 AND owner_id = $2`,
+		 FROM drive_files WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL`,
 		fileID, ownerID,
 	).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
 	if err != nil {
@@ -35,12 +35,12 @@ func (s *Store) GetFilesByFolder(ctx context.Context, ownerID string, folderID *
 	var args []interface{}
 	if folderID != nil {
 		query = `SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at
-			 FROM drive_files WHERE owner_id = $1 AND folder_id = $2
+			 FROM drive_files WHERE owner_id = $1 AND folder_id = $2 AND deleted_at IS NULL
 			 ORDER BY name ASC`
 		args = []interface{}{ownerID, *folderID}
 	} else {
 		query = `SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at
-			 FROM drive_files WHERE owner_id = $1 AND folder_id IS NULL
+			 FROM drive_files WHERE owner_id = $1 AND folder_id IS NULL AND deleted_at IS NULL
 			 ORDER BY name ASC`
 		args = []interface{}{ownerID}
 	}
@@ -67,7 +67,7 @@ func (s *Store) GetFilesByFolder(ctx context.Context, ownerID string, folderID *
 func (s *Store) GetAllFiles(ctx context.Context, ownerID string) ([]model.File, error) {
 	rows, err := s.DB.Query(ctx,
 		`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at
-		 FROM drive_files WHERE owner_id = $1
+		 FROM drive_files WHERE owner_id = $1 AND deleted_at IS NULL
 		 ORDER BY updated_at DESC LIMIT 200`,
 		ownerID,
 	)
@@ -118,7 +118,7 @@ func (s *Store) MoveFile(ctx context.Context, ownerID, fileID string, folderID *
 func (s *Store) DeleteFile(ctx context.Context, ownerID, fileID string) (string, error) {
 	var blobPath string
 	err := s.DB.QueryRow(ctx,
-		`DELETE FROM drive_files WHERE id = $1 AND owner_id = $2 RETURNING blob_path`,
+		`UPDATE drive_files SET deleted_at = NOW() WHERE id = $1 AND owner_id = $2 AND deleted_at IS NULL RETURNING blob_path`,
 		fileID, ownerID,
 	).Scan(&blobPath)
 	if err != nil {
@@ -131,7 +131,7 @@ func (s *Store) SearchFiles(ctx context.Context, ownerID, query string) ([]model
 	pattern := "%" + query + "%"
 	rows, err := s.DB.Query(ctx,
 		`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at
-		 FROM drive_files WHERE owner_id = $1 AND name ILIKE $2
+		 FROM drive_files WHERE owner_id = $1 AND name ILIKE $2 AND deleted_at IS NULL
 		 ORDER BY updated_at DESC LIMIT 50`,
 		ownerID, pattern,
 	)
@@ -158,7 +158,7 @@ func (s *Store) SearchFolders(ctx context.Context, ownerID, query string) ([]mod
 	pattern := "%" + query + "%"
 	rows, err := s.DB.Query(ctx,
 		`SELECT id, owner_id, parent_id, name, created_at
-		 FROM drive_folders WHERE owner_id = $1 AND name ILIKE $2
+		 FROM drive_folders WHERE owner_id = $1 AND name ILIKE $2 AND deleted_at IS NULL
 		 ORDER BY name ASC LIMIT 50`,
 		ownerID, pattern,
 	)
@@ -185,4 +185,62 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (string, error
 	var uid string
 	err := s.DB.QueryRow(ctx, `SELECT id FROM users WHERE email = $1`, email).Scan(&uid)
 	return uid, err
+}
+
+func (s *Store) ListTrash(ctx context.Context, ownerID string) ([]model.File, error) {
+rows, err := s.DB.Query(ctx,
+`SELECT id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at, deleted_at
+ FROM drive_files WHERE owner_id = $1 AND deleted_at IS NOT NULL
+ ORDER BY deleted_at DESC LIMIT 200`,
+ownerID,
+)
+if err != nil {
+return nil, err
+}
+defer rows.Close()
+
+var files []model.File
+for rows.Next() {
+var f model.File
+if err := rows.Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt, &f.DeletedAt); err != nil {
+return nil, err
+}
+files = append(files, f)
+}
+if files == nil {
+files = []model.File{}
+}
+return files, rows.Err()
+}
+
+func (s *Store) RestoreFile(ctx context.Context, ownerID, fileID string) (*model.File, error) {
+f := &model.File{}
+err := s.DB.QueryRow(ctx,
+`UPDATE drive_files SET deleted_at = NULL, updated_at = NOW()
+ WHERE id = $1 AND owner_id = $2 AND deleted_at IS NOT NULL
+ RETURNING id, owner_id, folder_id, name, mime_type, size, blob_path, created_at, updated_at`,
+fileID, ownerID,
+).Scan(&f.ID, &f.OwnerID, &f.FolderID, &f.Name, &f.MimeType, &f.Size, &f.BlobPath, &f.CreatedAt, &f.UpdatedAt)
+return f, err
+}
+
+func (s *Store) EmptyTrash(ctx context.Context, ownerID string) ([]string, error) {
+rows, err := s.DB.Query(ctx,
+`DELETE FROM drive_files WHERE owner_id = $1 AND deleted_at IS NOT NULL RETURNING blob_path`,
+ownerID,
+)
+if err != nil {
+return nil, err
+}
+defer rows.Close()
+
+var paths []string
+for rows.Next() {
+var p string
+if err := rows.Scan(&p); err != nil {
+return nil, err
+}
+paths = append(paths, p)
+}
+return paths, rows.Err()
 }

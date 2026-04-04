@@ -89,6 +89,10 @@ export interface DriveApi {
   downloadFile(fileID: string): Promise<ArrayBuffer>;
   deleteFile(fileID: string): Promise<void>;
   search(query: string): Promise<{ files: DriveFile[]; folders: DriveFolder[] }>;
+  listTrash(): Promise<{ files: DriveFile[] }>;
+  restoreFile(fileID: string): Promise<DriveFile>;
+  emptyTrash(): Promise<void>;
+  sharedWithMe(): Promise<{ files: DriveFile[] }>;
 }
 
 export interface DriveFile {

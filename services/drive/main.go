@@ -78,6 +78,11 @@ func main() {
 		r.Delete("/folders/{folderID}", h.DeleteFolder)
 
 		r.Post("/search", h.Search)
+
+		r.Get("/trash", h.ListTrash)
+		r.Post("/trash/{fileID}/restore", h.RestoreFile)
+		r.Delete("/trash", h.EmptyTrash)
+		r.Get("/shared", h.SharedWithMe)
 	})
 
 	go func() {

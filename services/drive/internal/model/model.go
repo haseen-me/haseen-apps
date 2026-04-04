@@ -5,25 +5,27 @@ import "time"
 // ---------- File ----------
 
 type File struct {
-	ID        string    `json:"id"`
-	OwnerID   string    `json:"-"`
-	FolderID  *string   `json:"folderId"`
-	Name      string    `json:"name"`
-	MimeType  string    `json:"mimeType"`
-	Size      int64     `json:"size"`
-	BlobPath  string    `json:"-"`
-	CreatedAt time.Time `json:"createdAt"`
-	UpdatedAt time.Time `json:"updatedAt"`
+	ID        string     `json:"id"`
+	OwnerID   string     `json:"-"`
+	FolderID  *string    `json:"folderId"`
+	Name      string     `json:"name"`
+	MimeType  string     `json:"mimeType"`
+	Size      int64      `json:"size"`
+	BlobPath  string     `json:"-"`
+	CreatedAt time.Time  `json:"createdAt"`
+	UpdatedAt time.Time  `json:"updatedAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
 // ---------- Folder ----------
 
 type Folder struct {
-	ID        string    `json:"id"`
-	OwnerID   string    `json:"-"`
-	ParentID  *string   `json:"parentId"`
-	Name      string    `json:"name"`
-	CreatedAt time.Time `json:"createdAt"`
+	ID        string     `json:"id"`
+	OwnerID   string     `json:"-"`
+	ParentID  *string    `json:"parentId"`
+	Name      string     `json:"name"`
+	CreatedAt time.Time  `json:"createdAt"`
+	DeletedAt *time.Time `json:"deletedAt,omitempty"`
 }
 
 // ---------- Share ----------
