@@ -1,10 +1,11 @@
-import { Mail, HardDrive, CalendarDays, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { Mail, HardDrive, CalendarDays, Settings, LogOut, Moon, Sun, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
 
 const PRODUCTS = [
   { id: 'mail', label: 'Mail', icon: Mail, port: 3001 },
   { id: 'drive', label: 'Drive', icon: HardDrive, port: 3002 },
   { id: 'calendar', label: 'Calendar', icon: CalendarDays, port: 3004 },
+  { id: 'contacts', label: 'Contacts', icon: Users, port: 3005 },
 ] as const;
 
 const THEME_KEY = 'haseen-theme';

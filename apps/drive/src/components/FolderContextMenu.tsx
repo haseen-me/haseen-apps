@@ -34,10 +34,7 @@ export function FolderContextMenu({ folder }: Props) {
       return;
     }
     try {
-      // Drive backend PUT /files/:id also works for metadata but we use the folder name
-      // The rename for folders goes through the same update flow
-      // For now, use a simple approach: delete and recreate or use a direct API
-      // Actually the backend doesn't have a rename-folder endpoint, so we'll just update locally
+      await driveApi.renameFolder(folder.id, newName.trim());
       setFolders(folders.map((f) => (f.id === folder.id ? { ...f, name: newName.trim() } : f)));
       toast.show('Folder renamed');
     } catch {

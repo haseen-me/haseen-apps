@@ -76,6 +76,27 @@ export default function App() {
             setFolders([]);
             setPath([]);
           }
+        } else if (currentFolderId === '__recent') {
+          // Recent: fetch root folder files and sort by updatedAt descending
+          const data = await driveApi.listFolder();
+          if (!cancelled) {
+            const recentFiles = data.files
+              .map((f) => ({
+                id: f.id,
+                folderId: f.folderID,
+                name: f.name,
+                mimeType: f.mimeType,
+                size: f.size,
+                encryptedKey: f.encryptedKey,
+                createdAt: f.createdAt,
+                updatedAt: f.updatedAt,
+              }))
+              .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
+              .slice(0, 50);
+            setFiles(recentFiles);
+            setFolders([]);
+            setPath([]);
+          }
         } else {
           const data = await driveApi.listFolder(
             currentFolderId === 'root' ? undefined : currentFolderId,

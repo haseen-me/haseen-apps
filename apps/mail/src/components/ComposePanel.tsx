@@ -56,22 +56,53 @@ export function ComposePanel() {
     }
   }, [to, cc, bcc, subject, body, draftId, hasContent]);
 
+  // Get current user's email for reply logic
+  const getUserEmail = (): string => {
+    try {
+      const raw = localStorage.getItem('haseen-auth');
+      if (!raw) return '';
+      const parsed = JSON.parse(raw);
+      return (parsed.user?.email ?? '').toLowerCase();
+    } catch { return ''; }
+  };
+
   // Auto-fill reply info
   useEffect(() => {
     if (replyToThreadId) {
       const thread = threads.find((t) => t.id === replyToThreadId);
       if (thread) {
         const lastMsg = thread.messages[thread.messages.length - 1];
-        setTo([{ address: lastMsg.from.address }]);
+        const myEmail = getUserEmail();
+        const senderIsMe = lastMsg.from.address.toLowerCase() === myEmail;
+
+        if (senderIsMe) {
+          // Replying to own message — reply to the original recipients instead
+          setTo(lastMsg.to.filter((a: EmailAddress) => a.address.toLowerCase() !== myEmail).map((a: EmailAddress) => ({ address: a.address, name: a.name })));
+        } else {
+          // Reply to sender + all To/CC minus self (Reply-All behavior)
+          const allRecipients = [
+            { address: lastMsg.from.address, name: lastMsg.from.name },
+            ...lastMsg.to.map((a: EmailAddress) => ({ address: a.address, name: a.name })),
+            ...lastMsg.cc.map((a: EmailAddress) => ({ address: a.address, name: a.name })),
+          ];
+          const unique = new Map<string, Recipient>();
+          for (const r of allRecipients) {
+            if (r.address.toLowerCase() !== myEmail) {
+              unique.set(r.address.toLowerCase(), r);
+            }
+          }
+          setTo([...unique.values()]);
+        }
+
         setSubject(thread.subject.startsWith('Re:') ? thread.subject : `Re: ${thread.subject}`);
-        // Quote original message
         const date = new Date(lastMsg.date).toLocaleString();
         const from = lastMsg.from.name || lastMsg.from.address;
-        setBody(
+        const quoted =
           `<br><br><div style="border-left:2px solid #ccc;padding-left:12px;color:#888">` +
           `<p>On ${date}, ${from} wrote:</p>` +
-          `${lastMsg.bodyHtml || lastMsg.bodyText || ''}</div>`,
-        );
+          `${lastMsg.bodyHtml || lastMsg.bodyText || ''}</div>`;
+        setBody(quoted);
+        if (bodyRef.current) bodyRef.current.innerHTML = quoted;
       }
     }
   }, [replyToThreadId, threads]);
@@ -87,12 +118,13 @@ export function ComposePanel() {
         const date = new Date(lastMsg.date).toLocaleString();
         const from = lastMsg.from.name || lastMsg.from.address;
         const toAddrs = lastMsg.to.map((a: { name?: string; address: string }) => a.name || a.address).join(', ');
-        setBody(
+        const fwdBody =
           `<br><br><div style="border-top:1px solid #ccc;padding-top:12px;color:#888">` +
           `<p>---------- Forwarded message ----------</p>` +
           `<p>From: ${from}<br>Date: ${date}<br>Subject: ${lastMsg.subject || thread.subject}<br>To: ${toAddrs}</p>` +
-          `${lastMsg.bodyHtml || lastMsg.bodyText || ''}</div>`,
-        );
+          `${lastMsg.bodyHtml || lastMsg.bodyText || ''}</div>`;
+        setBody(fwdBody);
+        if (bodyRef.current) bodyRef.current.innerHTML = fwdBody;
       }
     }
   }, [forwardFromThreadId, threads]);
@@ -104,7 +136,7 @@ export function ComposePanel() {
 
   // Sync body into contentEditable when set from reply/forward
   useEffect(() => {
-    if (bodyRef.current && body && !bodyRef.current.innerHTML) {
+    if (bodyRef.current && body) {
       bodyRef.current.innerHTML = body;
     }
   }, [body]);

@@ -72,6 +72,24 @@ export function App() {
       });
   }, [setUserLabels]);
 
+  // Poll for new mail every 30s
+  useEffect(() => {
+    const interval = setInterval(() => {
+      mailApi
+        .getMailbox(activeLabel)
+        .then((data) => {
+          const currentIds = new Set(threads.map((t) => t.id));
+          const newThreads = data.threads.filter((t) => !currentIds.has(t.id));
+          if (newThreads.length > 0) {
+            setThreads(data.threads);
+            toast.show(`${newThreads.length} new message${newThreads.length > 1 ? 's' : ''}`);
+          }
+        })
+        .catch(() => {});
+    }, 30000);
+    return () => clearInterval(interval);
+  }, [activeLabel, threads, setThreads, toast]);
+
   // Auto mark-as-read when opening a thread
   useEffect(() => {
     if (!activeThreadId) return;

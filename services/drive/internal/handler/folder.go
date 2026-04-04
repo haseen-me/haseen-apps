@@ -73,3 +73,21 @@ func (h *Handler) DeleteFolder(w http.ResponseWriter, r *http.Request) {
 	}
 	h.JSON(w, http.StatusOK, model.OkResponse{OK: true})
 }
+
+// RenameFolder updates a folder's name.
+func (h *Handler) RenameFolder(w http.ResponseWriter, r *http.Request) {
+	folderID := chi.URLParam(r, "folderID")
+	var req struct {
+		Name string `json:"name"`
+	}
+	if err := h.Decode(r, &req); err != nil || req.Name == "" {
+		h.Error(w, http.StatusBadRequest, "name is required")
+		return
+	}
+	folder, err := h.Store.RenameFolder(r.Context(), folderID, req.Name)
+	if err != nil {
+		h.Error(w, http.StatusNotFound, "folder not found")
+		return
+	}
+	h.JSON(w, http.StatusOK, folder)
+}

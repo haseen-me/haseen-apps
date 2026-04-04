@@ -75,6 +75,7 @@ func main() {
 
 		r.Get("/folders/{folderID}", h.GetFolder)
 		r.Post("/folders", h.CreateFolder)
+		r.Put("/folders/{folderID}", h.RenameFolder)
 		r.Delete("/folders/{folderID}", h.DeleteFolder)
 
 		r.Post("/search", h.Search)
