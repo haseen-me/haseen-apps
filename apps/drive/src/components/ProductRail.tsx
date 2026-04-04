@@ -1,5 +1,5 @@
-import { Mail, HardDrive, CalendarDays, Settings, LogOut } from 'lucide-react';
-import { useState } from 'react';
+import { Mail, HardDrive, CalendarDays, Settings, LogOut, Moon, Sun } from 'lucide-react';
+import { useState, useEffect } from 'react';
 
 const PRODUCTS = [
   { id: 'mail', label: 'Mail', icon: Mail, port: 3001 },
@@ -7,13 +7,28 @@ const PRODUCTS = [
   { id: 'calendar', label: 'Calendar', icon: CalendarDays, port: 3004 },
 ] as const;
 
+const THEME_KEY = 'haseen-theme';
+
 function getProductUrl(port: number): string {
   const { protocol, hostname } = window.location;
   return `${protocol}//${hostname}:${port}`;
 }
 
+function getInitialDark(): boolean {
+  const stored = localStorage.getItem(THEME_KEY);
+  if (stored === 'dark') return true;
+  if (stored === 'light') return false;
+  return window.matchMedia('(prefers-color-scheme: dark)').matches;
+}
+
 export function ProductRail({ activeProduct }: { activeProduct: string }) {
   const [showLogout, setShowLogout] = useState(false);
+  const [dark, setDark] = useState(getInitialDark);
+
+  useEffect(() => {
+    document.body.classList.toggle('dark', dark);
+    localStorage.setItem(THEME_KEY, dark ? 'dark' : 'light');
+  }, [dark]);
 
   const handleLogout = () => {
     localStorage.removeItem('haseen-auth');
@@ -98,6 +113,27 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
       })}
 
       <div style={{ flex: 1 }} />
+
+      {/* Theme toggle */}
+      <button
+        onClick={() => setDark(!dark)}
+        title={dark ? 'Switch to light mode' : 'Switch to dark mode'}
+        style={{
+          width: 36,
+          height: 36,
+          borderRadius: 8,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          color: 'rgba(255,255,255,0.45)',
+          background: 'transparent',
+          border: 'none',
+          cursor: 'pointer',
+          marginBottom: 4,
+        }}
+      >
+        {dark ? <Sun size={18} /> : <Moon size={18} />}
+      </button>
 
       {/* Bottom icons */}
       <a

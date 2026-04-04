@@ -32,6 +32,21 @@
   --mail-header-height: 52px;
 }
 
+body.dark {
+  --mail-bg: #0d0f12;
+  --mail-bg-secondary: #161a20;
+  --mail-bg-hover: #1c2028;
+  --mail-bg-active: #242830;
+  --mail-text: #e8eaed;
+  --mail-text-secondary: #9ba3b0;
+  --mail-text-muted: #6b7280;
+  --mail-border: #2a2f38;
+  --mail-border-subtle: #1f242c;
+  --mail-brand-subtle: rgba(45, 184, 175, 0.12);
+  --mail-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --mail-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
 html {
   font-size: 16px;
   -webkit-font-smoothing: antialiased;

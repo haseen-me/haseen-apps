@@ -1,10 +1,14 @@
 import { X, FolderPlus } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
+import { useToastStore } from '@/store/toast';
+import { driveApi } from '@/api/client';
 
 export function NewFolderDialog() {
-  const { newFolderOpen, setNewFolderOpen } = useDriveStore();
+  const { newFolderOpen, setNewFolderOpen, currentFolderId, folders, setFolders } = useDriveStore();
+  const toast = useToastStore();
   const [name, setName] = useState('');
+  const [creating, setCreating] = useState(false);
   const inputRef = useRef<HTMLInputElement>(null);
 
   useEffect(() => {
@@ -14,12 +18,22 @@ export function NewFolderDialog() {
     }
   }, [newFolderOpen]);
 
-  const handleCreate = useCallback(() => {
-    if (!name.trim()) return;
-    // In real app, call api.createFolder
-    setName('');
-    setNewFolderOpen(false);
-  }, [name, setNewFolderOpen]);
+  const handleCreate = useCallback(async () => {
+    if (!name.trim() || creating) return;
+    setCreating(true);
+    try {
+      const parentID = currentFolderId === 'root' ? undefined : currentFolderId;
+      const folder = await driveApi.createFolder({ name: name.trim(), parentID });
+      setFolders([...folders, { id: folder.id, name: folder.name, parentId: folder.parentId, createdAt: folder.createdAt }]);
+      toast.show('Folder created');
+    } catch {
+      toast.show('Failed to create folder');
+    } finally {
+      setCreating(false);
+      setName('');
+      setNewFolderOpen(false);
+    }
+  }, [name, creating, currentFolderId, folders, setFolders, setNewFolderOpen, toast]);
 
   const handleClose = useCallback(() => {
     setName('');

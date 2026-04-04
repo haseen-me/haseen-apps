@@ -31,6 +31,21 @@
   --cal-header-height: 56px;
 }
 
+body.dark {
+  --cal-bg: #0d0f12;
+  --cal-bg-secondary: #161a20;
+  --cal-bg-hover: #1c2028;
+  --cal-bg-active: #242830;
+  --cal-text: #e8eaed;
+  --cal-text-secondary: #9ba3b0;
+  --cal-text-muted: #6b7280;
+  --cal-border: #2a2f38;
+  --cal-border-subtle: #1f242c;
+  --cal-brand-subtle: rgba(45, 184, 175, 0.12);
+  --cal-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --cal-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
 body {

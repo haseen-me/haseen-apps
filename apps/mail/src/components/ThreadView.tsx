@@ -18,7 +18,7 @@ import {
 } from 'lucide-react';
 
 export function ThreadView() {
-  const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId, setThreads } =
+  const { activeThreadId, threads, setActiveThreadId, setComposeOpen, setReplyToThreadId, setForwardFromThreadId, setThreads } =
     useMailStore();
   const toast = useToastStore();
   const [menuOpen, setMenuOpen] = useState(false);
@@ -260,7 +260,7 @@ export function ThreadView() {
         </button>
         <button
           onClick={() => {
-            setReplyToThreadId(thread.id);
+            setForwardFromThreadId(thread.id);
             setComposeOpen(true);
           }}
           style={{

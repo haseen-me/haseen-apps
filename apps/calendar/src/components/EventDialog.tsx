@@ -12,7 +12,7 @@ function toLocalDatetimeStr(d: Date): string {
 }
 
 export function EventDialog() {
-  const { eventDialogOpen, editingEvent, selectedDate, closeEventDialog, calendars } =
+  const { eventDialogOpen, editingEvent, selectedDate, closeEventDialog, calendars, events, setEvents } =
     useCalendarStore();
 
   const [title, setTitle] = useState('');
@@ -124,9 +124,47 @@ export function EventDialog() {
     } catch (err) {
       console.warn('[Calendar] Save failed:', err);
       toast.show('Could not save event — backend unavailable');
-    } finally {
       closeEventDialog();
+      return;
     }
+    // Refresh events in store after successful save
+    try {
+      const now = new Date();
+      const start = new Date(now.getFullYear(), now.getMonth() - 1, 1).toISOString();
+      const end = new Date(now.getFullYear(), now.getMonth() + 2, 0).toISOString();
+      const evData = await calendarApi.listEvents({ start, end });
+      setEvents(
+        evData.events.map((e) => ({
+          id: e.id,
+          calendarId: e.calendarId ?? '',
+          title: decryptField(e.title),
+          description: decryptField(e.description),
+          startTime: e.startTime,
+          endTime: e.endTime,
+          allDay: e.allDay,
+          location: decryptField(e.location ?? ''),
+          recurrenceRule: e.recurrenceRule ?? null,
+          color: e.color,
+          createdAt: e.createdAt ?? '',
+          updatedAt: e.updatedAt ?? '',
+        })),
+      );
+    } catch {
+      // silently skip refresh
+    }
+    closeEventDialog();
+  };
+
+  const handleDelete = async () => {
+    if (!editingEvent) return;
+    try {
+      await calendarApi.deleteEvent(editingEvent.id);
+      setEvents(events.filter((e) => e.id !== editingEvent.id));
+      toast.show('Event deleted');
+    } catch {
+      toast.show('Could not delete event');
+    }
+    closeEventDialog();
   };
 
   const labelStyle: React.CSSProperties = {
@@ -325,7 +363,7 @@ export function EventDialog() {
         >
           {editingEvent && (
             <button
-              onClick={closeEventDialog}
+              onClick={handleDelete}
               style={{
                 padding: '7px 16px',
                 border: 'none',

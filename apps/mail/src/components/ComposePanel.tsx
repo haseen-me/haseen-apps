@@ -14,7 +14,7 @@ interface Recipient {
 }
 
 export function ComposePanel() {
-  const { composeOpen, setComposeOpen, replyToThreadId, setReplyToThreadId, threads } =
+  const { composeOpen, setComposeOpen, replyToThreadId, setReplyToThreadId, forwardFromThreadId, setForwardFromThreadId, threads } =
     useMailStore();
   const toast = useToastStore();
 
@@ -64,14 +64,50 @@ export function ComposePanel() {
         const lastMsg = thread.messages[thread.messages.length - 1];
         setTo([{ address: lastMsg.from.address }]);
         setSubject(thread.subject.startsWith('Re:') ? thread.subject : `Re: ${thread.subject}`);
+        // Quote original message
+        const date = new Date(lastMsg.date).toLocaleString();
+        const from = lastMsg.from.name || lastMsg.from.address;
+        setBody(
+          `<br><br><div style="border-left:2px solid #ccc;padding-left:12px;color:#888">` +
+          `<p>On ${date}, ${from} wrote:</p>` +
+          `${lastMsg.bodyHtml || lastMsg.bodyText || ''}</div>`,
+        );
       }
     }
   }, [replyToThreadId, threads]);
+
+  // Auto-fill forward info
+  useEffect(() => {
+    if (forwardFromThreadId) {
+      const thread = threads.find((t) => t.id === forwardFromThreadId);
+      if (thread) {
+        const lastMsg = thread.messages[thread.messages.length - 1];
+        setTo([]); // Forward: user needs to enter recipient
+        setSubject(thread.subject.startsWith('Fwd:') ? thread.subject : `Fwd: ${thread.subject}`);
+        const date = new Date(lastMsg.date).toLocaleString();
+        const from = lastMsg.from.name || lastMsg.from.address;
+        const toAddrs = lastMsg.to.map((a: { name?: string; address: string }) => a.name || a.address).join(', ');
+        setBody(
+          `<br><br><div style="border-top:1px solid #ccc;padding-top:12px;color:#888">` +
+          `<p>---------- Forwarded message ----------</p>` +
+          `<p>From: ${from}<br>Date: ${date}<br>Subject: ${lastMsg.subject || thread.subject}<br>To: ${toAddrs}</p>` +
+          `${lastMsg.bodyHtml || lastMsg.bodyText || ''}</div>`,
+        );
+      }
+    }
+  }, [forwardFromThreadId, threads]);
 
   // Initialize crypto keys on mount
   useEffect(() => {
     if (!initialized) initializeKeys();
   }, [initialized, initializeKeys]);
+
+  // Sync body into contentEditable when set from reply/forward
+  useEffect(() => {
+    if (bodyRef.current && body && !bodyRef.current.innerHTML) {
+      bodyRef.current.innerHTML = body;
+    }
+  }, [body]);
 
   if (!composeOpen) return null;
 
@@ -81,6 +117,7 @@ export function ComposePanel() {
     }
     setComposeOpen(false);
     setReplyToThreadId(null);
+    setForwardFromThreadId(null);
     setTo([]);
     setCc([]);
     setBcc([]);
@@ -253,7 +290,7 @@ export function ComposePanel() {
         }}
       >
         <span style={{ flex: 1, fontSize: 14, fontWeight: 500 }}>
-          {replyToThreadId ? 'Reply' : 'New Message'}
+          {replyToThreadId ? 'Reply' : forwardFromThreadId ? 'Forward' : 'New Message'}
         </span>
         <button
           onClick={() => setMinimized(true)}

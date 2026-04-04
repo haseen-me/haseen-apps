@@ -31,6 +31,21 @@
   --drive-header-height: 56px;
 }
 
+body.dark {
+  --drive-bg: #0d0f12;
+  --drive-bg-secondary: #161a20;
+  --drive-bg-hover: #1c2028;
+  --drive-bg-active: #242830;
+  --drive-text: #e8eaed;
+  --drive-text-secondary: #9ba3b0;
+  --drive-text-muted: #6b7280;
+  --drive-border: #2a2f38;
+  --drive-border-subtle: #1f242c;
+  --drive-brand-subtle: rgba(45, 184, 175, 0.12);
+  --drive-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+  --drive-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+}
+
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
 body {

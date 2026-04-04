@@ -65,6 +65,8 @@ export function createDriveApi(client: ApiClient): DriveApi {
     renameFile: (id, name) => client.put(`/drive/files/${id}`, { name }),
     moveFile: (id, folderID) => client.post(`/drive/files/${id}/move`, { folderID }),
     shareFile: (id, params) => client.post(`/drive/files/${id}/share`, params),
+    createFolder: (params) => client.post('/drive/folders', params),
+    deleteFolder: (id) => client.del(`/drive/folders/${id}`),
     search: (query) => client.post('/drive/search', { query }),
     listTrash: () => client.get('/drive/trash'),
     restoreFile: (fileID) => client.post(`/drive/trash/${fileID}/restore`, {}),

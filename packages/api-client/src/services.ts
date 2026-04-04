@@ -97,6 +97,8 @@ export interface DriveApi {
   renameFile(fileID: string, name: string): Promise<DriveFile>;
   moveFile(fileID: string, folderID: string): Promise<DriveFile>;
   shareFile(fileID: string, params: { email: string; permission: 'read' | 'write' }): Promise<void>;
+  createFolder(params: { name: string; parentID?: string }): Promise<DriveFolder>;
+  deleteFolder(folderID: string): Promise<void>;
   search(query: string): Promise<{ files: DriveFile[]; folders: DriveFolder[] }>;
   listTrash(): Promise<{ files: DriveFile[] }>;
   restoreFile(fileID: string): Promise<DriveFile>;

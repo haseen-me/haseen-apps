@@ -1,6 +1,7 @@
 import { FolderIcon } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
 import type { Folder } from '@/types/drive';
+import { FolderContextMenu } from './FolderContextMenu';
 
 export function FolderCard({ folder }: { folder: Folder }) {
   const { setCurrentFolderId, selectedIds, toggleSelected } = useDriveStore();
@@ -59,9 +60,11 @@ export function FolderCard({ folder }: { folder: Folder }) {
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',
+        flex: 1,
       }}>
         {folder.name}
       </span>
+      <FolderContextMenu folder={folder} />
     </div>
   );
 }

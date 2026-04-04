@@ -31,6 +31,8 @@ interface MailboxState {
   setComposeOpen: (v: boolean) => void;
   replyToThreadId: string | null;
   setReplyToThreadId: (id: string | null) => void;
+  forwardFromThreadId: string | null;
+  setForwardFromThreadId: (id: string | null) => void;
 
   /* Search */
   searchQuery: string;
@@ -72,6 +74,8 @@ export const useMailStore = create<MailboxState>((set, get) => ({
   setComposeOpen: (v) => set({ composeOpen: v }),
   replyToThreadId: null,
   setReplyToThreadId: (id) => set({ replyToThreadId: id }),
+  forwardFromThreadId: null,
+  setForwardFromThreadId: (id) => set({ forwardFromThreadId: id }),
 
   searchQuery: '',
   setSearchQuery: (q) => set({ searchQuery: q }),
