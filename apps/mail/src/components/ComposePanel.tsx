@@ -18,10 +18,12 @@ export function ComposePanel() {
   const [bcc, setBcc] = useState('');
   const [subject, setSubject] = useState('');
   const [body, setBody] = useState('');
+  const [attachments, setAttachments] = useState<File[]>([]);
   const [showCcBcc, setShowCcBcc] = useState(false);
   const [sending, setSending] = useState(false);
   const [encrypted, setEncrypted] = useState(true);
   const bodyRef = useRef<HTMLDivElement>(null);
+  const fileInputRef = useRef<HTMLInputElement>(null);
   const { initializeKeys, encryptionKeyPair, signingKeyPair, initialized } = useCryptoStore();
 
   // Auto-fill reply info
@@ -51,6 +53,7 @@ export function ComposePanel() {
     setBcc('');
     setSubject('');
     setBody('');
+    setAttachments([]);
     setShowCcBcc(false);
   };
 
@@ -98,7 +101,7 @@ export function ComposePanel() {
           sessionKeys[k] = btoa(String.fromCharCode(...v));
         }
 
-        await mailApi.sendMessage({
+        const result = await mailApi.sendMessage({
           to: recipientAddrs,
           cc: ccAddrs,
           bcc: bccAddrs,
@@ -108,15 +111,24 @@ export function ComposePanel() {
           encryptedBody: JSON.stringify(bodyEnvelope),
           encryptedSessionKeys: sessionKeys,
         });
+
+        // Upload attachments after message is created
+        if (attachments.length > 0 && result.id) {
+          await Promise.all(attachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
+        }
       } else {
         // Unencrypted fallback
-        await mailApi.sendMessage({
+        const result = await mailApi.sendMessage({
           to: recipientAddrs,
           cc: ccAddrs,
           bcc: bccAddrs,
           subject: subject || '(no subject)',
           bodyHtml: body || '',
         });
+
+        if (attachments.length > 0 && result.id) {
+          await Promise.all(attachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
+        }
       }
     } catch (err) {
       // Backend may be offline in development — show toast and close gracefully
@@ -269,6 +281,36 @@ export function ComposePanel() {
         }}
       />
 
+      {/* Attachment chips */}
+      {attachments.length > 0 && (
+        <div style={{ padding: '4px 16px 0', display: 'flex', flexWrap: 'wrap', gap: 6 }}>
+          {attachments.map((f, i) => (
+            <span
+              key={i}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                gap: 4,
+                padding: '3px 8px',
+                borderRadius: 12,
+                background: 'var(--mail-bg-active)',
+                fontSize: 12,
+                color: 'var(--mail-text-muted)',
+              }}
+            >
+              <Paperclip size={11} />
+              {f.name}
+              <button
+                onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--mail-text-muted)', display: 'flex' }}
+              >
+                <X size={11} />
+              </button>
+            </span>
+          ))}
+        </div>
+      )}
+
       {/* Bottom bar */}
       <div
         style={{
@@ -312,7 +354,18 @@ export function ComposePanel() {
           }}
         >
           <Paperclip size={16} />
-          <input type="file" multiple style={{ display: 'none' }} />
+          <input
+            ref={fileInputRef}
+            type="file"
+            multiple
+            style={{ display: 'none' }}
+            onChange={(e) => {
+              if (e.target.files) {
+                setAttachments((prev) => [...prev, ...Array.from(e.target.files!)]);
+                e.target.value = '';
+              }
+            }}
+          />
         </label>
 
         <div style={{ flex: 1 }} />

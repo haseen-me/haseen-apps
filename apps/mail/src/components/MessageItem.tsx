@@ -2,6 +2,7 @@ import type { Message } from '@/types/mail';
 import { useCryptoStore } from '@/store/crypto';
 import { openEnvelope } from '@haseen-me/crypto';
 import type { EncryptedEnvelope } from '@haseen-me/crypto';
+import { mailApi } from '@/api/client';
 import DOMPurify from 'dompurify';
 import {
   ChevronDown,
@@ -238,6 +239,13 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                 {message.attachments.map((att) => (
                   <div
                     key={att.id}
+                    onClick={() => {
+                      const url = mailApi.getAttachmentUrl(att.id);
+                      const a = document.createElement('a');
+                      a.href = url;
+                      a.download = att.filename;
+                      a.click();
+                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',

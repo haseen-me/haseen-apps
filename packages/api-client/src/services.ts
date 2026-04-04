@@ -30,6 +30,8 @@ export interface MailApi {
   moveMessage(messageID: string, label: string): Promise<MailMessage>;
   updateMessage(messageID: string, params: { read?: boolean; starred?: boolean }): Promise<MailMessage>;
   search(query: string): Promise<{ threads: MailThread[] }>;
+  uploadAttachment(messageID: string, file: File): Promise<{ id: string }>;
+  getAttachmentUrl(attachmentID: string): string;
 }
 
 export interface SendMessageParams {

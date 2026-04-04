@@ -20,6 +20,24 @@ export function createMailApi(client: ApiClient): MailApi {
     moveMessage: (id, label) => client.post(`/mail/messages/${id}/move`, { label }),
     updateMessage: (id, params) => client.put(`/mail/messages/${id}`, params),
     search: (query) => client.post('/mail/search', { query }),
+    uploadAttachment: async (messageID, file) => {
+      const token = typeof localStorage !== 'undefined'
+        ? (() => { try { return JSON.parse(localStorage.getItem('haseen-auth') ?? '{}').token; } catch { return null; } })()
+        : null;
+      const headers: Record<string, string> = {};
+      if (token) headers['Authorization'] = `Bearer ${token}`;
+      const form = new FormData();
+      form.append('file', file);
+      const res = await fetch(`/api/v1/mail/messages/${messageID}/attachments`, {
+        method: 'POST',
+        credentials: 'include',
+        headers,
+        body: form,
+      });
+      if (!res.ok) throw { status: res.status, message: 'upload failed' };
+      return res.json();
+    },
+    getAttachmentUrl: (attachmentID) => `/api/v1/mail/attachments/${attachmentID}`,
   };
 }
 

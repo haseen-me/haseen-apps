@@ -53,3 +53,17 @@ func (s *Store) GetAttachmentData(ctx context.Context, attachmentID string) ([]b
 	).Scan(&data, &filename, &mimeType)
 	return data, filename, mimeType, err
 }
+
+// GetAttachmentDataForMailbox returns attachment data only if the attachment belongs to the given mailbox.
+func (s *Store) GetAttachmentDataForMailbox(ctx context.Context, attachmentID, mailboxID string) ([]byte, string, string, error) {
+	var data []byte
+	var filename, mimeType string
+	err := s.DB.QueryRow(ctx,
+		`SELECT a.encrypted_data, a.filename, a.mime_type
+		 FROM mail_attachments a
+		 JOIN mail_messages m ON m.id = a.message_id
+		 WHERE a.id = $1 AND m.mailbox_id = $2`,
+		attachmentID, mailboxID,
+	).Scan(&data, &filename, &mimeType)
+	return data, filename, mimeType, err
+}

@@ -83,6 +83,7 @@ func main() {
 
 		// Attachments
 		r.Get("/attachments/{attachmentID}", h.GetAttachment)
+		r.Post("/messages/{messageID}/attachments", h.UploadAttachment)
 
 		// Search
 		r.Post("/search", h.Search)
