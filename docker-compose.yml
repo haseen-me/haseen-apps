@@ -15,6 +15,7 @@ services:
       - ./migrations/004_mail_enhancements.up.sql:/docker-entrypoint-initdb.d/004_mail_enhancements.sql
       - ./migrations/005_signed_pre_keys.up.sql:/docker-entrypoint-initdb.d/005_signed_pre_keys.sql
       - ./migrations/006_calendar_tables.up.sql:/docker-entrypoint-initdb.d/006_calendar_tables.sql
+      - ./migrations/007_contacts.up.sql:/docker-entrypoint-initdb.d/007_contacts.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U haseen"]
       interval: 5s
@@ -41,12 +42,14 @@ services:
       DRIVE_URL: "http://drive:8083"
       KEYSERVER_URL: "http://keyserver:8084"
       CALENDAR_URL: "http://calendar:8085"
+      CONTACTS_URL: "http://contacts:4008"
     depends_on:
       - auth
       - mail
       - drive
       - keyserver
       - calendar
+      - contacts
 
   auth:
     build:
@@ -103,6 +106,17 @@ services:
       dockerfile: deploy/Dockerfile.calendar
     environment:
       CALENDAR_PORT: "8085"
+      DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  contacts:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.contacts
+    environment:
+      PORT: "4008"
       DATABASE_URL: "postgres://haseen:haseen_dev_password@postgres:5432/haseen?sslmode=disable"
     depends_on:
       postgres:

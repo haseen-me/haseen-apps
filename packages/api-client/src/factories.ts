@@ -1,5 +1,5 @@
 import type { ApiClient } from './client';
-import type { AuthApi, MailApi, DriveApi, KeysApi, CalendarApi } from './services';
+import type { AuthApi, MailApi, DriveApi, KeysApi, CalendarApi, ContactsApi } from './services';
 
 export function createAuthApi(client: ApiClient): AuthApi {
   return {
@@ -82,5 +82,16 @@ export function createCalendarApi(client: ApiClient): CalendarApi {
     createEvent: (params) => client.post('/calendar/events', params),
     updateEvent: (id, params) => client.put(`/calendar/events/${id}`, params),
     deleteEvent: (id) => client.del(`/calendar/events/${id}`),
+  };
+}
+
+export function createContactsApi(client: ApiClient): ContactsApi {
+  return {
+    listContacts: () => client.get('/contacts/contacts'),
+    getContact: (id) => client.get(`/contacts/contacts/${id}`),
+    createContact: (params) => client.post('/contacts/contacts', params),
+    updateContact: (id, params) => client.put(`/contacts/contacts/${id}`, params),
+    deleteContact: (id) => client.del(`/contacts/contacts/${id}`),
+    searchContacts: (query) => client.post('/contacts/contacts/search', { query }),
   };
 }

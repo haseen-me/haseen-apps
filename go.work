@@ -4,6 +4,7 @@ use (
 	./proto/gen/go
 	./services/auth
 	./services/calendar
+	./services/contacts
 	./services/drive
 	./services/gateway
 	./services/keyserver

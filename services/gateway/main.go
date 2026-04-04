@@ -31,6 +31,7 @@ func main() {
 	driveURL := env("DRIVE_URL", "http://localhost:8083")
 	keysURL := env("KEYSERVER_URL", "http://localhost:8084")
 	calendarURL := env("CALENDAR_URL", "http://localhost:8085")
+	contactsURL := env("CONTACTS_URL", "http://localhost:4008")
 
 	r := chi.NewRouter()
 
@@ -53,7 +54,7 @@ func main() {
 	r.Use(rateLimitMiddleware(rl))
 
 	// Health check — aggregates all service statuses
-	r.Get("/api/health", healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL))
+	r.Get("/api/health", healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL, contactsURL))
 
 	// Reverse proxy routes
 	r.Route("/api/v1/auth", proxyRoute(authURL, "/v1"))
@@ -61,6 +62,7 @@ func main() {
 	r.Route("/api/v1/drive", proxyRoute(driveURL, "/v1"))
 	r.Route("/api/v1/keys", proxyRoute(keysURL, "/v1"))
 	r.Route("/api/v1/calendar", proxyRoute(calendarURL, "/v1"))
+	r.Route("/api/v1/contacts", proxyRoute(contactsURL, "/v1"))
 
 	log.Info().
 		Str("port", port).
@@ -69,6 +71,7 @@ func main() {
 		Str("drive", driveURL).
 		Str("keys", keysURL).
 		Str("calendar", calendarURL).
+		Str("contacts", contactsURL).
 		Msg("gateway started")
 
 	srv := &http.Server{
@@ -129,13 +132,14 @@ func proxyRoute(target, stripPrefix string) func(chi.Router) {
 
 // --- Health Aggregation ---
 
-func healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL string) http.HandlerFunc {
+func healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL, contactsURL string) http.HandlerFunc {
 	services := map[string]string{
 		"auth":      authURL + "/health",
 		"mail":      mailURL + "/health",
 		"drive":     driveURL + "/health",
 		"keyserver": keysURL + "/health",
 		"calendar":  calendarURL + "/health",
+		"contacts":  contactsURL + "/health",
 	}
 
 	return func(w http.ResponseWriter, r *http.Request) {

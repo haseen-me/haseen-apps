@@ -23,6 +23,8 @@ export type {
   CalendarApi,
   CalendarItem,
   CalendarEvent,
+  ContactsApi,
+  Contact,
 } from './services';
 export {
   createAuthApi,
@@ -30,4 +32,5 @@ export {
   createDriveApi,
   createKeysApi,
   createCalendarApi,
+  createContactsApi,
 } from './factories';

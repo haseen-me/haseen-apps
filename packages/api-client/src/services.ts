@@ -154,3 +154,22 @@ export interface CalendarEvent {
   createdAt: string;
   updatedAt: string;
 }
+
+/** Contacts service API types */
+export interface ContactsApi {
+  listContacts(): Promise<{ contacts: Contact[]; total: number }>;
+  getContact(id: string): Promise<Contact>;
+  createContact(params: { email: string; name: string; notes?: string }): Promise<Contact>;
+  updateContact(id: string, params: { email?: string; name?: string; notes?: string }): Promise<Contact>;
+  deleteContact(id: string): Promise<void>;
+  searchContacts(query: string): Promise<{ contacts: Contact[]; total: number }>;
+}
+
+export interface Contact {
+  id: string;
+  email: string;
+  name: string;
+  notes: string;
+  createdAt: string;
+  updatedAt: string;
+}
