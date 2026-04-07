@@ -7,6 +7,7 @@ import { ProfileSettingsPage } from '@/pages/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage';
 import { RecoverySettingsPage } from '@/pages/RecoverySettingsPage';
 import { AppearanceSettingsPage } from '@/pages/AppearanceSettingsPage';
+import { DataExportPage } from '@/pages/DataExportPage';
 import { RequireAuth } from '@/components/RequireAuth';
 
 export default function App() {
@@ -22,6 +23,7 @@ export default function App() {
         <Route path="/settings/security" element={<RequireAuth><SecuritySettingsPage /></RequireAuth>} />
         <Route path="/settings/recovery" element={<RequireAuth><RecoverySettingsPage /></RequireAuth>} />
         <Route path="/settings/appearance" element={<RequireAuth><AppearanceSettingsPage /></RequireAuth>} />
+        <Route path="/settings/export" element={<RequireAuth><DataExportPage /></RequireAuth>} />
       </Routes>
     </BrowserRouter>
     </ErrorBoundary>

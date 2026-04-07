@@ -106,6 +106,7 @@ export interface DriveApi {
   restoreFile(fileID: string): Promise<DriveFile>;
   emptyTrash(): Promise<void>;
   sharedWithMe(): Promise<{ files: DriveFile[] }>;
+  getStorageUsage(): Promise<{ usedBytes: number; totalBytes: number }>;
 }
 
 export interface DriveFile {
@@ -157,6 +158,7 @@ export interface CalendarApi {
   listAttendees(eventId: string): Promise<{ attendees: Attendee[] }>;
   addAttendee(eventId: string, email: string): Promise<Attendee>;
   removeAttendee(eventId: string, attendeeId: string): Promise<void>;
+  updateAttendeeStatus(eventId: string, attendeeId: string, status: 'accepted' | 'declined' | 'tentative'): Promise<Attendee>;
   listReminders(eventId: string): Promise<{ reminders: Reminder[] }>;
   setReminder(eventId: string, minutesBefore: number): Promise<Reminder>;
   deleteReminder(eventId: string, reminderId: string): Promise<void>;
@@ -203,8 +205,8 @@ export interface CalendarEvent {
 export interface ContactsApi {
   listContacts(): Promise<{ contacts: Contact[]; total: number }>;
   getContact(id: string): Promise<Contact>;
-  createContact(params: { email: string; name: string; notes?: string }): Promise<Contact>;
-  updateContact(id: string, params: { email?: string; name?: string; notes?: string }): Promise<Contact>;
+  createContact(params: { email: string; name: string; notes?: string; phone?: string; company?: string; address?: string; birthday?: string }): Promise<Contact>;
+  updateContact(id: string, params: { email?: string; name?: string; notes?: string; phone?: string; company?: string; address?: string; birthday?: string }): Promise<Contact>;
   deleteContact(id: string): Promise<void>;
   searchContacts(query: string): Promise<{ contacts: Contact[]; total: number }>;
 }
@@ -214,6 +216,10 @@ export interface Contact {
   email: string;
   name: string;
   notes: string;
+  phone: string;
+  company: string;
+  address: string;
+  birthday: string;
   createdAt: string;
   updatedAt: string;
 }

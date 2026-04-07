@@ -267,10 +267,21 @@ function formatBytes(bytes: number): string {
 }
 
 function StorageIndicator() {
-  const { files } = useDriveStore();
-  const totalQuota = 15 * 1024 * 1024 * 1024; // 15 GB
-  const used = files.reduce((sum, f) => sum + f.size, 0);
-  const pct = Math.min((used / totalQuota) * 100, 100);
+  const [used, setUsed] = useState(0);
+  const [total, setTotal] = useState(10 * 1024 * 1024 * 1024); // 10 GB default
+
+  useEffect(() => {
+    driveApi.getStorageUsage()
+      .then((res) => {
+        setUsed(res.usedBytes);
+        setTotal(res.totalBytes);
+      })
+      .catch(() => {
+        // Fallback: count client-side files
+      });
+  }, []);
+
+  const pct = total > 0 ? Math.min((used / total) * 100, 100) : 0;
 
   return (
     <div
@@ -281,7 +292,7 @@ function StorageIndicator() {
       }}
     >
       <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginBottom: 6 }}>
-        {formatBytes(used)} of {formatBytes(totalQuota)} used
+        {formatBytes(used)} of {formatBytes(total)} used
       </div>
       <div
         style={{

@@ -1,4 +1,4 @@
-import { Mail, Pencil, Trash2, StickyNote } from 'lucide-react';
+import { Mail, Pencil, Trash2, StickyNote, Phone, Building, MapPin, Cake } from 'lucide-react';
 import { useContactsStore } from '@/store/contacts';
 import { useToastStore } from '@/store/toast';
 import { contactsApi } from '@/api/client';
@@ -100,6 +100,48 @@ export function ContactDetail() {
               {contact.email}
             </a>
           </div>
+
+          {contact.phone && (
+            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Phone size={14} style={{ color: 'var(--ct-text-muted)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Phone</h3>
+              </div>
+              <a href={`tel:${contact.phone}`} style={{ fontSize: 14, color: 'var(--ct-brand)' }}>
+                {contact.phone}
+              </a>
+            </div>
+          )}
+
+          {contact.company && (
+            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Building size={14} style={{ color: 'var(--ct-text-muted)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Company</h3>
+              </div>
+              <span style={{ fontSize: 14, color: 'var(--ct-text)' }}>{contact.company}</span>
+            </div>
+          )}
+
+          {contact.address && (
+            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <MapPin size={14} style={{ color: 'var(--ct-text-muted)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Address</h3>
+              </div>
+              <span style={{ fontSize: 14, color: 'var(--ct-text)' }}>{contact.address}</span>
+            </div>
+          )}
+
+          {contact.birthday && (
+            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                <Cake size={14} style={{ color: 'var(--ct-text-muted)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Birthday</h3>
+              </div>
+              <span style={{ fontSize: 14, color: 'var(--ct-text)' }}>{new Date(contact.birthday).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+            </div>
+          )}
 
           {contact.notes && (
             <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>

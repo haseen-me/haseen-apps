@@ -70,12 +70,16 @@ function ContactsApp() {
       toast.show('No contacts to export');
       return;
     }
-    const header = 'Name,Email,Notes';
+    const header = 'Name,Email,Phone,Company,Address,Birthday,Notes';
     const rows = contacts.map((c: Contact) => {
       const name = csvEscape(c.name);
       const email = csvEscape(c.email);
+      const phone = csvEscape(c.phone || '');
+      const company = csvEscape(c.company || '');
+      const address = csvEscape(c.address || '');
+      const birthday = csvEscape(c.birthday || '');
       const notes = csvEscape(c.notes || '');
-      return `${name},${email},${notes}`;
+      return `${name},${email},${phone},${company},${address},${birthday},${notes}`;
     });
     const csv = [header, ...rows].join('\n');
     const blob = new Blob([csv], { type: 'text/csv' });
@@ -108,7 +112,14 @@ function ContactsApp() {
       const email = fields[1]?.trim();
       if (!email) continue;
       try {
-        const created = await contactsApi.createContact({ name: name || email, email, notes: fields[2]?.trim() || '' });
+        const created = await contactsApi.createContact({
+          name: name || email, email,
+          phone: fields[2]?.trim() || '',
+          company: fields[3]?.trim() || '',
+          address: fields[4]?.trim() || '',
+          birthday: fields[5]?.trim() || '',
+          notes: fields[6]?.trim() || '',
+        });
         setContacts([...useContactsStore.getState().contacts, created]);
         imported++;
       } catch {

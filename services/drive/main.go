@@ -84,6 +84,7 @@ func main() {
 		r.Post("/trash/{fileID}/restore", h.RestoreFile)
 		r.Delete("/trash", h.EmptyTrash)
 		r.Get("/shared", h.SharedWithMe)
+		r.Get("/usage", h.StorageUsage)
 	})
 
 	go func() {

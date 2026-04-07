@@ -1,6 +1,6 @@
 import type { ReactNode } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { LogOut, User, Shield, Key, Settings, Palette } from 'lucide-react';
+import { LogOut, User, Shield, Key, Settings, Palette, Download } from 'lucide-react';
 import { useAuthStore } from '@/store/auth';
 
 const NAV_ITEMS = [
@@ -8,6 +8,7 @@ const NAV_ITEMS = [
   { icon: <Shield size={18} />, label: 'Security', path: '/settings/security' },
   { icon: <Key size={18} />, label: 'Recovery', path: '/settings/recovery' },
   { icon: <Palette size={18} />, label: 'Appearance', path: '/settings/appearance' },
+  { icon: <Download size={18} />, label: 'Export Data', path: '/settings/export' },
 ];
 
 interface SettingsLayoutProps {

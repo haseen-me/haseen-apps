@@ -74,6 +74,7 @@ export function createDriveApi(client: ApiClient): DriveApi {
     restoreFile: (fileID) => client.post(`/drive/trash/${fileID}/restore`, {}),
     emptyTrash: () => client.del('/drive/trash'),
     sharedWithMe: () => client.get('/drive/shared'),
+    getStorageUsage: () => client.get('/drive/usage'),
   };
 }
 
@@ -103,6 +104,7 @@ export function createCalendarApi(client: ApiClient): CalendarApi {
     listAttendees: (eventId) => client.get(`/calendar/events/${eventId}/attendees`),
     addAttendee: (eventId, email) => client.post(`/calendar/events/${eventId}/attendees`, { email }),
     removeAttendee: (eventId, attendeeId) => client.del(`/calendar/events/${eventId}/attendees/${attendeeId}`),
+    updateAttendeeStatus: (eventId, attendeeId, status) => client.put(`/calendar/events/${eventId}/attendees/${attendeeId}`, { status }),
     listReminders: (eventId) => client.get(`/calendar/events/${eventId}/reminders`),
     setReminder: (eventId, minutesBefore) => client.post(`/calendar/events/${eventId}/reminders`, { minutesBefore }),
     deleteReminder: (eventId, reminderId) => client.del(`/calendar/events/${eventId}/reminders/${reminderId}`),

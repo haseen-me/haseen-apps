@@ -17,6 +17,15 @@ func (s *Store) CreateFile(ctx context.Context, ownerID, name, mimeType string, 
 	return f, err
 }
 
+func (s *Store) GetStorageUsage(ctx context.Context, ownerID string) (int64, error) {
+	var used int64
+	err := s.DB.QueryRow(ctx,
+		"SELECT COALESCE(SUM(size), 0) FROM drive_files WHERE owner_id = $1 AND deleted_at IS NULL",
+		ownerID,
+	).Scan(&used)
+	return used, err
+}
+
 func (s *Store) GetFile(ctx context.Context, ownerID, fileID string) (*model.File, error) {
 	f := &model.File{}
 	err := s.DB.QueryRow(ctx,

@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 	"time"
 
@@ -144,6 +145,30 @@ func (h *Handler) RemoveAttendee(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 	writeJSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+func (h *Handler) UpdateAttendeeStatus(w http.ResponseWriter, r *http.Request) {
+	attendeeID := chi.URLParam(r, "attendeeID")
+	var req struct {
+		Status string `json:"status"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		http.Error(w, "invalid JSON", http.StatusBadRequest)
+		return
+	}
+	switch req.Status {
+	case "accepted", "declined", "tentative":
+		// valid
+	default:
+		http.Error(w, "status must be accepted, declined, or tentative", http.StatusBadRequest)
+		return
+	}
+	a, err := h.Store.UpdateAttendeeStatus(r.Context(), attendeeID, req.Status)
+	if err != nil {
+		h.handleStoreErr(w, err, "attendee")
+		return
+	}
+	writeJSON(w, http.StatusOK, a)
 }
 
 // --- Reminders ---

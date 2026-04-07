@@ -54,3 +54,16 @@ func (h *Handler) SharedWithMe(w http.ResponseWriter, r *http.Request) {
 	}
 	h.JSON(w, http.StatusOK, map[string]interface{}{"files": files})
 }
+
+// StorageUsage returns the total bytes used and quota for the current user.
+func (h *Handler) StorageUsage(w http.ResponseWriter, r *http.Request) {
+	uid := UserID(r)
+	usedBytes, err := h.Store.GetStorageUsage(r.Context(), uid)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "failed to get storage usage")
+		return
+	}
+	// Default quota: 10 GB
+	const totalBytes int64 = 10 * 1024 * 1024 * 1024
+	h.JSON(w, http.StatusOK, map[string]interface{}{"usedBytes": usedBytes, "totalBytes": totalBytes})
+}

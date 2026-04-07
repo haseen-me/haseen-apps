@@ -193,6 +193,18 @@ func (s *Store) RemoveAttendee(ctx context.Context, attendeeID string) error {
 	return nil
 }
 
+func (s *Store) UpdateAttendeeStatus(ctx context.Context, attendeeID, status string) (model.Attendee, error) {
+	var a model.Attendee
+	err := s.DB.QueryRow(ctx,
+		"UPDATE event_attendees SET status = $1 WHERE id = $2 RETURNING id, event_id, email, status",
+		status, attendeeID).
+		Scan(&a.ID, &a.EventID, &a.Email, &a.Status)
+	if err != nil {
+		return a, fmt.Errorf("update attendee status: %w", err)
+	}
+	return a, nil
+}
+
 // --- Reminders ---
 
 func (s *Store) ListReminders(ctx context.Context, eventID string) ([]model.Reminder, error) {

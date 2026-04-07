@@ -10,6 +10,10 @@ export function ContactDialog() {
   const [name, setName] = useState('');
   const [email, setEmail] = useState('');
   const [notes, setNotes] = useState('');
+  const [phone, setPhone] = useState('');
+  const [company, setCompany] = useState('');
+  const [address, setAddress] = useState('');
+  const [birthday, setBirthday] = useState('');
   const [saving, setSaving] = useState(false);
 
   useEffect(() => {
@@ -17,10 +21,18 @@ export function ContactDialog() {
       setName(editingContact.name);
       setEmail(editingContact.email);
       setNotes(editingContact.notes);
+      setPhone(editingContact.phone || '');
+      setCompany(editingContact.company || '');
+      setAddress(editingContact.address || '');
+      setBirthday(editingContact.birthday || '');
     } else {
       setName('');
       setEmail('');
       setNotes('');
+      setPhone('');
+      setCompany('');
+      setAddress('');
+      setBirthday('');
     }
   }, [editingContact, dialogOpen]);
 
@@ -36,11 +48,11 @@ export function ContactDialog() {
     setSaving(true);
     try {
       if (editingContact) {
-        const updated = await contactsApi.updateContact(editingContact.id, { name: name.trim(), email: email.trim(), notes: notes.trim() });
+        const updated = await contactsApi.updateContact(editingContact.id, { name: name.trim(), email: email.trim(), notes: notes.trim(), phone: phone.trim(), company: company.trim(), address: address.trim(), birthday: birthday.trim() });
         setContacts(contacts.map((c) => (c.id === editingContact.id ? updated : c)));
         toast.show('Contact updated');
       } else {
-        const created = await contactsApi.createContact({ name: name.trim(), email: email.trim(), notes: notes.trim() });
+        const created = await contactsApi.createContact({ name: name.trim(), email: email.trim(), notes: notes.trim(), phone: phone.trim(), company: company.trim(), address: address.trim(), birthday: birthday.trim() });
         setContacts([...contacts, created]);
         toast.show('Contact created');
       }
@@ -96,6 +108,22 @@ export function ContactDialog() {
           <div>
             <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Email</label>
             <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" type="email" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Phone</label>
+            <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555-1234" type="tel" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Company</label>
+            <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company name" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Address</label>
+            <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street address" style={inputStyle} />
+          </div>
+          <div>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Birthday</label>
+            <input value={birthday} onChange={(e) => setBirthday(e.target.value)} type="date" style={inputStyle} />
           </div>
           <div>
             <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Notes</label>

@@ -73,6 +73,7 @@ func main() {
 		r.Get("/events/{eventID}/attendees", h.ListAttendees)
 		r.Post("/events/{eventID}/attendees", h.AddAttendee)
 		r.Delete("/events/{eventID}/attendees/{attendeeID}", h.RemoveAttendee)
+		r.Put("/events/{eventID}/attendees/{attendeeID}", h.UpdateAttendeeStatus)
 
 		// Reminders
 		r.Get("/events/{eventID}/reminders", h.ListReminders)

@@ -27,6 +27,7 @@ export function EventDialog() {
   const [attendees, setAttendees] = useState<string[]>([]);
   const [attendeeInput, setAttendeeInput] = useState('');
   const [existingAttendeeIds, setExistingAttendeeIds] = useState<Map<string, string>>(new Map());
+  const [attendeeStatuses, setAttendeeStatuses] = useState<Map<string, string>>(new Map());
   const [reminder, setReminder] = useState('');
 
   useEffect(() => {
@@ -42,12 +43,14 @@ export function EventDialog() {
       setColor(editingEvent.color || '#4285f4');
       setAttendees([]);
       setExistingAttendeeIds(new Map());
+      setAttendeeStatuses(new Map());
       setReminder('');
       // Load attendees and reminders from API
       calendarApi.listAttendees(editingEvent.id).then((res) => {
         const emails = res.attendees.map((a) => a.email);
         setAttendees(emails);
         setExistingAttendeeIds(new Map(res.attendees.map((a) => [a.email, a.id])));
+        setAttendeeStatuses(new Map(res.attendees.map((a) => [a.email, a.status || 'pending'])));
       }).catch(() => {});
       calendarApi.listReminders(editingEvent.id).then((res) => {
         if (res.reminders.length > 0) setReminder(String(res.reminders[0]!.minutesBefore));
@@ -69,6 +72,7 @@ export function EventDialog() {
       setAttendees([]);
       setAttendeeInput('');
       setExistingAttendeeIds(new Map());
+      setAttendeeStatuses(new Map());
       setReminder('');
     }
   }, [editingEvent, selectedDate, selectedEndDate, calendars]);
@@ -448,29 +452,63 @@ export function EventDialog() {
             </div>
             {attendees.length > 0 && (
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
-                {attendees.map((email) => (
-                  <span
-                    key={email}
-                    style={{
-                      display: 'inline-flex',
-                      alignItems: 'center',
-                      gap: 4,
-                      padding: '2px 8px',
-                      borderRadius: 12,
-                      background: 'var(--cal-bg-muted, #f1f3f4)',
-                      fontSize: 12,
-                      color: 'var(--cal-text-secondary)',
-                    }}
-                  >
-                    {email}
-                    <button
-                      onClick={() => setAttendees(attendees.filter((a) => a !== email))}
-                      style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', lineHeight: 1 }}
+                {attendees.map((email) => {
+                  const status = attendeeStatuses.get(email) || 'pending';
+                  const statusColor = status === 'accepted' ? '#30a46c' : status === 'declined' ? '#e5484d' : status === 'tentative' ? '#f5a623' : 'var(--cal-text-muted)';
+                  const statusLabel = status === 'accepted' ? '✓' : status === 'declined' ? '✗' : status === 'tentative' ? '?' : '·';
+                  const attendeeId = existingAttendeeIds.get(email);
+                  return (
+                    <span
+                      key={email}
+                      style={{
+                        display: 'inline-flex',
+                        alignItems: 'center',
+                        gap: 4,
+                        padding: '2px 8px',
+                        borderRadius: 12,
+                        background: 'var(--cal-bg-muted, #f1f3f4)',
+                        fontSize: 12,
+                        color: 'var(--cal-text-secondary)',
+                      }}
                     >
-                      <X size={12} />
-                    </button>
-                  </span>
-                ))}
+                      <span style={{ color: statusColor, fontWeight: 700, fontSize: 11, width: 12, textAlign: 'center' }} title={status}>
+                        {statusLabel}
+                      </span>
+                      {email}
+                      {attendeeId && (
+                        <select
+                          value={status}
+                          onChange={async (e) => {
+                            const newStatus = e.target.value as 'accepted' | 'declined' | 'tentative';
+                            try {
+                              await calendarApi.updateAttendeeStatus(editingEvent!.id, attendeeId, newStatus);
+                              setAttendeeStatuses(new Map(attendeeStatuses).set(email, newStatus));
+                            } catch { /* ignore */ }
+                          }}
+                          style={{
+                            background: 'none',
+                            border: 'none',
+                            fontSize: 10,
+                            color: statusColor,
+                            cursor: 'pointer',
+                            padding: 0,
+                          }}
+                        >
+                          <option value="pending">Pending</option>
+                          <option value="accepted">Accepted</option>
+                          <option value="declined">Declined</option>
+                          <option value="tentative">Maybe</option>
+                        </select>
+                      )}
+                      <button
+                        onClick={() => setAttendees(attendees.filter((a) => a !== email))}
+                        style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'inherit', lineHeight: 1 }}
+                      >
+                        <X size={12} />
+                      </button>
+                    </span>
+                  );
+                })}
               </div>
             )}
           </div>

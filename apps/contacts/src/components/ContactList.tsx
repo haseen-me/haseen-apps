@@ -124,6 +124,7 @@ export function ContactList() {
                   {c.name && (
                     <div style={{ fontSize: 12, color: 'var(--ct-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {c.email}
+                      {c.company && <span style={{ marginLeft: 6 }}>· {c.company}</span>}
                     </div>
                   )}
                 </div>

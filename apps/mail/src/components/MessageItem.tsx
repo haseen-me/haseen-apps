@@ -12,6 +12,10 @@ import {
   Download,
   ShieldCheck,
   ShieldAlert,
+  FileText,
+  Image as ImageIcon,
+  File,
+  Eye,
 } from 'lucide-react';
 import { useState, useMemo } from 'react';
 
@@ -46,8 +50,24 @@ function stringToColor(str: string): string {
   return colors[Math.abs(hash) % colors.length];
 }
 
+function isImageType(contentType: string): boolean {
+  return contentType.startsWith('image/');
+}
+
+function isPdfType(contentType: string): boolean {
+  return contentType === 'application/pdf';
+}
+
+function attachmentIcon(contentType: string) {
+  if (isImageType(contentType)) return <ImageIcon size={14} style={{ color: 'var(--mail-text-muted)' }} />;
+  if (isPdfType(contentType)) return <FileText size={14} style={{ color: '#e5484d' }} />;
+  if (contentType.startsWith('text/')) return <FileText size={14} style={{ color: 'var(--mail-text-muted)' }} />;
+  return <File size={14} style={{ color: 'var(--mail-text-muted)' }} />;
+}
+
 export function MessageItem({ message, isLast }: { message: Message; isLast: boolean }) {
   const [collapsed, setCollapsed] = useState(!isLast);
+  const [previewAttId, setPreviewAttId] = useState<string | null>(null);
   const from = message.from;
   const { encryptionKeyPair, signingKeyPair } = useCryptoStore();
 
@@ -235,17 +255,85 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                 <Paperclip size={13} />
                 {message.attachments.length} attachment{message.attachments.length > 1 ? 's' : ''}
               </div>
+
+              {/* Inline image previews */}
+              {message.attachments.some((a) => isImageType(a.contentType)) && (
+                <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', marginBottom: 10 }}>
+                  {message.attachments
+                    .filter((a) => isImageType(a.contentType))
+                    .map((att) => (
+                      <div
+                        key={att.id}
+                        style={{
+                          position: 'relative',
+                          borderRadius: 8,
+                          overflow: 'hidden',
+                          border: '1px solid var(--mail-border)',
+                          cursor: 'pointer',
+                          maxWidth: 200,
+                        }}
+                        onClick={() => setPreviewAttId(previewAttId === att.id ? null : att.id)}
+                      >
+                        <img
+                          src={mailApi.getAttachmentUrl(att.id)}
+                          alt={att.filename}
+                          style={{
+                            display: 'block',
+                            maxWidth: 200,
+                            maxHeight: 150,
+                            objectFit: 'cover',
+                          }}
+                        />
+                        <div
+                          style={{
+                            position: 'absolute',
+                            bottom: 0,
+                            left: 0,
+                            right: 0,
+                            padding: '4px 8px',
+                            background: 'rgba(0,0,0,0.55)',
+                            color: '#fff',
+                            fontSize: 10,
+                            whiteSpace: 'nowrap',
+                            overflow: 'hidden',
+                            textOverflow: 'ellipsis',
+                          }}
+                        >
+                          {att.filename}
+                        </div>
+                      </div>
+                    ))}
+                </div>
+              )}
+
+              {/* Lightbox for clicked image */}
+              {previewAttId && (
+                <div
+                  onClick={() => setPreviewAttId(null)}
+                  style={{
+                    position: 'fixed',
+                    inset: 0,
+                    background: 'rgba(0,0,0,0.8)',
+                    display: 'flex',
+                    alignItems: 'center',
+                    justifyContent: 'center',
+                    zIndex: 300,
+                    cursor: 'zoom-out',
+                  }}
+                >
+                  <img
+                    src={mailApi.getAttachmentUrl(previewAttId)}
+                    alt=""
+                    style={{ maxWidth: '90vw', maxHeight: '90vh', borderRadius: 8 }}
+                  />
+                </div>
+              )}
+
+              {/* Attachment chips */}
               <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap' }}>
                 {message.attachments.map((att) => (
                   <div
                     key={att.id}
-                    onClick={() => {
-                      const url = mailApi.getAttachmentUrl(att.id);
-                      const a = document.createElement('a');
-                      a.href = url;
-                      a.download = att.filename;
-                      a.click();
-                    }}
                     style={{
                       display: 'flex',
                       alignItems: 'center',
@@ -254,16 +342,58 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                       borderRadius: 'var(--mail-radius-sm)',
                       border: '1px solid var(--mail-border)',
                       fontSize: 13,
-                      cursor: 'pointer',
                       background: 'var(--mail-bg-secondary)',
                     }}
                   >
-                    <Paperclip size={14} style={{ color: 'var(--mail-text-muted)' }} />
+                    {attachmentIcon(att.contentType)}
                     <div>
                       <div style={{ fontWeight: 500 }}>{att.filename}</div>
                       <div style={{ fontSize: 11, color: 'var(--mail-text-muted)' }}>{formatSize(att.size)}</div>
                     </div>
-                    <Download size={14} style={{ color: 'var(--mail-text-muted)', marginLeft: 8 }} />
+                    {(isImageType(att.contentType) || isPdfType(att.contentType)) && (
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (isImageType(att.contentType)) {
+                            setPreviewAttId(att.id);
+                          } else {
+                            window.open(mailApi.getAttachmentUrl(att.id), '_blank', 'noopener');
+                          }
+                        }}
+                        style={{
+                          background: 'none',
+                          border: 'none',
+                          padding: 2,
+                          cursor: 'pointer',
+                          color: 'var(--mail-text-muted)',
+                          display: 'flex',
+                        }}
+                        title="Preview"
+                      >
+                        <Eye size={14} />
+                      </button>
+                    )}
+                    <button
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        const url = mailApi.getAttachmentUrl(att.id);
+                        const a = document.createElement('a');
+                        a.href = url;
+                        a.download = att.filename;
+                        a.click();
+                      }}
+                      style={{
+                        background: 'none',
+                        border: 'none',
+                        padding: 2,
+                        cursor: 'pointer',
+                        color: 'var(--mail-text-muted)',
+                        display: 'flex',
+                      }}
+                      title="Download"
+                    >
+                      <Download size={14} />
+                    </button>
                   </div>
                 ))}
               </div>
