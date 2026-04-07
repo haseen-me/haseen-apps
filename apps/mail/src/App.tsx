@@ -159,7 +159,13 @@ export function App() {
       </div>
       <ComposePanel />
       <SearchOverlay />
-      <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
+      <Toast
+        message={toast.countdown ? `${toast.message} (${toast.countdown}s)` : toast.message}
+        visible={toast.visible}
+        onDismiss={toast.hide}
+        action={toast.action ?? undefined}
+        duration={toast.countdown ? 0 : undefined}
+      />
     </MailLayout>
     </ErrorBoundary>
   );

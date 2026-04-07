@@ -6,40 +6,53 @@ import {
   Trash2,
   Share2,
   RotateCcw,
+  FolderInput,
 } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
 import { useToastStore } from '@/store/toast';
 import { driveApi } from '@/api/client';
 import type { DriveFile } from '@/types/drive';
 import { decryptSymmetric } from '@haseen-me/crypto';
+import { ConfirmDialog } from './ConfirmDialog';
+import { MoveToDialog } from './MoveToDialog';
 
 interface Props {
   file: DriveFile;
   isTrash?: boolean;
+  contextPos?: { x: number; y: number } | null;
+  onCloseContext?: () => void;
 }
 
-export function FileContextMenu({ file, isTrash }: Props) {
+export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: Props) {
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(file.name);
+  const [confirmDelete, setConfirmDelete] = useState(false);
+  const [moveOpen, setMoveOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toast = useToastStore();
   const { files, setFiles, setShareDialogFileId } = useDriveStore();
 
+  const isMenuOpen = open || !!contextPos;
+  const closeMenu = () => {
+    setOpen(false);
+    onCloseContext?.();
+  };
+
   // Close on click outside
   useEffect(() => {
-    if (!open) return;
+    if (!isMenuOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeMenu();
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [isMenuOpen]);
 
   const handleDownload = async () => {
-    setOpen(false);
+    closeMenu();
     try {
       const buffer = await driveApi.downloadFile(file.id);
       let blob: Blob;
@@ -80,7 +93,8 @@ export function FileContextMenu({ file, isTrash }: Props) {
   };
 
   const handleDelete = async () => {
-    setOpen(false);
+    setConfirmDelete(false);
+    closeMenu();
     try {
       await driveApi.deleteFile(file.id);
       setFiles(files.filter((f) => f.id !== file.id));
@@ -91,7 +105,7 @@ export function FileContextMenu({ file, isTrash }: Props) {
   };
 
   const handleRestore = async () => {
-    setOpen(false);
+    closeMenu();
     try {
       await driveApi.restoreFile(file.id);
       setFiles(files.filter((f) => f.id !== file.id));
@@ -102,8 +116,19 @@ export function FileContextMenu({ file, isTrash }: Props) {
   };
 
   const handleShare = () => {
-    setOpen(false);
+    closeMenu();
     setShareDialogFileId(file.id);
+  };
+
+  const handleMove = async (targetFolderId: string) => {
+    setMoveOpen(false);
+    try {
+      await driveApi.moveFile(file.id, targetFolderId);
+      setFiles(files.filter((f) => f.id !== file.id));
+      toast.show('File moved');
+    } catch {
+      toast.show('Move failed');
+    }
   };
 
   if (renaming) {
@@ -138,24 +163,37 @@ export function FileContextMenu({ file, isTrash }: Props) {
 
   return (
     <div ref={menuRef} style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => setOpen(!open)}
-        title="More actions"
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--drive-text-muted)',
-          padding: 4,
-          borderRadius: 4,
-          display: 'flex',
-          cursor: 'pointer',
-        }}
-      >
-        <MoreVertical size={16} />
-      </button>
-      {open && (
-        <div
+      {!contextPos && (
+        <button
+          onClick={() => setOpen(!open)}
+          title="More actions"
           style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--drive-text-muted)',
+            padding: 4,
+            borderRadius: 4,
+            display: 'flex',
+            cursor: 'pointer',
+          }}
+        >
+          <MoreVertical size={16} />
+        </button>
+      )}
+      {isMenuOpen && (
+        <div
+          style={contextPos ? {
+            position: 'fixed',
+            top: contextPos.y,
+            left: contextPos.x,
+            background: 'var(--drive-bg)',
+            border: '1px solid var(--drive-border)',
+            borderRadius: 'var(--drive-radius)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            zIndex: 200,
+            minWidth: 160,
+            overflow: 'hidden',
+          } : {
             position: 'absolute',
             top: '100%',
             right: 0,
@@ -186,7 +224,7 @@ export function FileContextMenu({ file, isTrash }: Props) {
                 icon={<Pencil size={15} />}
                 label="Rename"
                 onClick={() => {
-                  setOpen(false);
+                  closeMenu();
                   setNewName(file.name);
                   setRenaming(true);
                 }}
@@ -196,16 +234,46 @@ export function FileContextMenu({ file, isTrash }: Props) {
                 label="Share"
                 onClick={handleShare}
               />
+              <MenuItem
+                icon={<FolderInput size={15} />}
+                label="Move to…"
+                onClick={() => {
+                  closeMenu();
+                  setMoveOpen(true);
+                }}
+              />
               <div style={{ height: 1, background: 'var(--drive-border)', margin: '4px 0' }} />
               <MenuItem
                 icon={<Trash2 size={15} />}
                 label="Move to trash"
-                onClick={handleDelete}
+                onClick={() => {
+                  closeMenu();
+                  setConfirmDelete(true);
+                }}
                 danger
               />
             </>
           )}
         </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Move to trash?"
+          message={`"${file.name}" will be moved to trash. You can restore it later.`}
+          confirmLabel="Move to trash"
+          danger
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
+      )}
+
+      {moveOpen && (
+        <MoveToDialog
+          title={`Move "${file.name}" to…`}
+          onSelect={handleMove}
+          onCancel={() => setMoveOpen(false)}
+        />
       )}
     </div>
   );

@@ -5,6 +5,13 @@ import type { CalendarEvent } from '@/types/calendar';
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 function getWeekDates(date: Date): Date[] {
   const start = new Date(date);
   start.setDate(start.getDate() - start.getDay());
@@ -67,7 +74,9 @@ export function WeekView() {
           borderBottom: '1px solid var(--cal-border)',
         }}
       >
-        <div />
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500, color: 'var(--cal-text-muted)' }}>
+          W{getISOWeekNumber(weekDates[0]!)}
+        </div>
         {weekDates.map((date, i) => {
           const isToday = isSameDay(date, today);
           return (

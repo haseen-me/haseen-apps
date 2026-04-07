@@ -173,8 +173,10 @@ export function ComposePanel() {
     setDraftId(null);
   };
 
-  const handleSend = async () => {
-    setSending(true);
+  const sendTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const countdownRef = useRef<ReturnType<typeof setInterval>>(undefined);
+
+  const doSend = async () => {
     try {
       // Clean up draft if one was auto-saved
       if (draftId) {
@@ -251,15 +253,48 @@ export function ComposePanel() {
           await Promise.all(attachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
         }
       }
+      toast.show(encrypted ? 'Encrypted message sent' : 'Message sent');
     } catch (err) {
       // Backend may be offline in development — show toast and close gracefully
       console.warn('[Mail] Send failed:', err);
       toast.show('Message could not be sent — backend unavailable');
-    } finally {
-      setSending(false);
-      handleClose(true); // don't save draft — message was sent
-      toast.show(encrypted ? 'Encrypted message sent' : 'Message sent');
     }
+  };
+
+  const handleSend = () => {
+    const UNDO_SECONDS = 5;
+    // Close compose immediately
+    handleClose(true);
+
+    let remaining = UNDO_SECONDS;
+    toast.show('Sending message…', {
+      countdown: remaining,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          clearTimeout(sendTimerRef.current);
+          clearInterval(countdownRef.current);
+          toast.hide();
+          // Re-open compose with the same content
+          setComposeOpen(true);
+        },
+      },
+    });
+
+    countdownRef.current = setInterval(() => {
+      remaining--;
+      if (remaining > 0) {
+        toast.setCountdown(remaining);
+      } else {
+        clearInterval(countdownRef.current);
+      }
+    }, 1000);
+
+    sendTimerRef.current = setTimeout(() => {
+      clearInterval(countdownRef.current);
+      toast.hide();
+      doSend();
+    }, UNDO_SECONDS * 1000);
   };
 
   if (minimized) {

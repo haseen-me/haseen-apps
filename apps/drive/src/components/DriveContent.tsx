@@ -1,6 +1,7 @@
 import { useDriveStore } from '@/store/drive';
 import { FolderCard } from './FolderCard';
 import { FileCard, FileRow } from './FileCard';
+import { BulkActionBar } from './BulkActionBar';
 import { FolderIcon } from 'lucide-react';
 import type { DriveFile, Folder, SortField, SortDir } from '@/types/drive';
 
@@ -64,6 +65,7 @@ export function DriveContent() {
 
   return (
     <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
+      <BulkActionBar />
       {/* Folders */}
       {sortedFolders.length > 0 && (
         <div style={{ marginBottom: 24 }}>

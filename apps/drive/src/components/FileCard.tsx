@@ -13,6 +13,7 @@ import { useDriveStore } from '@/store/drive';
 import type { DriveFile } from '@/types/drive';
 import { getFileIcon, formatFileSize } from '@/types/drive';
 import { FileContextMenu } from './FileContextMenu';
+import { useState } from 'react';
 
 const ICON_MAP: Record<string, React.ReactNode> = {
   file: <File size={22} />,
@@ -50,11 +51,16 @@ function FileIcon({ mimeType }: { mimeType: string }) {
 export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean }) {
   const { selectedIds, toggleSelected, setPreviewFileId } = useDriveStore();
   const selected = selectedIds.has(file.id);
+  const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
 
   return (
     <div
       onClick={() => toggleSelected(file.id)}
       onDoubleClick={() => setPreviewFileId(file.id)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextPos({ x: e.clientX, y: e.clientY });
+      }}
       style={{
         padding: 16,
         borderRadius: 'var(--drive-radius)',
@@ -115,6 +121,14 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
           </div>
         </div>
         <FileContextMenu file={file} isTrash={isTrash} />
+        {contextPos && (
+          <FileContextMenu
+            file={file}
+            isTrash={isTrash}
+            contextPos={contextPos}
+            onCloseContext={() => setContextPos(null)}
+          />
+        )}
       </div>
     </div>
   );
@@ -123,6 +137,7 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
 export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean }) {
   const { selectedIds, toggleSelected, setPreviewFileId } = useDriveStore();
   const selected = selectedIds.has(file.id);
+  const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
 
   const date = new Date(file.updatedAt);
   const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
@@ -131,6 +146,10 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
     <div
       onClick={() => toggleSelected(file.id)}
       onDoubleClick={() => setPreviewFileId(file.id)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextPos({ x: e.clientX, y: e.clientY });
+      }}
       style={{
         display: 'flex',
         alignItems: 'center',
@@ -166,6 +185,14 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
         {formatFileSize(file.size)}
       </span>
       <FileContextMenu file={file} isTrash={isTrash} />
+      {contextPos && (
+        <FileContextMenu
+          file={file}
+          isTrash={isTrash}
+          contextPos={contextPos}
+          onCloseContext={() => setContextPos(null)}
+        />
+      )}
     </div>
   );
 }

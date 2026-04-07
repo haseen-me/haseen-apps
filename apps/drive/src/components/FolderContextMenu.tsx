@@ -4,29 +4,39 @@ import { useDriveStore } from '@/store/drive';
 import { useToastStore } from '@/store/toast';
 import { driveApi } from '@/api/client';
 import type { Folder } from '@/types/drive';
+import { ConfirmDialog } from './ConfirmDialog';
 
 interface Props {
   folder: Folder;
+  contextPos?: { x: number; y: number } | null;
+  onCloseContext?: () => void;
 }
 
-export function FolderContextMenu({ folder }: Props) {
+export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props) {
   const [open, setOpen] = useState(false);
   const [renaming, setRenaming] = useState(false);
   const [newName, setNewName] = useState(folder.name);
+  const [confirmDelete, setConfirmDelete] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
   const toast = useToastStore();
   const { folders, setFolders } = useDriveStore();
 
+  const isMenuOpen = open || !!contextPos;
+  const closeMenu = () => {
+    setOpen(false);
+    onCloseContext?.();
+  };
+
   useEffect(() => {
-    if (!open) return;
+    if (!isMenuOpen) return;
     const handler = (e: MouseEvent) => {
       if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setOpen(false);
+        closeMenu();
       }
     };
     document.addEventListener('mousedown', handler);
     return () => document.removeEventListener('mousedown', handler);
-  }, [open]);
+  }, [isMenuOpen]);
 
   const handleRename = async () => {
     if (!newName.trim() || newName === folder.name) {
@@ -44,7 +54,8 @@ export function FolderContextMenu({ folder }: Props) {
   };
 
   const handleDelete = async () => {
-    setOpen(false);
+    setConfirmDelete(false);
+    closeMenu();
     try {
       await driveApi.deleteFolder(folder.id);
       setFolders(folders.filter((f) => f.id !== folder.id));
@@ -86,24 +97,37 @@ export function FolderContextMenu({ folder }: Props) {
 
   return (
     <div ref={menuRef} style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
-      <button
-        onClick={() => setOpen(!open)}
-        title="More actions"
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--drive-text-muted)',
-          padding: 4,
-          borderRadius: 4,
-          display: 'flex',
-          cursor: 'pointer',
-        }}
-      >
-        <MoreVertical size={16} />
-      </button>
-      {open && (
-        <div
+      {!contextPos && (
+        <button
+          onClick={() => setOpen(!open)}
+          title="More actions"
           style={{
+            background: 'none',
+            border: 'none',
+            color: 'var(--drive-text-muted)',
+            padding: 4,
+            borderRadius: 4,
+            display: 'flex',
+            cursor: 'pointer',
+          }}
+        >
+          <MoreVertical size={16} />
+        </button>
+      )}
+      {isMenuOpen && (
+        <div
+          style={contextPos ? {
+            position: 'fixed',
+            top: contextPos.y,
+            left: contextPos.x,
+            background: 'var(--drive-bg)',
+            border: '1px solid var(--drive-border)',
+            borderRadius: 'var(--drive-radius)',
+            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
+            zIndex: 200,
+            minWidth: 150,
+            overflow: 'hidden',
+          } : {
             position: 'absolute',
             top: '100%',
             right: 0,
@@ -121,7 +145,7 @@ export function FolderContextMenu({ folder }: Props) {
             icon={<Pencil size={15} />}
             label="Rename"
             onClick={() => {
-              setOpen(false);
+              closeMenu();
               setNewName(folder.name);
               setRenaming(true);
             }}
@@ -130,10 +154,24 @@ export function FolderContextMenu({ folder }: Props) {
           <MenuItem
             icon={<Trash2 size={15} />}
             label="Delete folder"
-            onClick={handleDelete}
+            onClick={() => {
+              closeMenu();
+              setConfirmDelete(true);
+            }}
             danger
           />
         </div>
+      )}
+
+      {confirmDelete && (
+        <ConfirmDialog
+          title="Delete folder?"
+          message={`"${folder.name}" and all its contents will be permanently deleted.`}
+          confirmLabel="Delete"
+          danger
+          onConfirm={handleDelete}
+          onCancel={() => setConfirmDelete(false)}
+        />
       )}
     </div>
   );

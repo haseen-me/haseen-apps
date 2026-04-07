@@ -3,6 +3,13 @@ import type { CalendarEvent } from '@/types/calendar';
 
 const DAYS = ['Sun', 'Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat'];
 
+function getISOWeekNumber(date: Date): number {
+  const d = new Date(Date.UTC(date.getFullYear(), date.getMonth(), date.getDate()));
+  d.setUTCDate(d.getUTCDate() + 4 - (d.getUTCDay() || 7));
+  const yearStart = new Date(Date.UTC(d.getUTCFullYear(), 0, 1));
+  return Math.ceil(((d.getTime() - yearStart.getTime()) / 86400000 + 1) / 7);
+}
+
 function getMonthGrid(date: Date): Date[][] {
   const year = date.getFullYear();
   const month = date.getMonth();
@@ -71,7 +78,8 @@ export function MonthView() {
       }}
     >
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(7, 1fr)', borderBottom: '1px solid var(--cal-border)' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: '32px repeat(7, 1fr)', borderBottom: '1px solid var(--cal-border)' }}>
+        <div style={{ padding: '8px 0', fontSize: 9, fontWeight: 600, color: 'var(--cal-text-muted)', textAlign: 'center' }}>Wk</div>
         {DAYS.map((d) => (
           <div
             key={d}
@@ -97,11 +105,26 @@ export function MonthView() {
             key={wi}
             style={{
               display: 'grid',
-              gridTemplateColumns: 'repeat(7, 1fr)',
+              gridTemplateColumns: '32px repeat(7, 1fr)',
               flex: 1,
               minHeight: 0,
             }}
           >
+            <div
+              style={{
+                display: 'flex',
+                alignItems: 'flex-start',
+                justifyContent: 'center',
+                paddingTop: 6,
+                fontSize: 10,
+                fontWeight: 500,
+                color: 'var(--cal-text-muted)',
+                borderRight: '1px solid var(--cal-border-subtle)',
+                borderBottom: '1px solid var(--cal-border-subtle)',
+              }}
+            >
+              {getISOWeekNumber(week[0]!)}
+            </div>
             {week.map((date, di) => {
               const isCurrentMonth = date.getMonth() === currentDate.getMonth();
               const isToday = isSameDay(date, today);

@@ -1,3 +1,4 @@
+import { useState } from 'react';
 import { FolderIcon } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
 import type { Folder } from '@/types/drive';
@@ -6,10 +7,15 @@ import { FolderContextMenu } from './FolderContextMenu';
 export function FolderCard({ folder }: { folder: Folder }) {
   const { setCurrentFolderId, selectedIds, toggleSelected } = useDriveStore();
   const selected = selectedIds.has(folder.id);
+  const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
 
   return (
     <div
       onClick={() => setCurrentFolderId(folder.id)}
+      onContextMenu={(e) => {
+        e.preventDefault();
+        setContextPos({ x: e.clientX, y: e.clientY });
+      }}
       style={{
         padding: '14px 16px',
         borderRadius: 'var(--drive-radius)',
@@ -65,6 +71,13 @@ export function FolderCard({ folder }: { folder: Folder }) {
         {folder.name}
       </span>
       <FolderContextMenu folder={folder} />
+      {contextPos && (
+        <FolderContextMenu
+          folder={folder}
+          contextPos={contextPos}
+          onCloseContext={() => setContextPos(null)}
+        />
+      )}
     </div>
   );
 }
