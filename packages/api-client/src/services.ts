@@ -23,7 +23,7 @@ export interface Attachment {
 
 /** Mail service API types */
 export interface MailApi {
-  getMailbox(label?: string): Promise<MailboxResponse>;
+  getMailbox(label?: string, params?: { limit?: number; cursor?: string }): Promise<MailboxResponse>;
   getMessage(messageID: string): Promise<MailMessage>;
   sendMessage(params: SendMessageParams): Promise<{ id: string }>;
   deleteMessage(messageID: string): Promise<void>;
@@ -86,6 +86,8 @@ export interface MailThread {
 export interface MailboxResponse {
   threads: MailThread[];
   total: number;
+  nextCursor?: string;
+  hasMore: boolean;
 }
 
 /** Drive service API types */
@@ -107,6 +109,8 @@ export interface DriveApi {
   emptyTrash(): Promise<void>;
   sharedWithMe(): Promise<{ files: DriveFile[] }>;
   getStorageUsage(): Promise<{ usedBytes: number; totalBytes: number }>;
+  starFile(fileID: string, starred: boolean): Promise<void>;
+  listStarred(): Promise<{ files: DriveFile[] }>;
 }
 
 export interface DriveFile {
@@ -116,6 +120,7 @@ export interface DriveFile {
   mimeType: string;
   folderID: string | null;
   encryptedKey: string;
+  starred: boolean;
   createdAt: string;
   updatedAt: string;
 }

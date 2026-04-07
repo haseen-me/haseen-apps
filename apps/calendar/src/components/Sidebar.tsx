@@ -3,14 +3,17 @@ import { Calendar as CalIcon, Eye, EyeOff, Plus } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
 import { MiniCalendar } from '@/components/MiniCalendar';
 import { AddCalendarDialog } from '@/components/AddCalendarDialog';
+import { useMobileSidebar } from '@/layout/CalendarLayout';
 
 export function Sidebar() {
   const { calendars, visibleCalendarIds, toggleCalendarVisibility, openNewEvent } =
     useCalendarStore();
   const [showAddCalendar, setShowAddCalendar] = useState(false);
+  const { open: mobileSidebarOpen } = useMobileSidebar();
 
   return (
     <aside
+      className={`cal-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}
       style={{
         width: 'var(--cal-sidebar-width)',
         borderRight: '1px solid var(--cal-border)',

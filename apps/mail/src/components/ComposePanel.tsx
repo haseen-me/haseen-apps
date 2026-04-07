@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect, useCallback } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
 import { mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';

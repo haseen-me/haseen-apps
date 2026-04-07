@@ -69,3 +69,39 @@ button { font-family: inherit; cursor: pointer; }
 *:focus-visible { outline: 2px solid var(--drive-brand); outline-offset: 2px; }
 
 @keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+
+/* ── Responsive ────────────────────────────────── */
+@media (max-width: 1024px) {
+  :root { --drive-sidebar-width: 200px; }
+}
+
+@media (max-width: 768px) {
+  .drive-product-rail { display: none !important; }
+  .drive-sidebar {
+    position: fixed !important;
+    left: -280px;
+    top: 0;
+    z-index: 300;
+    width: 260px !important;
+    transition: left 0.25s ease !important;
+    box-shadow: none;
+  }
+  .drive-sidebar.mobile-open {
+    left: 0;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+  .drive-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 299;
+  }
+  .drive-sidebar-backdrop.mobile-open { display: block; }
+  .drive-mobile-header { display: flex !important; }
+}
+
+@media (min-width: 769px) {
+  .drive-mobile-header { display: none !important; }
+  .drive-sidebar-backdrop { display: none !important; }
+}

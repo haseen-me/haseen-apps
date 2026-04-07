@@ -6,7 +6,7 @@ import { ContactList } from '@/components/ContactList';
 import { ContactDetail } from '@/components/ContactDetail';
 import { ContactDialog } from '@/components/ContactDialog';
 import { useContactsStore } from '@/store/contacts';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { contactsApi } from '@/api/client';
 import type { Contact } from '@haseen-me/api-client';
 

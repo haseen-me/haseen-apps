@@ -8,14 +8,14 @@ import { ComposePanel } from '@/components/ComposePanel';
 import { SearchOverlay } from '@/components/SearchOverlay';
 import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { mailApi } from '@/api/client';
 import { MOCK_THREADS } from '@/data/mock';
 import { Toast } from '@haseen-me/ui';
 
 export function App() {
   const [authed, setAuthed] = useState(false);
-  const { activeLabel, activeThreadId, threads, setThreads, setLoading, setUserLabels, setComposeOpen, setActiveThreadId, setReplyToThreadId, setForwardFromThreadId } = useMailStore();
+  const { activeLabel, activeThreadId, threads, setThreads, appendThreads, setCursor, setHasMore, setLoading, setUserLabels, setComposeOpen, setActiveThreadId, setReplyToThreadId, setForwardFromThreadId } = useMailStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
@@ -36,16 +36,20 @@ export function App() {
     setLoading(true);
 
     mailApi
-      .getMailbox(activeLabel)
+      .getMailbox(activeLabel, { limit: 25 })
       .then((data) => {
         if (!cancelled) {
           setThreads(data.threads);
+          setCursor(data.nextCursor ?? null);
+          setHasMore(data.hasMore);
         }
       })
       .catch(() => {
         // Backend unavailable — use mock data
         if (!cancelled) {
           setThreads(MOCK_THREADS);
+          setCursor(null);
+          setHasMore(false);
         }
       })
       .finally(() => {
@@ -55,7 +59,7 @@ export function App() {
     return () => {
       cancelled = true;
     };
-  }, [activeLabel, setThreads, setLoading]);
+  }, [activeLabel, setThreads, setCursor, setHasMore, setLoading]);
 
   // Load user labels on mount
   useEffect(() => {
@@ -72,16 +76,16 @@ export function App() {
       });
   }, [setUserLabels]);
 
-  // Poll for new mail every 30s
+  // Poll for new mail every 30s — check first page only, prepend new threads
   useEffect(() => {
     const interval = setInterval(() => {
       mailApi
-        .getMailbox(activeLabel)
+        .getMailbox(activeLabel, { limit: 25 })
         .then((data) => {
           const currentIds = new Set(threads.map((t) => t.id));
           const newThreads = data.threads.filter((t) => !currentIds.has(t.id));
           if (newThreads.length > 0) {
-            setThreads(data.threads);
+            setThreads([...newThreads, ...threads]);
             toast.show(`${newThreads.length} new message${newThreads.length > 1 ? 's' : ''}`);
           }
         })
@@ -153,9 +157,13 @@ export function App() {
   return (
     <ErrorBoundary>
     <MailLayout>
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-        <MailboxList />
-        <ThreadView />
+      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', paddingTop: 'var(--mail-mobile-header, 0px)' }}>
+        <div className={`mail-thread-list${activeThreadId ? ' mobile-hidden' : ''}`}>
+          <MailboxList />
+        </div>
+        <div className={`mail-thread-detail${!activeThreadId ? ' mobile-hidden' : ''}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+          <ThreadView />
+        </div>
       </div>
       <ComposePanel />
       <SearchOverlay />

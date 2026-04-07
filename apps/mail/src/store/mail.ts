@@ -9,8 +9,17 @@ interface MailboxState {
   /* Threads */
   threads: Thread[];
   setThreads: (threads: Thread[]) => void;
+  appendThreads: (threads: Thread[]) => void;
   loading: boolean;
   setLoading: (v: boolean) => void;
+
+  /* Pagination */
+  cursor: string | null;
+  setCursor: (c: string | null) => void;
+  hasMore: boolean;
+  setHasMore: (v: boolean) => void;
+  loadingMore: boolean;
+  setLoadingMore: (v: boolean) => void;
 
   /* Selected thread */
   activeThreadId: string | null;
@@ -51,12 +60,24 @@ interface MailboxState {
 
 export const useMailStore = create<MailboxState>((set, get) => ({
   activeLabel: 'inbox',
-  setActiveLabel: (label) => set({ activeLabel: label, activeThreadId: null, selectedIds: new Set() }),
+  setActiveLabel: (label) => set({ activeLabel: label, activeThreadId: null, selectedIds: new Set(), threads: [], cursor: null, hasMore: false }),
 
   threads: [],
   setThreads: (threads) => set({ threads }),
+  appendThreads: (threads) => set((s) => {
+    const existingIds = new Set(s.threads.map((t) => t.id));
+    const newThreads = threads.filter((t) => !existingIds.has(t.id));
+    return { threads: [...s.threads, ...newThreads] };
+  }),
   loading: false,
   setLoading: (loading) => set({ loading }),
+
+  cursor: null,
+  setCursor: (cursor) => set({ cursor }),
+  hasMore: false,
+  setHasMore: (hasMore) => set({ hasMore }),
+  loadingMore: false,
+  setLoadingMore: (loadingMore) => set({ loadingMore }),
 
   activeThreadId: null,
   setActiveThreadId: (id) => set({ activeThreadId: id }),

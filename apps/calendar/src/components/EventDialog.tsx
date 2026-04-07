@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react';
 import { X, Clock, MapPin, AlignLeft, Repeat, Palette, Users, Bell } from 'lucide-react';
 import { useCalendarStore } from '@/store/calendar';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { calendarApi } from '@/api/client';
 import { encryptSymmetric, decryptSymmetric } from '@haseen-me/crypto';
 

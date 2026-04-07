@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { MoreVertical, Pencil, Trash2 } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { driveApi } from '@/api/client';
 import type { Folder } from '@/types/drive';
 import { ConfirmDialog } from './ConfirmDialog';

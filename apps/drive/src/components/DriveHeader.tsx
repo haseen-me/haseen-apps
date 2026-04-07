@@ -10,7 +10,7 @@ import {
 import { useState, useRef, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
 import { driveApi } from '@/api/client';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import type { SortField, SortDir } from '@/types/drive';
 
 const SORT_OPTIONS: { field: SortField; label: string }[] = [

@@ -1,7 +1,7 @@
 import { X, FolderPlus } from 'lucide-react';
 import { useState, useCallback, useRef, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { driveApi } from '@/api/client';
 
 export function NewFolderDialog() {

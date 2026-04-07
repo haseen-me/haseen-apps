@@ -13,17 +13,22 @@
     "./ErrorBoundary": {
       "types": "./dist/ErrorBoundary.d.ts",
       "import": "./dist/ErrorBoundary.js"
+    },
+    "./toast": {
+      "types": "./dist/toast.d.ts",
+      "import": "./dist/toast.js"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/ErrorBoundary.tsx --format esm --dts",
-    "dev": "tsup src/index.ts src/ErrorBoundary.tsx --format esm --dts --watch",
+    "build": "tsup src/index.ts src/ErrorBoundary.tsx src/toast.ts --format esm --dts",
+    "dev": "tsup src/index.ts src/ErrorBoundary.tsx src/toast.ts --format esm --dts --watch",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
-    "react": ">=18"
+    "react": ">=18",
+    "zustand": ">=4"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

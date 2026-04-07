@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { X } from 'lucide-react';
 import { useContactsStore } from '@/store/contacts';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { contactsApi } from '@/api/client';
 
 export function ContactDialog() {

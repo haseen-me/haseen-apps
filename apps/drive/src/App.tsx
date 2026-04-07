@@ -11,7 +11,7 @@ import { ShareDialog } from '@/components/ShareDialog';
 import { SearchOverlay } from '@/components/SearchOverlay';
 import { useDriveStore } from '@/store/drive';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { driveApi } from '@/api/client';
 import { MOCK_FILES, MOCK_FOLDERS } from '@/data/mock';
 import { Toast } from '@haseen-me/ui';
@@ -53,6 +53,7 @@ export default function App() {
                 encryptedKey: f.encryptedKey,
                 createdAt: f.createdAt,
                 updatedAt: f.updatedAt,
+                starred: f.starred,
               })),
             );
             setFolders([]);
@@ -71,6 +72,26 @@ export default function App() {
                 encryptedKey: f.encryptedKey,
                 createdAt: f.createdAt,
                 updatedAt: f.updatedAt,
+                starred: f.starred,
+              })),
+            );
+            setFolders([]);
+            setPath([]);
+          }
+        } else if (currentFolderId === '__starred') {
+          const data = await driveApi.listStarred();
+          if (!cancelled) {
+            setFiles(
+              data.files.map((f) => ({
+                id: f.id,
+                folderId: f.folderID,
+                name: f.name,
+                mimeType: f.mimeType,
+                size: f.size,
+                encryptedKey: f.encryptedKey,
+                createdAt: f.createdAt,
+                updatedAt: f.updatedAt,
+                starred: f.starred,
               })),
             );
             setFolders([]);
@@ -90,6 +111,7 @@ export default function App() {
                 encryptedKey: f.encryptedKey,
                 createdAt: f.createdAt,
                 updatedAt: f.updatedAt,
+                starred: f.starred,
               }))
               .sort((a, b) => new Date(b.updatedAt).getTime() - new Date(a.updatedAt).getTime())
               .slice(0, 50);
@@ -112,6 +134,7 @@ export default function App() {
                 encryptedKey: f.encryptedKey,
                 createdAt: f.createdAt,
                 updatedAt: f.updatedAt,
+                starred: f.starred,
               })),
             );
             setFolders(
@@ -171,6 +194,68 @@ export default function App() {
       cancelled = true;
     };
   }, [currentFolderId, setFolders, setFiles, setPath, setLoading]);
+
+  // Keyboard shortcuts
+  const { setSearchOpen, setUploadOpen, setNewFolderOpen, selectedIds, clearSelection, setPreviewFileId, viewMode, setViewMode, files, folders } = useDriveStore();
+  useEffect(() => {
+    const handler = (e: KeyboardEvent) => {
+      const tag = (e.target as HTMLElement).tagName;
+      if (tag === 'INPUT' || tag === 'TEXTAREA' || (e.target as HTMLElement).isContentEditable) return;
+
+      // ⌘K or / — open search
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+      if (e.key === '/' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setSearchOpen(true);
+        return;
+      }
+      // u — upload
+      if (e.key === 'u' && !e.metaKey && !e.ctrlKey) {
+        e.preventDefault();
+        setUploadOpen(true);
+        return;
+      }
+      // n — new folder
+      if (e.key === 'n' && !e.metaKey && !e.ctrlKey && !e.shiftKey) {
+        e.preventDefault();
+        setNewFolderOpen(true);
+        return;
+      }
+      // Delete/Backspace — trash selected
+      if ((e.key === 'Delete' || e.key === 'Backspace') && selectedIds.size > 0) {
+        e.preventDefault();
+        (async () => {
+          try {
+            for (const id of selectedIds) {
+              await driveApi.deleteFile(id);
+            }
+            toast.show(`${selectedIds.size} item${selectedIds.size > 1 ? 's' : ''} moved to trash`);
+            clearSelection();
+          } catch {
+            toast.show('Failed to delete');
+          }
+        })();
+        return;
+      }
+      // Escape — clear selection or close preview
+      if (e.key === 'Escape') {
+        if (selectedIds.size > 0) clearSelection();
+        else setPreviewFileId(null);
+        return;
+      }
+      // v — toggle view mode
+      if (e.key === 'v' && !e.metaKey && !e.ctrlKey) {
+        setViewMode(viewMode === 'grid' ? 'list' : 'grid');
+        return;
+      }
+    };
+    window.addEventListener('keydown', handler);
+    return () => window.removeEventListener('keydown', handler);
+  }, [setSearchOpen, setUploadOpen, setNewFolderOpen, selectedIds, clearSelection, setPreviewFileId, viewMode, setViewMode, files, folders, toast]);
 
   if (!authed) return null;
 

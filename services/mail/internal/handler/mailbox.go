@@ -2,6 +2,7 @@ package handler
 
 import (
 	"net/http"
+	"strconv"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -41,7 +42,17 @@ func (h *Handler) getMailboxByLabel(w http.ResponseWriter, r *http.Request, labe
 		return
 	}
 
-	threads, err := h.Store.GetThreadsByLabel(ctx, mb.ID, label.ID)
+	// Parse pagination params
+	limitStr := r.URL.Query().Get("limit")
+	cursor := r.URL.Query().Get("cursor")
+	limit := 25
+	if limitStr != "" {
+		if n, err := strconv.Atoi(limitStr); err == nil && n > 0 && n <= 100 {
+			limit = n
+		}
+	}
+
+	threads, nextCursor, hasMore, err := h.Store.GetThreadsByLabel(ctx, mb.ID, label.ID, limit, cursor)
 	if err != nil {
 		h.Log.Error().Err(err).Msg("get threads")
 		h.Error(w, http.StatusInternalServerError, "failed to get threads")
@@ -59,8 +70,10 @@ func (h *Handler) getMailboxByLabel(w http.ResponseWriter, r *http.Request, labe
 	}
 
 	h.JSON(w, http.StatusOK, model.MailboxResponse{
-		Threads: threads,
-		Total:   len(threads),
+		Threads:    threads,
+		Total:      len(threads),
+		NextCursor: nextCursor,
+		HasMore:    hasMore,
 	})
 }
 

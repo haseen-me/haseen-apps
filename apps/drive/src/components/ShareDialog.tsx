@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { X, Share2, UserPlus } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { driveApi } from '@/api/client';
 
 type Permission = 'read' | 'write';

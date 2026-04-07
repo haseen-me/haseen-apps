@@ -2,7 +2,7 @@ import { X, Upload, FileUp, Lock } from 'lucide-react';
 import { useCallback, useState, useRef } from 'react';
 import { useDriveStore } from '@/store/drive';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { encryptSymmetric, deriveSessionKey } from '@haseen-me/crypto';
 import { driveApi } from '@/api/client';
 

@@ -85,6 +85,8 @@ func main() {
 		r.Delete("/trash", h.EmptyTrash)
 		r.Get("/shared", h.SharedWithMe)
 		r.Get("/usage", h.StorageUsage)
+		r.Put("/files/{fileID}/star", h.StarFile)
+		r.Get("/starred", h.ListStarred)
 	})
 
 	go func() {

@@ -117,8 +117,10 @@ type SearchRequest struct {
 // ---------- API Responses ----------
 
 type MailboxResponse struct {
-	Threads []Thread `json:"threads"`
-	Total   int      `json:"total"`
+	Threads    []Thread `json:"threads"`
+	Total      int      `json:"total"`
+	NextCursor string   `json:"nextCursor,omitempty"`
+	HasMore    bool     `json:"hasMore"`
 }
 
 type SendResponse struct {

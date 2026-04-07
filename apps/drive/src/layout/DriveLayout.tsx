@@ -1,15 +1,16 @@
 import { type ReactNode, useState, useCallback, useRef } from 'react';
-import { Upload } from 'lucide-react';
+import { Upload, Menu } from 'lucide-react';
 import { ProductRail } from '@/components/ProductRail';
 import { Sidebar } from './Sidebar';
 import { useDriveStore } from '@/store/drive';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { encryptSymmetric, deriveSessionKey } from '@haseen-me/crypto';
 import { driveApi } from '@/api/client';
 
 export function DriveLayout({ children }: { children: ReactNode }) {
   const [dragOver, setDragOver] = useState(false);
+  const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
   const dragCounter = useRef(0);
   const { currentFolderId } = useDriveStore();
   const { encryptionKeyPair } = useCryptoStore();
@@ -84,8 +85,40 @@ export function DriveLayout({ children }: { children: ReactNode }) {
       onDragOver={handleDragOver}
       onDrop={handleDrop}
     >
-      <ProductRail activeProduct="drive" />
-      <Sidebar />
+      <div className="drive-product-rail">
+        <ProductRail activeProduct="drive" />
+      </div>
+      {/* Mobile header */}
+      <div
+        className="drive-mobile-header"
+        style={{
+          display: 'none',
+          position: 'fixed',
+          top: 0,
+          left: 0,
+          right: 0,
+          height: 48,
+          background: 'var(--drive-bg)',
+          borderBottom: '1px solid var(--drive-border)',
+          alignItems: 'center',
+          padding: '0 12px',
+          gap: 10,
+          zIndex: 250,
+        }}
+      >
+        <button
+          onClick={() => setMobileSidebarOpen(true)}
+          style={{ background: 'none', border: 'none', color: 'var(--drive-text)', padding: 4, display: 'flex' }}
+        >
+          <Menu size={20} />
+        </button>
+        <span style={{ fontWeight: 600, fontSize: 15 }}>Drive</span>
+      </div>
+      <div
+        className={`drive-sidebar-backdrop${mobileSidebarOpen ? ' mobile-open' : ''}`}
+        onClick={() => setMobileSidebarOpen(false)}
+      />
+      <Sidebar mobileSidebarOpen={mobileSidebarOpen} />
       <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', position: 'relative' }}>
         {children}
         {dragOver && (

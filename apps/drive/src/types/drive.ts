@@ -4,6 +4,7 @@ export interface DriveFile {
   name: string;
   mimeType: string;
   size: number;
+  starred?: boolean;
   encryptedKey?: string;
   createdAt: string;
   updatedAt: string;

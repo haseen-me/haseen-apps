@@ -2,50 +2,87 @@ package store
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"github.com/haseen-me/haseen-apps/services/mail/internal/model"
 )
 
 // GetThreadsByLabel returns threads for a mailbox filtered by label name.
-// It builds full Thread objects with messages, unread counts, etc.
-func (s *Store) GetThreadsByLabel(ctx context.Context, mailboxID, labelID string) ([]model.Thread, error) {
-	rows, err := s.DB.Query(ctx,
-		`SELECT DISTINCT t.id, t.created_at
+// It supports cursor-based pagination: cursor is a created_at timestamp,
+// limit controls page size.
+func (s *Store) GetThreadsByLabel(ctx context.Context, mailboxID, labelID string, limit int, cursor string) ([]model.Thread, string, bool, error) {
+	if limit <= 0 || limit > 100 {
+		limit = 25
+	}
+
+	// Fetch one extra to determine hasMore
+	fetchLimit := limit + 1
+
+	var query string
+	var args []interface{}
+
+	if cursor != "" {
+		query = `SELECT DISTINCT t.id, t.created_at
+		 FROM mail_threads t
+		 JOIN mail_messages m ON m.thread_id = t.id
+		 WHERE t.mailbox_id = $1 AND m.label_id = $2 AND t.created_at < $3
+		 ORDER BY t.created_at DESC
+		 LIMIT $4`
+		args = []interface{}{mailboxID, labelID, cursor, fetchLimit}
+	} else {
+		query = `SELECT DISTINCT t.id, t.created_at
 		 FROM mail_threads t
 		 JOIN mail_messages m ON m.thread_id = t.id
 		 WHERE t.mailbox_id = $1 AND m.label_id = $2
 		 ORDER BY t.created_at DESC
-		 LIMIT 100`,
-		mailboxID, labelID,
-	)
+		 LIMIT $3`
+		args = []interface{}{mailboxID, labelID, fetchLimit}
+	}
+
+	rows, err := s.DB.Query(ctx, query, args...)
 	if err != nil {
-		return nil, err
+		return nil, "", false, err
 	}
 	defer rows.Close()
 
-	var threadIDs []string
+	type threadRow struct {
+		id        string
+		createdAt time.Time
+	}
+	var threadRows []threadRow
 	for rows.Next() {
-		var id string
-		var created time.Time
-		if err := rows.Scan(&id, &created); err != nil {
-			return nil, err
+		var r threadRow
+		if err := rows.Scan(&r.id, &r.createdAt); err != nil {
+			return nil, "", false, err
 		}
-		threadIDs = append(threadIDs, id)
+		threadRows = append(threadRows, r)
 	}
 	if err := rows.Err(); err != nil {
-		return nil, err
+		return nil, "", false, err
 	}
 
-	threads := make([]model.Thread, 0, len(threadIDs))
-	for _, tid := range threadIDs {
-		t, err := s.buildThread(ctx, tid)
+	hasMore := len(threadRows) > limit
+	if hasMore {
+		threadRows = threadRows[:limit]
+	}
+
+	threads := make([]model.Thread, 0, len(threadRows))
+	for _, r := range threadRows {
+		t, err := s.buildThread(ctx, r.id)
 		if err != nil {
-			return nil, err
+			return nil, "", false, err
 		}
 		threads = append(threads, *t)
 	}
-	return threads, nil
+
+	var nextCursor string
+	if hasMore && len(threadRows) > 0 {
+		last := threadRows[len(threadRows)-1]
+		nextCursor = fmt.Sprintf("%d", last.createdAt.UnixMicro())
+	}
+
+	return threads, nextCursor, hasMore, nil
 }
 
 // GetThread returns a single thread with all messages.

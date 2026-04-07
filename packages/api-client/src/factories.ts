@@ -13,7 +13,14 @@ export function createAuthApi(client: ApiClient): AuthApi {
 
 export function createMailApi(client: ApiClient): MailApi {
   return {
-    getMailbox: (label) => client.get(`/mail/mailbox${label ? `/${label}` : ''}`),
+    getMailbox: (label, params) => {
+      const base = `/mail/mailbox${label ? `/${label}` : ''}`;
+      const qs = new URLSearchParams();
+      if (params?.limit) qs.set('limit', String(params.limit));
+      if (params?.cursor) qs.set('cursor', params.cursor);
+      const query = qs.toString();
+      return client.get(query ? `${base}?${query}` : base);
+    },
     getMessage: (id) => client.get(`/mail/messages/${id}`),
     sendMessage: (params) => client.post('/mail/messages/send', params),
     deleteMessage: (id) => client.del(`/mail/messages/${id}`),
@@ -75,6 +82,8 @@ export function createDriveApi(client: ApiClient): DriveApi {
     emptyTrash: () => client.del('/drive/trash'),
     sharedWithMe: () => client.get('/drive/shared'),
     getStorageUsage: () => client.get('/drive/usage'),
+    starFile: (fileID, starred) => client.put(`/drive/files/${fileID}/star`, { starred }),
+    listStarred: () => client.get('/drive/starred'),
   };
 }
 

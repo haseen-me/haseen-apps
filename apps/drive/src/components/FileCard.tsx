@@ -8,6 +8,7 @@ import {
   Presentation,
   Archive,
   FileCode,
+  Star,
 } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
 import type { DriveFile } from '@/types/drive';
@@ -95,9 +96,18 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
+          position: 'relative',
         }}
       >
         <FileIcon mimeType={file.mimeType} />
+        {file.starred && (
+          <Star
+            size={14}
+            fill="var(--drive-warning, #f59e0b)"
+            color="var(--drive-warning, #f59e0b)"
+            style={{ position: 'absolute', top: 8, right: 8 }}
+          />
+        )}
       </div>
 
       {/* Info */}
@@ -165,6 +175,9 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
       onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = selected ? 'var(--drive-brand-subtle)' : 'transparent'; }}
     >
       <FileIcon mimeType={file.mimeType} />
+      {file.starred && (
+        <Star size={14} fill="var(--drive-warning, #f59e0b)" color="var(--drive-warning, #f59e0b)" style={{ flexShrink: 0 }} />
+      )}
       <span
         style={{
           flex: 1,

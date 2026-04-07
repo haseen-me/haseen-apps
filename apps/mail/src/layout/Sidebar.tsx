@@ -28,7 +28,7 @@ const LABEL_ICONS: Record<SystemLabel, React.ReactNode> = {
   trash: <Trash2 size={18} />,
 };
 
-export function Sidebar() {
+export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) {
   const {
     activeLabel,
     setActiveLabel,
@@ -51,6 +51,7 @@ export function Sidebar() {
   return (
     <>
     <aside
+      className={`mail-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}
       style={{
         width: sidebarCollapsed ? 'var(--mail-sidebar-collapsed)' : 'var(--mail-sidebar-width)',
         height: '100vh',

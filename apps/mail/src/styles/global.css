@@ -112,3 +112,57 @@ button {
   from { opacity: 0; transform: translateY(4px); }
   to { opacity: 1; transform: translateY(0); }
 }
+
+/* ── Responsive ────────────────────────────────── */
+
+.mail-thread-list { width: 380px; flex-shrink: 0; }
+.mail-thread-detail { flex: 1; }
+
+/* Tablet: auto-collapse sidebar, narrower thread list */
+@media (max-width: 1024px) {
+  :root {
+    --mail-sidebar-width: 200px;
+  }
+  .mail-thread-list { width: 320px; }
+}
+
+/* Mobile: single-pane layout */
+@media (max-width: 768px) {
+  :root { --mail-mobile-header: 48px; }
+  .mail-product-rail { display: none !important; }
+  .mail-sidebar {
+    position: fixed !important;
+    left: -280px;
+    top: 0;
+    z-index: 300;
+    width: 260px !important;
+    transition: left 0.25s ease !important;
+    box-shadow: none;
+  }
+  .mail-sidebar.mobile-open {
+    left: 0;
+    box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
+  }
+  .mail-sidebar-backdrop {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.3);
+    z-index: 299;
+  }
+  .mail-sidebar-backdrop.mobile-open { display: block; }
+  .mail-thread-list {
+    width: 100% !important;
+    flex-shrink: 1 !important;
+  }
+  .mail-thread-list.mobile-hidden { display: none !important; }
+  .mail-thread-detail.mobile-hidden { display: none !important; }
+  .mail-mobile-header {
+    display: flex !important;
+  }
+}
+
+@media (min-width: 769px) {
+  .mail-mobile-header { display: none !important; }
+  .mail-sidebar-backdrop { display: none !important; }
+}

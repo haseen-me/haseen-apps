@@ -7,9 +7,10 @@ import {
   Share2,
   RotateCcw,
   FolderInput,
+  Star,
 } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { driveApi } from '@/api/client';
 import type { DriveFile } from '@/types/drive';
 import { decryptSymmetric } from '@haseen-me/crypto';
@@ -131,6 +132,18 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
     }
   };
 
+  const handleToggleStar = async () => {
+    closeMenu();
+    const newStarred = !file.starred;
+    try {
+      await driveApi.starFile(file.id, newStarred);
+      setFiles(files.map((f) => (f.id === file.id ? { ...f, starred: newStarred } : f)));
+      toast.show(newStarred ? 'Starred' : 'Unstarred');
+    } catch {
+      toast.show('Failed to update');
+    }
+  };
+
   if (renaming) {
     return (
       <form
@@ -233,6 +246,11 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
                 icon={<Share2 size={15} />}
                 label="Share"
                 onClick={handleShare}
+              />
+              <MenuItem
+                icon={<Star size={15} style={file.starred ? { fill: 'var(--drive-warning, #f5a623)', color: 'var(--drive-warning, #f5a623)' } : undefined} />}
+                label={file.starred ? 'Unstar' : 'Star'}
+                onClick={handleToggleStar}
               />
               <MenuItem
                 icon={<FolderInput size={15} />}

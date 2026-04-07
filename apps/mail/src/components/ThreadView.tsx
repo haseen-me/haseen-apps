@@ -1,7 +1,7 @@
 import { useState, useRef, useEffect } from 'react';
 import { useMailStore } from '@/store/mail';
 import { useDecrypt } from '@/hooks/useDecrypt';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { mailApi } from '@/api/client';
 import { MessageItem } from './MessageItem';
 import {

@@ -10,7 +10,7 @@ import { DayView } from '@/components/DayView';
 import { EventDialog } from '@/components/EventDialog';
 import { useCalendarStore } from '@/store/calendar';
 import { useCryptoStore } from '@/store/crypto';
-import { useToastStore } from '@/store/toast';
+import { useToastStore } from '@haseen-me/shared/toast';
 import { calendarApi } from '@/api/client';
 import { MOCK_CALENDARS, MOCK_EVENTS } from '@/data/mock';
 import { decryptSymmetric } from '@haseen-me/crypto';

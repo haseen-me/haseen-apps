@@ -10,6 +10,7 @@ import {
   PanelLeftOpen,
   ChevronRight,
   ChevronDown,
+  Star,
 } from 'lucide-react';
 import { useState, useEffect } from 'react';
 import { useDriveStore } from '@/store/drive';
@@ -24,11 +25,12 @@ interface NavItem {
 const NAV_ITEMS: NavItem[] = [
   { id: 'root', label: 'My Drive', icon: <HardDrive size={18} /> },
   { id: '__recent', label: 'Recent', icon: <Clock size={18} /> },
+  { id: '__starred', label: 'Starred', icon: <Star size={18} /> },
   { id: '__shared', label: 'Shared with me', icon: <Share2 size={18} /> },
   { id: '__trash', label: 'Trash', icon: <Trash2 size={18} /> },
 ];
 
-export function Sidebar() {
+export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) {
   const {
     currentFolderId,
     setCurrentFolderId,
@@ -54,6 +56,7 @@ export function Sidebar() {
 
   return (
     <aside
+      className={`drive-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}
       style={{
         width: collapsed ? 64 : 'var(--drive-sidebar-width)',
         height: '100vh',

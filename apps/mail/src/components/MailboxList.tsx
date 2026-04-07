@@ -1,17 +1,15 @@
-import { useState, useEffect, useRef, useCallback } from 'react';
+import { useEffect, useRef, useCallback } from 'react';
 import { useMailStore } from '@/store/mail';
+import { mailApi } from '@/api/client';
 import { MailboxHeader } from './MailboxHeader';
 import { ThreadRow } from './ThreadRow';
 import { EmptyState } from './EmptyState';
 
-const PAGE_SIZE = 25;
-
 export function MailboxList() {
-  const { activeLabel, threads, loading, sortBy } = useMailStore();
-  const [visibleCount, setVisibleCount] = useState(PAGE_SIZE);
+  const { activeLabel, threads, loading, sortBy, cursor, hasMore, loadingMore, appendThreads, setCursor, setHasMore, setLoadingMore } = useMailStore();
   const sentinelRef = useRef<HTMLDivElement>(null);
 
-  const filtered = threads
+  const sorted = [...threads]
     .filter((t) => t.labels.includes(activeLabel))
     .sort((a, b) => {
       if (sortBy === 'sender') {
@@ -26,39 +24,45 @@ export function MailboxList() {
       return new Date(b.lastMessageDate).getTime() - new Date(a.lastMessageDate).getTime();
     });
 
-  const hasMore = visibleCount < filtered.length;
-
-  // Reset visible count when label changes
-  useEffect(() => {
-    setVisibleCount(PAGE_SIZE);
-  }, [activeLabel]);
+  // Fetch more threads from server when sentinel is visible
+  const fetchMore = useCallback(() => {
+    if (loadingMore || !hasMore || !cursor) return;
+    setLoadingMore(true);
+    mailApi
+      .getMailbox(activeLabel, { limit: 25, cursor })
+      .then((data) => {
+        appendThreads(data.threads);
+        setCursor(data.nextCursor ?? null);
+        setHasMore(data.hasMore);
+      })
+      .catch(() => {
+        // Stop paginating on error
+        setHasMore(false);
+      })
+      .finally(() => setLoadingMore(false));
+  }, [loadingMore, hasMore, cursor, activeLabel, appendThreads, setCursor, setHasMore, setLoadingMore]);
 
   // IntersectionObserver for infinite scroll
-  const observerCallback = useCallback(
-    (entries: IntersectionObserverEntry[]) => {
-      if (entries[0]?.isIntersecting && hasMore) {
-        setVisibleCount((prev) => Math.min(prev + PAGE_SIZE, filtered.length));
-      }
-    },
-    [hasMore, filtered.length],
-  );
-
   useEffect(() => {
     const el = sentinelRef.current;
     if (!el) return;
-    const observer = new IntersectionObserver(observerCallback, { rootMargin: '200px' });
+    const observer = new IntersectionObserver(
+      (entries) => {
+        if (entries[0]?.isIntersecting) fetchMore();
+      },
+      { rootMargin: '200px' },
+    );
     observer.observe(el);
     return () => observer.disconnect();
-  }, [observerCallback]);
+  }, [fetchMore]);
 
   return (
     <div
       style={{
-        width: 380,
+        width: '100%',
         borderRight: '1px solid var(--mail-border)',
         display: 'flex',
         flexDirection: 'column',
-        flexShrink: 0,
         height: '100%',
         overflow: 'hidden',
       }}
@@ -89,19 +93,17 @@ export function MailboxList() {
             ))}
             <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
           </div>
-        ) : filtered.length === 0 ? (
+        ) : sorted.length === 0 ? (
           <EmptyState label={activeLabel} />
         ) : (
           <>
-            {filtered
-              .slice(0, visibleCount)
-              .map((thread) => <ThreadRow key={thread.id} thread={thread} />)}
+            {sorted.map((thread) => <ThreadRow key={thread.id} thread={thread} />)}
             {hasMore && (
               <div
                 ref={sentinelRef}
                 style={{ padding: '12px 16px', textAlign: 'center', fontSize: 12, color: 'var(--mail-text-muted)' }}
               >
-                Loading more...
+                {loadingMore ? 'Loading more...' : '\u00A0'}
               </div>
             )}
           </>

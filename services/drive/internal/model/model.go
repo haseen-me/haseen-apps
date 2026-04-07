@@ -11,6 +11,7 @@ type File struct {
 	Name      string     `json:"name"`
 	MimeType  string     `json:"mimeType"`
 	Size      int64      `json:"size"`
+	Starred   bool       `json:"starred"`
 	BlobPath  string     `json:"-"`
 	CreatedAt time.Time  `json:"createdAt"`
 	UpdatedAt time.Time  `json:"updatedAt"`

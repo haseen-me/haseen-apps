@@ -1,6 +1,7 @@
 package handler
 
 import (
+	"encoding/json"
 	"net/http"
 
 	"github.com/go-chi/chi/v5"
@@ -66,4 +67,33 @@ func (h *Handler) StorageUsage(w http.ResponseWriter, r *http.Request) {
 	// Default quota: 10 GB
 	const totalBytes int64 = 10 * 1024 * 1024 * 1024
 	h.JSON(w, http.StatusOK, map[string]interface{}{"usedBytes": usedBytes, "totalBytes": totalBytes})
+}
+
+// StarFile toggles the starred flag on a file.
+func (h *Handler) StarFile(w http.ResponseWriter, r *http.Request) {
+	uid := UserID(r)
+	fileID := chi.URLParam(r, "fileID")
+	var req struct {
+		Starred bool `json:"starred"`
+	}
+	if err := json.NewDecoder(r.Body).Decode(&req); err != nil {
+		h.Error(w, http.StatusBadRequest, "invalid request body")
+		return
+	}
+	if err := h.Store.StarFile(r.Context(), uid, fileID, req.Starred); err != nil {
+		h.Error(w, http.StatusInternalServerError, "failed to star file")
+		return
+	}
+	h.JSON(w, http.StatusOK, map[string]bool{"ok": true})
+}
+
+// ListStarred returns all starred files for the current user.
+func (h *Handler) ListStarred(w http.ResponseWriter, r *http.Request) {
+	uid := UserID(r)
+	files, err := h.Store.ListStarred(r.Context(), uid)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "failed to list starred files")
+		return
+	}
+	h.JSON(w, http.StatusOK, map[string]interface{}{"files": files})
 }

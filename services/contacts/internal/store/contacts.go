@@ -1,10 +1,10 @@
 package store
 
 import (
-"context"
-"time"
+	"context"
+	"time"
 
-"github.com/haseen-me/haseen-apps/services/contacts/internal/model"
+	"github.com/haseen-me/haseen-apps/services/contacts/internal/model"
 )
 
 func (s *Store) CreateContact(ctx context.Context, userID string, req *model.CreateContactRequest) (*model.Contact, error) {
