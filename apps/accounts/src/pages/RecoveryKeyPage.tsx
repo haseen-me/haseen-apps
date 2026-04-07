@@ -1,4 +1,4 @@
-import { useState } from 'react';
+import { useState, useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Copy, Check, AlertTriangle } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
@@ -11,9 +11,14 @@ export function RecoveryKeyPage() {
   const [confirmed, setConfirmed] = useState(false);
   const recoveryKey = useAuthStore((s) => s.recoveryKey);
 
-  // If there's no recovery key in the store, the user shouldn't be on this page
+  // If there's no recovery key in the store, redirect away
+  useEffect(() => {
+    if (!recoveryKey) {
+      navigate('/settings', { replace: true });
+    }
+  }, [recoveryKey, navigate]);
+
   if (!recoveryKey) {
-    navigate('/settings', { replace: true });
     return null;
   }
 

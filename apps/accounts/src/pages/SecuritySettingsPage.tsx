@@ -78,7 +78,7 @@ export function SecuritySettingsPage() {
     try {
       const salt = generateSalt();
       const verifier = computeVerifier(salt, user.email, newPassword);
-      await authApi.updateAccount(token, { srpSalt: salt, srpVerifier: verifier });
+      await authApi.changePassword(token, salt, verifier);
       setPwSuccess(true);
       setTimeout(() => setPwSuccess(false), 3000);
       setShowPasswordChange(false);

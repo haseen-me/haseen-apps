@@ -38,11 +38,23 @@ export function SignInPage() {
     try {
       if (mfaRequired) {
         // MFA verification step
+        if (!mfaCode.trim()) return setLoading(false);
         setStatus('Verifying 2FA code...');
-        // In production: authApi.verifyMfa(email, mfaCode, srpM1)
-        // For now, this path will work when the backend supports MFA verify
-        setStatus('');
-        setLoading(false);
+        const mfaResult = await authApi.verifyMfaLogin(email.toLowerCase(), mfaCode);
+        if (mfaResult.user && mfaResult.token) {
+          loginSuccess(
+            {
+              id: mfaResult.user.id,
+              email: mfaResult.user.email,
+              displayName: mfaResult.user.displayName || email.split('@')[0] || email,
+              mfaEnabled: true,
+              createdAt: mfaResult.user.createdAt || new Date().toISOString(),
+            },
+            mfaResult.token,
+          );
+          setStatus('');
+          navigate('/settings');
+        }
         return;
       }
 

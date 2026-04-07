@@ -75,6 +75,9 @@ func (m *mockStore) GetUserByID(ctx context.Context, id string) (*model.User, er
 }
 
 func (m *mockStore) UpdateUserEmail(ctx context.Context, id, email string) error { return nil }
+func (m *mockStore) UpdateUserDisplayName(ctx context.Context, id, displayName string) error {
+	return nil
+}
 func (m *mockStore) UpdateUserSRP(ctx context.Context, id, srpSalt, srpVerifier string) error {
 	return nil
 }
@@ -107,6 +110,10 @@ func (m *mockStore) DeleteSession(ctx context.Context, token string) error {
 
 func (m *mockStore) DeleteUserSessions(ctx context.Context, userID string) error { return nil }
 func (m *mockStore) RefreshSession(ctx context.Context, token string) error      { return nil }
+func (m *mockStore) ListUserSessions(ctx context.Context, userID string) ([]model.Session, error) {
+	return nil, nil
+}
+func (m *mockStore) RevokeSession(ctx context.Context, sessionID, userID string) error { return nil }
 
 func (m *mockStore) StorePublicKeys(ctx context.Context, userID string, encKey, signKey, sig []byte) (*model.PublicKeyBundle, error) {
 	return &model.PublicKeyBundle{ID: "pk-1", UserID: userID}, nil

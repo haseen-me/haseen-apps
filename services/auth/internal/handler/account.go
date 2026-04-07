@@ -60,7 +60,30 @@ func (h *Handler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 		}
 	}
 
-	h.JSON(w, http.StatusOK, model.OkResponse{OK: true})
+	if req.DisplayName != "" {
+		if err := h.Store.UpdateUserDisplayName(r.Context(), userID, req.DisplayName); err != nil {
+			h.Log.Error().Err(err).Msg("failed to update display name")
+			h.Error(w, http.StatusInternalServerError, "internal error")
+			return
+		}
+	}
+
+	// Return updated user
+	user, err := h.Store.GetUserByID(r.Context(), userID)
+	if err != nil {
+		h.Error(w, http.StatusInternalServerError, "internal error")
+		return
+	}
+
+	mfaEnabled, _ := h.Store.IsMFAEnabled(r.Context(), userID)
+
+	h.JSON(w, http.StatusOK, map[string]any{
+		"id":          user.ID,
+		"email":       user.Email,
+		"displayName": user.DisplayName,
+		"mfaEnabled":  mfaEnabled,
+		"createdAt":   user.CreatedAt,
+	})
 }
 
 // DeleteAccount handles DELETE /v1/account.

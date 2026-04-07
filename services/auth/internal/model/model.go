@@ -6,6 +6,7 @@ import "time"
 type User struct {
 	ID          string    `json:"id"`
 	Email       string    `json:"email"`
+	DisplayName string    `json:"displayName,omitempty"`
 	SRPSalt     string    `json:"-"`
 	SRPVerifier string    `json:"-"`
 	CreatedAt   time.Time `json:"createdAt"`
@@ -109,7 +110,8 @@ type MFAVerifySetupRequest struct {
 }
 
 type UpdateAccountRequest struct {
-	Email string `json:"email,omitempty"`
+	Email       string `json:"email,omitempty"`
+	DisplayName string `json:"displayName,omitempty"`
 }
 
 type ChangePasswordRequest struct {

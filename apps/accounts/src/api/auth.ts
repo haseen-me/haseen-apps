@@ -117,10 +117,17 @@ export const authApi = {
       headers: { Authorization: `Bearer ${token}` },
     }),
 
-  updateAccount: (token: string, data: { displayName?: string; srpSalt?: string; srpVerifier?: string }) =>
+  updateAccount: (token: string, data: { displayName?: string; email?: string }) =>
     request<AuthResponse['user']>('/account', {
       method: 'PUT',
       body: JSON.stringify(data),
+      headers: { Authorization: `Bearer ${token}` },
+    }),
+
+  changePassword: (token: string, newSrpSalt: string, newSrpVerifier: string) =>
+    request<{ sessionToken: string }>('/account/password', {
+      method: 'PUT',
+      body: JSON.stringify({ newSrpSalt, newSrpVerifier }),
       headers: { Authorization: `Bearer ${token}` },
     }),
 
@@ -142,6 +149,17 @@ export const authApi = {
       body: JSON.stringify({ code }),
       headers: { Authorization: `Bearer ${token}` },
     }),
+
+  verifyMfaLogin: async (email: string, code: string): Promise<AuthResponse> => {
+    const res = await request<LoginVerifyResponse>('/mfa/verify-login', {
+      method: 'POST',
+      body: JSON.stringify({ email, code }),
+    });
+    return {
+      token: res.sessionToken,
+      user: res.user,
+    };
+  },
 
   disableMfa: (token: string) =>
     request<{ ok: boolean }>('/mfa', {

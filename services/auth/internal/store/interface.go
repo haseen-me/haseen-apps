@@ -13,6 +13,7 @@ type DataStore interface {
 	GetUserByEmail(ctx context.Context, email string) (*model.User, error)
 	GetUserByID(ctx context.Context, id string) (*model.User, error)
 	UpdateUserEmail(ctx context.Context, id, email string) error
+	UpdateUserDisplayName(ctx context.Context, id, displayName string) error
 	UpdateUserSRP(ctx context.Context, id, srpSalt, srpVerifier string) error
 	DeleteUser(ctx context.Context, id string) error
 
