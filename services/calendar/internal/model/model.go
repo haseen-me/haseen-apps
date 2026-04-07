@@ -31,6 +31,7 @@ type Event struct {
 	EncryptedData  *string   `json:"-"`
 	CreatedAt      time.Time `json:"createdAt"`
 	UpdatedAt      time.Time `json:"updatedAt"`
+	AttendeeCount  int       `json:"attendeeCount"`
 }
 
 // ---------- Attendee ----------

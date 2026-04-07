@@ -19,21 +19,48 @@ export function BulkActionBar() {
   const selectedFiles = files.filter((f) => selectedIds.has(f.id));
   const selectedFolders = folders.filter((f) => selectedIds.has(f.id));
 
-  const handleBulkDelete = async () => {
+  const handleBulkDelete = () => {
     setConfirmDelete(false);
-    const ops = [
-      ...selectedFiles.map((f) => driveApi.deleteFile(f.id)),
-      ...selectedFolders.map((f) => driveApi.deleteFolder(f.id)),
-    ];
-    try {
-      await Promise.all(ops);
-      setFiles(files.filter((f) => !selectedIds.has(f.id)));
-      setFolders(folders.filter((f) => !selectedIds.has(f.id)));
-      clearSelection();
-      toast.show(`${count} items deleted`);
-    } catch {
-      toast.show('Some items could not be deleted');
-    }
+    const removedFiles = selectedFiles;
+    const removedFolders = selectedFolders;
+    const removedIds = new Set(selectedIds);
+
+    setFiles(files.filter((f) => !removedIds.has(f.id)));
+    setFolders(folders.filter((f) => !removedIds.has(f.id)));
+    clearSelection();
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      const ops = [
+        ...removedFiles.map((f) => driveApi.deleteFile(f.id)),
+        ...removedFolders.map((f) => driveApi.deleteFolder(f.id)),
+      ];
+      try {
+        await Promise.all(ops);
+      } catch {
+        const curFiles = useDriveStore.getState().files;
+        const curFolders = useDriveStore.getState().folders;
+        setFiles([...curFiles, ...removedFiles]);
+        setFolders([...curFolders, ...removedFolders]);
+        toast.show('Some items could not be deleted');
+      }
+    }, 5000);
+
+    toast.show(`${count} items deleted`, {
+      countdown: 5,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          cancelled = true;
+          clearTimeout(timer);
+          const curFiles = useDriveStore.getState().files;
+          const curFolders = useDriveStore.getState().folders;
+          setFiles([...curFiles, ...removedFiles]);
+          setFolders([...curFolders, ...removedFolders]);
+        },
+      },
+    });
   };
 
   const handleBulkMove = async (targetFolderId: string) => {

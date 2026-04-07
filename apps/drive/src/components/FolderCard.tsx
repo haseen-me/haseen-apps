@@ -1,13 +1,42 @@
 import { useState } from 'react';
 import { FolderIcon } from 'lucide-react';
 import { useDriveStore } from '@/store/drive';
+import { useToastStore } from '@haseen-me/shared/toast';
+import { driveApi } from '@/api/client';
 import type { Folder } from '@/types/drive';
 import { FolderContextMenu } from './FolderContextMenu';
 
 export function FolderCard({ folder }: { folder: Folder }) {
-  const { setCurrentFolderId, selectedIds, toggleSelected } = useDriveStore();
+  const { setCurrentFolderId, selectedIds, toggleSelected, files, setFiles } = useDriveStore();
+  const toast = useToastStore();
   const selected = selectedIds.has(folder.id);
   const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
+  const [dragOver, setDragOver] = useState(false);
+
+  const handleDragOver = (e: React.DragEvent) => {
+    if (e.dataTransfer.types.includes('application/x-drive-file-ids')) {
+      e.preventDefault();
+      e.dataTransfer.dropEffect = 'move';
+      setDragOver(true);
+    }
+  };
+
+  const handleDragLeave = () => setDragOver(false);
+
+  const handleDrop = async (e: React.DragEvent) => {
+    e.preventDefault();
+    setDragOver(false);
+    const raw = e.dataTransfer.getData('application/x-drive-file-ids');
+    if (!raw) return;
+    try {
+      const ids: string[] = JSON.parse(raw);
+      await Promise.all(ids.map((id) => driveApi.moveFile(id, folder.id)));
+      setFiles(files.filter((f) => !ids.includes(f.id)));
+      toast.show(`Moved ${ids.length} file${ids.length > 1 ? 's' : ''} to ${folder.name}`);
+    } catch {
+      toast.show('Failed to move files');
+    }
+  };
 
   return (
     <div
@@ -16,11 +45,14 @@ export function FolderCard({ folder }: { folder: Folder }) {
         e.preventDefault();
         setContextPos({ x: e.clientX, y: e.clientY });
       }}
+      onDragOver={handleDragOver}
+      onDragLeave={handleDragLeave}
+      onDrop={handleDrop}
       style={{
         padding: '14px 16px',
         borderRadius: 'var(--drive-radius)',
-        border: `1px solid ${selected ? 'var(--drive-brand)' : 'var(--drive-border)'}`,
-        background: selected ? 'var(--drive-brand-subtle)' : 'var(--drive-bg)',
+        border: `2px solid ${dragOver ? 'var(--drive-brand)' : selected ? 'var(--drive-brand)' : 'var(--drive-border)'}`,
+        background: dragOver ? 'var(--drive-brand-subtle)' : selected ? 'var(--drive-brand-subtle)' : 'var(--drive-bg)',
         display: 'flex',
         alignItems: 'center',
         gap: 12,

@@ -11,17 +11,18 @@ import (
 
 func (s *Store) ListEvents(ctx context.Context, ownerID string, start, end time.Time, calendarID *string) ([]model.Event, error) {
 	// Query both: non-recurring events in window + recurring templates that started before window end
-	query := `SELECT id, calendar_id, owner_id, title, description, start_time, end_time, all_day, location, recurrence_rule, color, created_at, updated_at
-		FROM events WHERE owner_id = $1
-		AND ((recurrence_rule IS NULL AND start_time < $3 AND end_time > $2)
-		  OR (recurrence_rule IS NOT NULL AND start_time < $3))`
+	query := `SELECT e.id, e.calendar_id, e.owner_id, e.title, e.description, e.start_time, e.end_time, e.all_day, e.location, e.recurrence_rule, e.color, e.created_at, e.updated_at,
+		COALESCE((SELECT COUNT(*) FROM event_attendees a WHERE a.event_id = e.id), 0) AS attendee_count
+		FROM events e WHERE e.owner_id = $1
+		AND ((e.recurrence_rule IS NULL AND e.start_time < $3 AND e.end_time > $2)
+		  OR (e.recurrence_rule IS NOT NULL AND e.start_time < $3))`
 	args := []interface{}{ownerID, start, end}
 
 	if calendarID != nil {
-		query += " AND calendar_id = $4"
+		query += " AND e.calendar_id = $4"
 		args = append(args, *calendarID)
 	}
-	query += " ORDER BY start_time"
+	query += " ORDER BY e.start_time"
 
 	rows, err := s.DB.Query(ctx, query, args...)
 	if err != nil {
@@ -34,7 +35,7 @@ func (s *Store) ListEvents(ctx context.Context, ownerID string, start, end time.
 		var e model.Event
 		if err := rows.Scan(&e.ID, &e.CalendarID, &e.OwnerID, &e.Title, &e.Description,
 			&e.StartTime, &e.EndTime, &e.AllDay, &e.Location, &e.RecurrenceRule,
-			&e.Color, &e.CreatedAt, &e.UpdatedAt); err != nil {
+			&e.Color, &e.CreatedAt, &e.UpdatedAt, &e.AttendeeCount); err != nil {
 			return nil, fmt.Errorf("scan event: %w", err)
 		}
 

@@ -4,6 +4,7 @@ import { useDecrypt } from '@/hooks/useDecrypt';
 import { useToastStore } from '@haseen-me/shared/toast';
 import { mailApi } from '@/api/client';
 import { MessageItem } from './MessageItem';
+import { InlineReply } from './InlineReply';
 import {
   ArrowLeft,
   Archive,
@@ -24,6 +25,7 @@ export function ThreadView() {
     useMailStore();
   const toast = useToastStore();
   const [menuOpen, setMenuOpen] = useState(false);
+  const [inlineReplyOpen, setInlineReplyOpen] = useState(false);
   const menuRef = useRef<HTMLDivElement>(null);
 
   const thread = threads.find((t) => t.id === activeThreadId);
@@ -52,30 +54,69 @@ export function ThreadView() {
   }
 
   const handleReply = () => {
-    setReplyToThreadId(thread.id);
-    setComposeOpen(true);
+    setInlineReplyOpen(true);
   };
 
-  const handleArchive = async () => {
-    try {
-      await Promise.all(thread.messages.map((m) => mailApi.moveMessage(m.id, 'archive')));
-      setThreads(threads.filter((t) => t.id !== thread.id));
-      setActiveThreadId(null);
-      toast.show('Conversation archived');
-    } catch {
-      toast.show('Failed to archive');
-    }
+  const handleArchive = () => {
+    const removedThread = thread;
+    setThreads(threads.filter((t) => t.id !== thread.id));
+    setActiveThreadId(null);
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        await Promise.all(removedThread.messages.map((m) => mailApi.moveMessage(m.id, 'archive')));
+      } catch {
+        const cur = useMailStore.getState().threads;
+        setThreads([removedThread, ...cur]);
+        toast.show('Failed to archive');
+      }
+    }, 5000);
+
+    toast.show('Conversation archived', {
+      countdown: 5,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          cancelled = true;
+          clearTimeout(timer);
+          const cur = useMailStore.getState().threads;
+          setThreads([removedThread, ...cur]);
+        },
+      },
+    });
   };
 
-  const handleTrash = async () => {
-    try {
-      await Promise.all(thread.messages.map((m) => mailApi.moveMessage(m.id, 'trash')));
-      setThreads(threads.filter((t) => t.id !== thread.id));
-      setActiveThreadId(null);
-      toast.show('Moved to trash');
-    } catch {
-      toast.show('Failed to move to trash');
-    }
+  const handleTrash = () => {
+    const removedThread = thread;
+    setThreads(threads.filter((t) => t.id !== thread.id));
+    setActiveThreadId(null);
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        await Promise.all(removedThread.messages.map((m) => mailApi.moveMessage(m.id, 'trash')));
+      } catch {
+        const cur = useMailStore.getState().threads;
+        setThreads([removedThread, ...cur]);
+        toast.show('Failed to move to trash');
+      }
+    }, 5000);
+
+    toast.show('Moved to trash', {
+      countdown: 5,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          cancelled = true;
+          clearTimeout(timer);
+          const cur = useMailStore.getState().threads;
+          setThreads([removedThread, ...cur]);
+        },
+      },
+    });
   };
 
   const handleToggleRead = async () => {
@@ -294,60 +335,65 @@ export function ThreadView() {
           {thread.messages.map((msg, i) => (
             <MessageItem key={msg.id} message={msg} isLast={i === thread.messages.length - 1} />
           ))}
+          {inlineReplyOpen && (
+            <InlineReply thread={thread} onClose={() => setInlineReplyOpen(false)} />
+          )}
         </div>
       </div>
 
       {/* Reply bar */}
-      <div
-        style={{
-          padding: '12px 20px',
-          borderTop: '1px solid var(--mail-border)',
-          display: 'flex',
-          gap: 8,
-          flexShrink: 0,
-          background: 'var(--mail-bg)',
-        }}
-      >
-        <button
-          onClick={handleReply}
+      {!inlineReplyOpen && (
+        <div
           style={{
+            padding: '12px 20px',
+            borderTop: '1px solid var(--mail-border)',
             display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 16px',
-            borderRadius: 'var(--mail-radius)',
-            background: 'var(--mail-brand)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 500,
-            fontSize: 14,
-            cursor: 'pointer',
+            gap: 8,
+            flexShrink: 0,
+            background: 'var(--mail-bg)',
           }}
         >
-          <Reply size={15} /> Reply
-        </button>
-        <button
-          onClick={() => {
-            setForwardFromThreadId(thread.id);
-            setComposeOpen(true);
-          }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '8px 16px',
-            borderRadius: 'var(--mail-radius)',
-            background: 'var(--mail-bg-secondary)',
-            color: 'var(--mail-text-secondary)',
-            border: '1px solid var(--mail-border)',
-            fontWeight: 500,
-            fontSize: 14,
-            cursor: 'pointer',
-          }}
-        >
-          <Forward size={15} /> Forward
-        </button>
-      </div>
+          <button
+            onClick={handleReply}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              borderRadius: 'var(--mail-radius)',
+              background: 'var(--mail-brand)',
+              color: '#fff',
+              border: 'none',
+              fontWeight: 500,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            <Reply size={15} /> Reply
+          </button>
+          <button
+            onClick={() => {
+              setForwardFromThreadId(thread.id);
+              setComposeOpen(true);
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 16px',
+              borderRadius: 'var(--mail-radius)',
+              background: 'var(--mail-bg-secondary)',
+              color: 'var(--mail-text-secondary)',
+              border: '1px solid var(--mail-border)',
+              fontWeight: 500,
+              fontSize: 14,
+              cursor: 'pointer',
+            }}
+          >
+            <Forward size={15} /> Forward
+          </button>
+        </div>
+      )}
     </div>
   );
 }

@@ -1,5 +1,5 @@
 import { create } from 'zustand';
-import type { Contact } from '@haseen-me/api-client';
+import type { Contact, ContactGroup } from '@haseen-me/api-client';
 
 interface ContactsState {
   contacts: Contact[];
@@ -14,9 +14,15 @@ interface ContactsState {
   setEditingContact: (c: Contact | null) => void;
   dialogOpen: boolean;
   setDialogOpen: (v: boolean) => void;
+  groups: ContactGroup[];
+  setGroups: (groups: ContactGroup[]) => void;
+  activeGroupId: string | null;
+  setActiveGroupId: (id: string | null) => void;
+  groupMembers: Map<string, Set<string>>;
+  setGroupMembers: (groupId: string, contactIds: string[]) => void;
 }
 
-export const useContactsStore = create<ContactsState>((set) => ({
+export const useContactsStore = create<ContactsState>((set, get) => ({
   contacts: [],
   setContacts: (contacts) => set({ contacts }),
   loading: false,
@@ -29,4 +35,14 @@ export const useContactsStore = create<ContactsState>((set) => ({
   setEditingContact: (editingContact) => set({ editingContact }),
   dialogOpen: false,
   setDialogOpen: (dialogOpen) => set({ dialogOpen }),
+  groups: [],
+  setGroups: (groups) => set({ groups }),
+  activeGroupId: null,
+  setActiveGroupId: (activeGroupId) => set({ activeGroupId }),
+  groupMembers: new Map(),
+  setGroupMembers: (groupId, contactIds) => {
+    const next = new Map(get().groupMembers);
+    next.set(groupId, new Set(contactIds));
+    set({ groupMembers: next });
+  },
 }));

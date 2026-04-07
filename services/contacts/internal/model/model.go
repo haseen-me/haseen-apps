@@ -48,3 +48,30 @@ Total    int       `json:"total"`
 type OkResponse struct {
 OK bool `json:"ok"`
 }
+// ---------- Groups ----------
+
+type Group struct {
+	ID        string    `json:"id"`
+	UserID    string    `json:"-"`
+	Name      string    `json:"name"`
+	Color     string    `json:"color"`
+	CreatedAt time.Time `json:"createdAt"`
+}
+
+type CreateGroupRequest struct {
+	Name  string `json:"name"`
+	Color string `json:"color"`
+}
+
+type UpdateGroupRequest struct {
+	Name  *string `json:"name,omitempty"`
+	Color *string `json:"color,omitempty"`
+}
+
+type GroupListResponse struct {
+	Groups []Group `json:"groups"`
+}
+
+type GroupMembersResponse struct {
+	ContactIDs []string `json:"contactIds"`
+}

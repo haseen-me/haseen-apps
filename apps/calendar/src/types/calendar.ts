@@ -19,6 +19,7 @@ export interface CalendarEvent {
   color: string;
   createdAt: string;
   updatedAt: string;
+  attendeeCount?: number;
 }
 
 export interface Attendee {

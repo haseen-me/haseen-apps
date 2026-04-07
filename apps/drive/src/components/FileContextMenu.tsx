@@ -93,16 +93,36 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
     setRenaming(false);
   };
 
-  const handleDelete = async () => {
+  const handleDelete = () => {
     setConfirmDelete(false);
     closeMenu();
-    try {
-      await driveApi.deleteFile(file.id);
-      setFiles(files.filter((f) => f.id !== file.id));
-      toast.show('Moved to trash');
-    } catch {
-      toast.show('Delete failed');
-    }
+    const removedFile = file;
+    setFiles(files.filter((f) => f.id !== file.id));
+
+    let cancelled = false;
+    const timer = setTimeout(async () => {
+      if (cancelled) return;
+      try {
+        await driveApi.deleteFile(removedFile.id);
+      } catch {
+        const cur = useDriveStore.getState().files;
+        setFiles([...cur, removedFile]);
+        toast.show('Delete failed');
+      }
+    }, 5000);
+
+    toast.show('Moved to trash', {
+      countdown: 5,
+      action: {
+        label: 'Undo',
+        onClick: () => {
+          cancelled = true;
+          clearTimeout(timer);
+          const cur = useDriveStore.getState().files;
+          setFiles([...cur, removedFile]);
+        },
+      },
+    });
   };
 
   const handleRestore = async () => {

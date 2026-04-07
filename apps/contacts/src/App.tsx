@@ -1,5 +1,5 @@
-import { useEffect, useRef } from 'react';
-import { Search, Plus, Users, Upload, Download } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { Search, Plus, Users, Upload, Download, FolderPlus, Tag, X } from 'lucide-react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { ProductRail } from '@/components/ProductRail';
 import { ContactList } from '@/components/ContactList';
@@ -46,19 +46,55 @@ function parseCsvLine(line: string): string[] {
 }
 
 function ContactsApp() {
-  const { contacts, setContacts, setLoading, searchQuery, setSearchQuery, setDialogOpen, setEditingContact } = useContactsStore();
+  const { contacts, setContacts, setLoading, searchQuery, setSearchQuery, setDialogOpen, setEditingContact, groups, setGroups, activeGroupId, setActiveGroupId, setGroupMembers } = useContactsStore();
   const toast = useToastStore();
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const [newGroupName, setNewGroupName] = useState('');
+  const [showGroupInput, setShowGroupInput] = useState(false);
 
   useEffect(() => {
     setLoading(true);
     contactsApi.listContacts()
       .then((res: { contacts: Contact[] }) => setContacts(res.contacts))
-      .catch(() => {
-        // Graceful fallback — show empty state
-      })
+      .catch(() => {})
       .finally(() => setLoading(false));
-  }, [setContacts, setLoading]);
+    // Load groups
+    contactsApi.listGroups()
+      .then((res) => setGroups(res.groups))
+      .catch(() => {});
+  }, [setContacts, setLoading, setGroups]);
+
+  // Load group members when active group changes
+  useEffect(() => {
+    if (!activeGroupId) return;
+    contactsApi.getGroupMembers(activeGroupId)
+      .then((res) => setGroupMembers(activeGroupId, res.contactIds))
+      .catch(() => {});
+  }, [activeGroupId, setGroupMembers]);
+
+  const handleCreateGroup = async () => {
+    if (!newGroupName.trim()) return;
+    try {
+      const g = await contactsApi.createGroup({ name: newGroupName.trim(), color: '#6366f1' });
+      setGroups([...groups, g]);
+      setNewGroupName('');
+      setShowGroupInput(false);
+      toast.show(`Group "${g.name}" created`);
+    } catch {
+      toast.show('Failed to create group');
+    }
+  };
+
+  const handleDeleteGroup = async (id: string) => {
+    try {
+      await contactsApi.deleteGroup(id);
+      setGroups(groups.filter((g) => g.id !== id));
+      if (activeGroupId === id) setActiveGroupId(null);
+      toast.show('Group deleted');
+    } catch {
+      toast.show('Failed to delete group');
+    }
+  };
 
   const handleNew = () => {
     setEditingContact(null);
@@ -200,6 +236,77 @@ function ContactsApp() {
               }}
             />
           </div>
+        </div>
+
+        {/* Groups */}
+        <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--ct-border)' }}>
+          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ct-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+              Groups
+            </span>
+            <button
+              onClick={() => setShowGroupInput(!showGroupInput)}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ct-text-muted)', padding: 2, display: 'flex' }}
+            >
+              {showGroupInput ? <X size={12} /> : <FolderPlus size={12} />}
+            </button>
+          </div>
+          {showGroupInput && (
+            <form onSubmit={(e) => { e.preventDefault(); handleCreateGroup(); }} style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
+              <input
+                value={newGroupName}
+                onChange={(e) => setNewGroupName(e.target.value)}
+                placeholder="Group name..."
+                autoFocus
+                style={{
+                  flex: 1, padding: '4px 8px', fontSize: 12, border: '1px solid var(--ct-border)',
+                  borderRadius: 'var(--ct-radius-sm)', background: 'var(--ct-bg-secondary)', color: 'var(--ct-text)',
+                  outline: 'none', fontFamily: 'inherit',
+                }}
+              />
+              <button type="submit" style={{ padding: '4px 8px', fontSize: 11, border: 'none', borderRadius: 'var(--ct-radius-sm)', background: 'var(--ct-brand)', color: '#fff', cursor: 'pointer' }}>
+                Add
+              </button>
+            </form>
+          )}
+          <button
+            onClick={() => setActiveGroupId(null)}
+            style={{
+              display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '5px 8px',
+              borderRadius: 'var(--ct-radius-sm)', border: 'none', background: !activeGroupId ? 'var(--ct-brand-subtle, rgba(99,102,241,0.1))' : 'transparent',
+              color: !activeGroupId ? 'var(--ct-brand)' : 'var(--ct-text-secondary)', fontSize: 12, fontWeight: 500,
+              cursor: 'pointer', textAlign: 'left',
+            }}
+          >
+            <Tag size={12} /> All Contacts
+          </button>
+          {groups.map((g) => (
+            <div
+              key={g.id}
+              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
+            >
+              <button
+                onClick={() => setActiveGroupId(g.id)}
+                style={{
+                  display: 'flex', alignItems: 'center', gap: 6, flex: 1, padding: '5px 8px',
+                  borderRadius: 'var(--ct-radius-sm)', border: 'none',
+                  background: activeGroupId === g.id ? 'var(--ct-brand-subtle, rgba(99,102,241,0.1))' : 'transparent',
+                  color: activeGroupId === g.id ? 'var(--ct-brand)' : 'var(--ct-text-secondary)', fontSize: 12, fontWeight: 500,
+                  cursor: 'pointer', textAlign: 'left',
+                }}
+              >
+                <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, flexShrink: 0 }} />
+                {g.name}
+              </button>
+              <button
+                onClick={() => handleDeleteGroup(g.id)}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ct-text-muted)', padding: 2, display: 'flex', opacity: 0.5 }}
+                title="Delete group"
+              >
+                <X size={10} />
+              </button>
+            </div>
+          ))}
         </div>
 
         <ContactList />

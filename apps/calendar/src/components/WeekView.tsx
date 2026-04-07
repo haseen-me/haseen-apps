@@ -1,5 +1,7 @@
-import { useState, useRef } from 'react';
+import { useState, useRef, useEffect } from 'react';
 import { useCalendarStore } from '@/store/calendar';
+import { useToastStore } from '@haseen-me/shared/toast';
+import { calendarApi } from '@/api/client';
 import type { CalendarEvent } from '@/types/calendar';
 
 const HOURS = Array.from({ length: 24 }, (_, i) => i);
@@ -54,8 +56,9 @@ function formatHour(h: number): string {
 }
 
 export function WeekView() {
-  const { currentDate, events, visibleCalendarIds, openNewEvent, openEditEvent } =
+  const { currentDate, events, visibleCalendarIds, openNewEvent, openEditEvent, setEvents } =
     useCalendarStore();
+  const toast = useToastStore();
   const weekDates = getWeekDates(currentDate);
   const today = new Date();
 
@@ -63,6 +66,70 @@ export function WeekView() {
   const [dragStart, setDragStart] = useState<{ day: number; hour: number } | null>(null);
   const [dragEnd, setDragEnd] = useState<{ day: number; hour: number } | null>(null);
   const isDragging = useRef(false);
+
+  // Drag-to-reschedule state
+  const rescheduleRef = useRef<{
+    event: CalendarEvent;
+    startY: number;
+    origStartMins: number;
+    durationMins: number;
+    dayIndex: number;
+  } | null>(null);
+  const [rescheduleOffset, setRescheduleOffset] = useState<number>(0);
+  const [rescheduleEventId, setRescheduleEventId] = useState<string | null>(null);
+
+  useEffect(() => {
+    if (!rescheduleEventId) return;
+    const handleMouseMove = (e: MouseEvent) => {
+      if (!rescheduleRef.current) return;
+      const dy = e.clientY - rescheduleRef.current.startY;
+      setRescheduleOffset(dy);
+    };
+    const handleMouseUp = async () => {
+      const info = rescheduleRef.current;
+      if (!info) return;
+      rescheduleRef.current = null;
+      setRescheduleEventId(null);
+      setRescheduleOffset(0);
+
+      // Calculate new time from pixel offset
+      const offsetMins = Math.round(rescheduleOffset / 48 * 60 / 15) * 15; // snap to 15min
+      if (offsetMins === 0) return;
+
+      const origStart = new Date(info.event.startTime);
+      const origEnd = new Date(info.event.endTime);
+      const newStart = new Date(origStart.getTime() + offsetMins * 60000);
+      const newEnd = new Date(origEnd.getTime() + offsetMins * 60000);
+
+      // Optimistic update
+      setEvents(events.map((ev) =>
+        ev.id === info.event.id
+          ? { ...ev, startTime: newStart.toISOString(), endTime: newEnd.toISOString() }
+          : ev,
+      ));
+
+      try {
+        await calendarApi.updateEvent(info.event.id, {
+          startTime: newStart.toISOString(),
+          endTime: newEnd.toISOString(),
+        });
+      } catch {
+        // Revert on failure
+        setEvents(events.map((ev) =>
+          ev.id === info.event.id
+            ? { ...ev, startTime: info.event.startTime, endTime: info.event.endTime }
+            : ev,
+        ));
+        toast.show('Failed to reschedule');
+      }
+    };
+    window.addEventListener('mousemove', handleMouseMove);
+    window.addEventListener('mouseup', handleMouseUp);
+    return () => {
+      window.removeEventListener('mousemove', handleMouseMove);
+      window.removeEventListener('mouseup', handleMouseUp);
+    };
+  }, [rescheduleEventId, rescheduleOffset, events, setEvents, toast]);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
@@ -230,13 +297,26 @@ export function WeekView() {
                     return (
                       <div
                         key={evt.id}
+                        onMouseDown={(e) => {
+                          e.stopPropagation();
+                          e.preventDefault();
+                          rescheduleRef.current = {
+                            event: evt,
+                            startY: e.clientY,
+                            origStartMins: startMins,
+                            durationMins,
+                            dayIndex: di,
+                          };
+                          setRescheduleEventId(evt.id);
+                          setRescheduleOffset(0);
+                        }}
                         onClick={(e) => {
                           e.stopPropagation();
-                          openEditEvent(evt);
+                          if (!rescheduleEventId) openEditEvent(evt);
                         }}
                         style={{
                           position: 'absolute',
-                          top,
+                          top: rescheduleEventId === evt.id ? top + rescheduleOffset : top,
                           left: 2,
                           right: 2,
                           height,
@@ -247,12 +327,19 @@ export function WeekView() {
                           fontSize: 11,
                           lineHeight: '14px',
                           overflow: 'hidden',
-                          cursor: 'pointer',
+                          cursor: rescheduleEventId === evt.id ? 'grabbing' : 'grab',
                           pointerEvents: 'auto',
-                          zIndex: 1,
+                          zIndex: rescheduleEventId === evt.id ? 10 : 1,
+                          opacity: rescheduleEventId === evt.id ? 0.8 : 1,
+                          transition: rescheduleEventId === evt.id ? 'none' : 'top 0.15s',
                         }}
                       >
                         <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
+                        {(evt.attendeeCount ?? 0) > 0 && height >= 32 && (
+                          <div style={{ fontSize: 9, color: 'var(--cal-text-muted)', marginTop: 1 }}>
+                            {evt.attendeeCount} attendee{evt.attendeeCount !== 1 ? 's' : ''}
+                          </div>
+                        )}
                       </div>
                     );
                   })}

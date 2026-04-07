@@ -128,5 +128,12 @@ export function createContactsApi(client: ApiClient): ContactsApi {
     updateContact: (id, params) => client.put(`/contacts/contacts/${id}`, params),
     deleteContact: (id) => client.del(`/contacts/contacts/${id}`),
     searchContacts: (query) => client.post('/contacts/contacts/search', { query }),
+    listGroups: () => client.get('/contacts/groups'),
+    createGroup: (params) => client.post('/contacts/groups', params),
+    updateGroup: (id, params) => client.put(`/contacts/groups/${id}`, params),
+    deleteGroup: (id) => client.del(`/contacts/groups/${id}`),
+    addToGroup: (groupId, contactId) => client.post(`/contacts/groups/${groupId}/members`, { contactId }),
+    removeFromGroup: (groupId, contactId) => client.del(`/contacts/groups/${groupId}/members/${contactId}`),
+    getGroupMembers: (groupId) => client.get(`/contacts/groups/${groupId}/members`),
   };
 }

@@ -54,8 +54,16 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
   const selected = selectedIds.has(file.id);
   const [contextPos, setContextPos] = useState<{ x: number; y: number } | null>(null);
 
+  const handleDragStart = (e: React.DragEvent) => {
+    const ids = selectedIds.has(file.id) ? Array.from(selectedIds) : [file.id];
+    e.dataTransfer.setData('application/x-drive-file-ids', JSON.stringify(ids));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div
+      draggable={!isTrash}
+      onDragStart={handleDragStart}
       onClick={() => toggleSelected(file.id)}
       onDoubleClick={() => setPreviewFileId(file.id)}
       onContextMenu={(e) => {
@@ -152,8 +160,16 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
   const date = new Date(file.updatedAt);
   const dateStr = date.toLocaleDateString('en-US', { month: 'short', day: 'numeric', year: 'numeric' });
 
+  const handleDragStart = (e: React.DragEvent) => {
+    const ids = selectedIds.has(file.id) ? Array.from(selectedIds) : [file.id];
+    e.dataTransfer.setData('application/x-drive-file-ids', JSON.stringify(ids));
+    e.dataTransfer.effectAllowed = 'move';
+  };
+
   return (
     <div
+      draggable={!isTrash}
+      onDragStart={handleDragStart}
       onClick={() => toggleSelected(file.id)}
       onDoubleClick={() => setPreviewFileId(file.id)}
       onContextMenu={(e) => {

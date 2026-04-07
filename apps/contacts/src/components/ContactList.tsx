@@ -4,7 +4,7 @@ import { contactsApi } from '@/api/client';
 import type { Contact } from '@haseen-me/api-client';
 
 export function ContactList() {
-  const { contacts, searchQuery, selectedContactId, setSelectedContactId, loading } = useContactsStore();
+  const { contacts, searchQuery, selectedContactId, setSelectedContactId, loading, activeGroupId, groupMembers } = useContactsStore();
   const [remoteResults, setRemoteResults] = useState<Contact[] | null>(null);
   const debounceRef = useRef<ReturnType<typeof setTimeout>>(undefined);
 
@@ -33,7 +33,14 @@ export function ContactList() {
       return c.name.toLowerCase().includes(q) || c.email.toLowerCase().includes(q);
     });
 
-  const filtered = (remoteResults ?? clientFiltered)
+  // Filter by active group
+  const groupFiltered = (remoteResults ?? clientFiltered).filter((c: Contact) => {
+    if (!activeGroupId) return true;
+    const members = groupMembers.get(activeGroupId);
+    return members ? members.has(c.id) : false;
+  });
+
+  const filtered = groupFiltered
     .sort((a: Contact, b: Contact) => (a.name || a.email).localeCompare(b.name || b.email));
 
   if (loading) {

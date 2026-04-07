@@ -28,6 +28,7 @@ export type {
   Reminder,
   ContactsApi,
   Contact,
+  ContactGroup,
 } from './services';
 export {
   createAuthApi,

@@ -204,6 +204,7 @@ export interface CalendarEvent {
   color: string;
   createdAt: string;
   updatedAt: string;
+  attendeeCount: number;
 }
 
 /** Contacts service API types */
@@ -214,6 +215,20 @@ export interface ContactsApi {
   updateContact(id: string, params: { email?: string; name?: string; notes?: string; phone?: string; company?: string; address?: string; birthday?: string }): Promise<Contact>;
   deleteContact(id: string): Promise<void>;
   searchContacts(query: string): Promise<{ contacts: Contact[]; total: number }>;
+  listGroups(): Promise<{ groups: ContactGroup[] }>;
+  createGroup(params: { name: string; color: string }): Promise<ContactGroup>;
+  updateGroup(id: string, params: { name?: string; color?: string }): Promise<ContactGroup>;
+  deleteGroup(id: string): Promise<void>;
+  addToGroup(groupId: string, contactId: string): Promise<void>;
+  removeFromGroup(groupId: string, contactId: string): Promise<void>;
+  getGroupMembers(groupId: string): Promise<{ contactIds: string[] }>;
+}
+
+export interface ContactGroup {
+  id: string;
+  name: string;
+  color: string;
+  createdAt: string;
 }
 
 export interface Contact {

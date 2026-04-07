@@ -1,20 +1,20 @@
 package main
 
 import (
-"context"
-"fmt"
-"net/http"
-"os"
-"os/signal"
-"syscall"
-"time"
+	"context"
+	"fmt"
+	"net/http"
+	"os"
+	"os/signal"
+	"syscall"
+	"time"
 
-"github.com/go-chi/chi/v5"
-chimw "github.com/go-chi/chi/v5/middleware"
-"github.com/haseen-me/haseen-apps/services/contacts/internal/handler"
-"github.com/haseen-me/haseen-apps/services/contacts/internal/middleware"
-"github.com/haseen-me/haseen-apps/services/contacts/internal/store"
-"github.com/rs/zerolog"
+	"github.com/go-chi/chi/v5"
+	chimw "github.com/go-chi/chi/v5/middleware"
+	"github.com/haseen-me/haseen-apps/services/contacts/internal/handler"
+	"github.com/haseen-me/haseen-apps/services/contacts/internal/middleware"
+	"github.com/haseen-me/haseen-apps/services/contacts/internal/store"
+	"github.com/rs/zerolog"
 )
 
 func main() {
@@ -62,7 +62,13 @@ r.Get("/contacts/{contactID}", h.GetContact)
 r.Put("/contacts/{contactID}", h.UpdateContact)
 r.Delete("/contacts/{contactID}", h.DeleteContact)
 r.Post("/contacts/search", h.SearchContacts)
-})
+		r.Get("/groups", h.ListGroups)
+		r.Post("/groups", h.CreateGroup)
+		r.Put("/groups/{groupID}", h.UpdateGroup)
+		r.Delete("/groups/{groupID}", h.DeleteGroup)
+		r.Post("/groups/{groupID}/members", h.AddToGroup)
+		r.Delete("/groups/{groupID}/members/{contactID}", h.RemoveFromGroup)
+		r.Get("/groups/{groupID}/members", h.GetGroupMembers)})
 
 srv := &http.Server{Addr: ":" + port, Handler: r}
 go func() {
