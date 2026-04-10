@@ -1,0 +1,25 @@
+FROM node:20-alpine AS ui-builder
+WORKDIR /app/ui
+COPY ui/package.json ui/package-lock.json ./
+RUN npm ci
+COPY ui/src ./src
+COPY ui/tsconfig.json ui/tsup.config.ts ./
+RUN npm run build
+
+FROM node:20-alpine AS app-builder
+ARG APP_PACKAGE
+ARG APP_PATH
+WORKDIR /app/haseen-apps
+COPY haseen-apps/package.json haseen-apps/package-lock.json ./
+COPY haseen-apps/tsconfig.json haseen-apps/turbo.json haseen-apps/buf.yaml haseen-apps/buf.gen.yaml haseen-apps/go.work haseen-apps/go.work.sum ./
+COPY haseen-apps/apps ./apps
+COPY haseen-apps/packages ./packages
+COPY --from=ui-builder /app/ui /app/ui
+RUN npm ci
+RUN npm run build -- --filter=${APP_PACKAGE}
+
+FROM nginx:1.27-alpine
+ARG APP_PATH
+COPY haseen-apps/deploy/nginx-spa.conf /etc/nginx/conf.d/default.conf
+COPY --from=app-builder /app/haseen-apps/${APP_PATH}/dist /usr/share/nginx/html
+EXPOSE 80

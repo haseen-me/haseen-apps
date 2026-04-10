@@ -1,0 +1,221 @@
+services:
+  postgres:
+    image: postgres:16-alpine
+    restart: unless-stopped
+    environment:
+      POSTGRES_DB: ${POSTGRES_DB:-haseen}
+      POSTGRES_USER: ${POSTGRES_USER:-haseen}
+      POSTGRES_PASSWORD: ${POSTGRES_PASSWORD:?set POSTGRES_PASSWORD in .env.production}
+    volumes:
+      - pgdata:/var/lib/postgresql/data
+      - ./migrations/001_initial_schema.up.sql:/docker-entrypoint-initdb.d/001_initial_schema.sql:ro
+      - ./migrations/002_mail_tables.up.sql:/docker-entrypoint-initdb.d/002_mail_tables.sql:ro
+      - ./migrations/003_drive_tables.up.sql:/docker-entrypoint-initdb.d/003_drive_tables.sql:ro
+      - ./migrations/004_mail_enhancements.up.sql:/docker-entrypoint-initdb.d/004_mail_enhancements.sql:ro
+      - ./migrations/005_signed_pre_keys.up.sql:/docker-entrypoint-initdb.d/005_signed_pre_keys.sql:ro
+      - ./migrations/006_calendar_tables.up.sql:/docker-entrypoint-initdb.d/006_calendar_tables.sql:ro
+      - ./migrations/007_contacts.up.sql:/docker-entrypoint-initdb.d/007_contacts.sql:ro
+    healthcheck:
+      test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-haseen} -d ${POSTGRES_DB:-haseen}"]
+      interval: 5s
+      timeout: 5s
+      retries: 10
+
+  redis:
+    image: redis:7-alpine
+    restart: unless-stopped
+    volumes:
+      - redisdata:/data
+
+  auth:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.auth
+    restart: unless-stopped
+    environment:
+      AUTH_PORT: "8081"
+      DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+      REDIS_URL: redis://redis:6379/0
+      SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env.production}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  mail:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.mail
+    restart: unless-stopped
+    environment:
+      MAIL_PORT: "8082"
+      DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+      REDIS_URL: redis://redis:6379/1
+      SMTP_HOST: ${SMTP_HOST:-}
+      SMTP_PORT: ${SMTP_PORT:-587}
+      SMTP_USER: ${SMTP_USER:-}
+      SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_started
+
+  drive:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.drive
+    restart: unless-stopped
+    environment:
+      DRIVE_PORT: "8083"
+      DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+      BLOB_DIR: /data/blobs
+    volumes:
+      - drivedata:/data/blobs
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  keyserver:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.keyserver
+    restart: unless-stopped
+    environment:
+      KEYSERVER_PORT: "8084"
+      DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  calendar:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.calendar
+    restart: unless-stopped
+    environment:
+      CALENDAR_PORT: "8085"
+      DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  contacts:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.contacts
+    restart: unless-stopped
+    environment:
+      PORT: "4008"
+      DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+    depends_on:
+      postgres:
+        condition: service_healthy
+
+  gateway:
+    build:
+      context: .
+      dockerfile: deploy/Dockerfile.gateway
+    restart: unless-stopped
+    environment:
+      GATEWAY_PORT: "8080"
+      AUTH_URL: http://auth:8081
+      MAIL_URL: http://mail:8082
+      DRIVE_URL: http://drive:8083
+      KEYSERVER_URL: http://keyserver:8084
+      CALENDAR_URL: http://calendar:8085
+      CONTACTS_URL: http://contacts:4008
+      CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://haseen.me,https://mail.haseen.me,https://accounts.haseen.me,https://drive.haseen.me,https://calendar.haseen.me,https://contacts.haseen.me}
+    ports:
+      - "127.0.0.1:8080:8080"
+    depends_on:
+      - auth
+      - mail
+      - drive
+      - keyserver
+      - calendar
+      - contacts
+
+  web:
+    build:
+      context: ..
+      dockerfile: haseen-apps/deploy/Dockerfile.frontend
+      args:
+        APP_PACKAGE: "@haseen-me/web"
+        APP_PATH: apps/web
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3000:80"
+    depends_on:
+      - gateway
+
+  accounts-web:
+    build:
+      context: ..
+      dockerfile: haseen-apps/deploy/Dockerfile.frontend
+      args:
+        APP_PACKAGE: "@haseen-me/accounts-app"
+        APP_PATH: apps/accounts
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3003:80"
+    depends_on:
+      - gateway
+
+  mail-web:
+    build:
+      context: ..
+      dockerfile: haseen-apps/deploy/Dockerfile.frontend
+      args:
+        APP_PACKAGE: "@haseen-me/mail-app"
+        APP_PATH: apps/mail
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3001:80"
+    depends_on:
+      - gateway
+
+  drive-web:
+    build:
+      context: ..
+      dockerfile: haseen-apps/deploy/Dockerfile.frontend
+      args:
+        APP_PACKAGE: "@haseen-me/drive-app"
+        APP_PATH: apps/drive
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3002:80"
+    depends_on:
+      - gateway
+
+  calendar-web:
+    build:
+      context: ..
+      dockerfile: haseen-apps/deploy/Dockerfile.frontend
+      args:
+        APP_PACKAGE: "@haseen-me/calendar-app"
+        APP_PATH: apps/calendar
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3004:80"
+    depends_on:
+      - gateway
+
+  contacts-web:
+    build:
+      context: ..
+      dockerfile: haseen-apps/deploy/Dockerfile.frontend
+      args:
+        APP_PACKAGE: "@haseen-me/contacts-app"
+        APP_PATH: apps/contacts
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3005:80"
+    depends_on:
+      - gateway
+
+volumes:
+  pgdata:
+  redisdata:
+  drivedata:

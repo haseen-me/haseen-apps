@@ -32,6 +32,7 @@ func main() {
 	keysURL := env("KEYSERVER_URL", "http://localhost:8084")
 	calendarURL := env("CALENDAR_URL", "http://localhost:8085")
 	contactsURL := env("CONTACTS_URL", "http://localhost:4008")
+	allowedOrigins := splitCSV(env("CORS_ALLOWED_ORIGINS", "http://localhost:*,https://*.haseen.me"))
 
 	r := chi.NewRouter()
 
@@ -41,7 +42,7 @@ func main() {
 	r.Use(chimw.Compress(5))
 	r.Use(requestLogger)
 	r.Use(cors.Handler(cors.Options{
-		AllowedOrigins:   []string{"http://localhost:*", "https://*.haseen.me"},
+		AllowedOrigins:   allowedOrigins,
 		AllowedMethods:   []string{"GET", "POST", "PUT", "DELETE", "PATCH", "OPTIONS"},
 		AllowedHeaders:   []string{"Accept", "Authorization", "Content-Type", "X-Request-ID", "X-User-ID"},
 		ExposedHeaders:   []string{"X-Request-ID"},
@@ -172,6 +173,18 @@ func healthHandler(authURL, mailURL, driveURL, keysURL, calendarURL, contactsURL
 		fmt.Fprintf(w, `{"status":"%s","services":{"auth":"%s","mail":"%s","drive":"%s","keyserver":"%s","calendar":"%s"}}`,
 			overall, results["auth"], results["mail"], results["drive"], results["keyserver"], results["calendar"])
 	}
+}
+
+func splitCSV(value string) []string {
+	parts := strings.Split(value, ",")
+	out := make([]string, 0, len(parts))
+	for _, part := range parts {
+		trimmed := strings.TrimSpace(part)
+		if trimmed != "" {
+			out = append(out, trimmed)
+		}
+	}
+	return out
 }
 
 // --- IP Rate Limiter ---
