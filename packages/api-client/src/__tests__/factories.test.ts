@@ -18,7 +18,7 @@ describe('createAuthApi', () => {
 
   it('register calls POST /auth/register', async () => {
     const api = createAuthApi(client);
-    const params = { email: 'a@b.com', srpSalt: 's', srpVerifier: 'v', publicKey: 'pk', signingPublicKey: 'spk' };
+    const params = { email: 'a@b.com', srpSalt: 's', srpVerifier: 'v', publicKey: 'pk', signingKey: 'spk' };
     await api.register(params);
     expect(client.post).toHaveBeenCalledWith('/auth/register', params);
   });
@@ -66,7 +66,7 @@ describe('createMailApi', () => {
 
   it('sendMessage calls POST /mail/messages/send', async () => {
     const api = createMailApi(client);
-    const params = { to: ['b@c.com'], encryptedSubject: 'es', encryptedBody: 'eb', encryptedSessionKeys: { k: 'v' } };
+    const params = { to: [{ address: 'b@c.com' }], encryptedSubject: 'es', encryptedBody: 'eb', encryptedSessionKeys: { k: 'v' }, subject: 's', bodyHtml: 'b' };
     await api.sendMessage(params);
     expect(client.post).toHaveBeenCalledWith('/mail/messages/send', params);
   });
@@ -120,7 +120,7 @@ describe('createKeysApi', () => {
 
   it('publishKey calls POST /keys/keys/publish', async () => {
     const api = createKeysApi(client);
-    const params = { publicKey: 'pk', signingPublicKey: 'spk', signature: 'sig' };
+    const params = { encryptionPublicKey: 'pk', signingPublicKey: 'spk', selfSignature: 'sig' };
     await api.publishKey(params);
     expect(client.post).toHaveBeenCalledWith('/keys/keys/publish', params);
   });
@@ -166,7 +166,7 @@ describe('createCalendarApi', () => {
     expect(client.get).toHaveBeenCalledWith(
       expect.stringContaining('/calendar/events?'),
     );
-    const url: string = (client.get as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const url: string = (client.get as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(url).toContain('start=2024-01-01');
     expect(url).toContain('end=2024-01-31');
   });
@@ -174,7 +174,7 @@ describe('createCalendarApi', () => {
   it('listEvents includes optional calendarId', async () => {
     const api = createCalendarApi(client);
     await api.listEvents({ start: '2024-01-01', end: '2024-01-31', calendarId: 'cal-1' });
-    const url: string = (client.get as ReturnType<typeof vi.fn>).mock.calls[0][0];
+    const url: string = (client.get as ReturnType<typeof vi.fn>).mock.calls[0]![0];
     expect(url).toContain('calendarId=cal-1');
   });
 

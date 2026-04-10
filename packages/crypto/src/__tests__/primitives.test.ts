@@ -172,8 +172,8 @@ describe('Digital Signatures (Ed25519)', () => {
     const message = new TextEncoder().encode('data');
     const signed = sign(message, kp.secretKey);
 
-    const corrupted = new Uint8Array(signed.signature);
-    corrupted[0] ^= 0xff;
+    const corrupted = new Uint8Array(signed.signature!);
+    corrupted[0] = corrupted[0]! ^ 0xff;
     expect(verify(message, corrupted, kp.publicKey)).toBe(false);
   });
 });
