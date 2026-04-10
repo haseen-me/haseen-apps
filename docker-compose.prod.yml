@@ -15,6 +15,11 @@ services:
       - ./migrations/005_signed_pre_keys.up.sql:/docker-entrypoint-initdb.d/005_signed_pre_keys.sql:ro
       - ./migrations/006_calendar_tables.up.sql:/docker-entrypoint-initdb.d/006_calendar_tables.sql:ro
       - ./migrations/007_contacts.up.sql:/docker-entrypoint-initdb.d/007_contacts.sql:ro
+      - ./migrations/008_drive_trash.up.sql:/docker-entrypoint-initdb.d/008_drive_trash.sql:ro
+      - ./migrations/009_contacts_fields.up.sql:/docker-entrypoint-initdb.d/009_contacts_fields.sql:ro
+      - ./migrations/010_drive_starred.up.sql:/docker-entrypoint-initdb.d/010_drive_starred.sql:ro
+      - ./migrations/011_contact_groups.up.sql:/docker-entrypoint-initdb.d/011_contact_groups.sql:ro
+      - ./migrations/012_user_display_name.up.sql:/docker-entrypoint-initdb.d/012_user_display_name.sql:ro
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U ${POSTGRES_USER:-haseen} -d ${POSTGRES_DB:-haseen}"]
       interval: 5s

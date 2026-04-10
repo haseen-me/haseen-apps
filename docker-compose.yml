@@ -16,6 +16,11 @@ services:
       - ./migrations/005_signed_pre_keys.up.sql:/docker-entrypoint-initdb.d/005_signed_pre_keys.sql
       - ./migrations/006_calendar_tables.up.sql:/docker-entrypoint-initdb.d/006_calendar_tables.sql
       - ./migrations/007_contacts.up.sql:/docker-entrypoint-initdb.d/007_contacts.sql
+      - ./migrations/008_drive_trash.up.sql:/docker-entrypoint-initdb.d/008_drive_trash.sql
+      - ./migrations/009_contacts_fields.up.sql:/docker-entrypoint-initdb.d/009_contacts_fields.sql
+      - ./migrations/010_drive_starred.up.sql:/docker-entrypoint-initdb.d/010_drive_starred.sql
+      - ./migrations/011_contact_groups.up.sql:/docker-entrypoint-initdb.d/011_contact_groups.sql
+      - ./migrations/012_user_display_name.up.sql:/docker-entrypoint-initdb.d/012_user_display_name.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U haseen"]
       interval: 5s
