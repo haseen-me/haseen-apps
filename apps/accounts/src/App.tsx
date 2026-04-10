@@ -2,6 +2,7 @@ import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { SignUpPage } from '@/pages/SignUpPage';
 import { SignInPage } from '@/pages/SignInPage';
+import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { RecoveryKeyPage } from '@/pages/RecoveryKeyPage';
 import { ProfileSettingsPage } from '@/pages/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage';
@@ -18,6 +19,7 @@ export default function App() {
         <Route path="/" element={<Navigate to="/sign-in" replace />} />
         <Route path="/sign-up" element={<SignUpPage />} />
         <Route path="/sign-in" element={<SignInPage />} />
+        <Route path="/forgot-password" element={<ForgotPasswordPage />} />
         <Route path="/recovery-key" element={<RequireAuth><RecoveryKeyPage /></RequireAuth>} />
         <Route path="/settings" element={<RequireAuth><ProfileSettingsPage /></RequireAuth>} />
         <Route path="/settings/security" element={<RequireAuth><SecuritySettingsPage /></RequireAuth>} />
