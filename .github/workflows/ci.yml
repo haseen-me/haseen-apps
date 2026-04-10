@@ -11,22 +11,37 @@ jobs:
     name: Frontend (build + test)
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - name: Checkout root repository (haseen-apps)
+        uses: actions/checkout@v4
+        with:
+          path: haseen-apps
+
+      - name: Checkout UI dependency
+        uses: actions/checkout@v4
+        with:
+          repository: haseen-me/ui
+          path: ui
 
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
+          cache-dependency-path: haseen-apps/package-lock.json
 
-      - run: npm ci
+      - name: Install dependencies
+        working-directory: ./haseen-apps
+        run: npm ci
 
       - name: Typecheck
+        working-directory: ./haseen-apps
         run: npx turbo typecheck
 
       - name: Build
+        working-directory: ./haseen-apps
         run: npx turbo build
 
       - name: Test
+        working-directory: ./haseen-apps
         run: npx turbo test
 
   backend:
