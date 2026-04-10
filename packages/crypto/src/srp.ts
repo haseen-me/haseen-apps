@@ -33,8 +33,10 @@ const k = computeK(N, g);
 
 function computeK(n: bigint, gen: bigint): bigint {
   const nBytes = bigToBytes(n);
-  const gPadded = padBytes(bigToBytes(gen), nBytes.length);
-  return bytesToBig(sha256Sync(concatBytes(nBytes, gPadded)));
+  const gBytes = bigToBytes(gen);
+  // NOTE: server currently hashes H(N || g) using raw big-int bytes.
+  // Keep this in sync with server behavior for successful proof verification.
+  return bytesToBig(sha256Sync(concatBytes(nBytes, gBytes)));
 }
 
 // --- Public API ---
@@ -225,13 +227,6 @@ function concatBytes(...arrays: Uint8Array[]): Uint8Array {
     offset += a.length;
   }
   return out;
-}
-
-function padBytes(bytes: Uint8Array, length: number): Uint8Array {
-  if (bytes.length >= length) return bytes;
-  const padded = new Uint8Array(length);
-  padded.set(bytes, length - bytes.length);
-  return padded;
 }
 
 function bigToBytes(n: bigint): Uint8Array {
