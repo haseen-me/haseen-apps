@@ -27,8 +27,8 @@ jobs:
 
       - name: Sync Files to Server
         run: |
-          rsync -avz --exclude='.git' --exclude='node_modules' --exclude='.github' ./ root@${{ secrets.SERVER_IP }}:/opt/haseen-me/
+          rsync -avz --exclude='.git' --exclude='node_modules' --exclude='.github' ./ root@${{ secrets.SERVER_IP }}:/opt/haseen-apps/
 
       - name: Build and Restart on Remote Server
         run: |
-          ssh root@${{ secrets.SERVER_IP }} "cd /opt/haseen-me && docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build"
+          ssh root@${{ secrets.SERVER_IP }} "cd /opt/haseen-apps && docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build"

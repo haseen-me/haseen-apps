@@ -1,0 +1,31 @@
+{
+    # Global options
+}
+
+http://204.168.246.210, https://204.168.246.210 {
+    abort
+}
+
+haseen.me {
+  reverse_proxy 127.0.0.1:3000
+}
+
+mail.haseen.me {
+  reverse_proxy 127.0.0.1:3001
+}
+
+accounts.haseen.me {
+  reverse_proxy 127.0.0.1:3003
+}
+
+drive.haseen.me {
+  reverse_proxy 127.0.0.1:3002
+}
+
+calendar.haseen.me {
+  reverse_proxy 127.0.0.1:3004
+}
+
+contacts.haseen.me {
+  reverse_proxy 127.0.0.1:3005
+}
