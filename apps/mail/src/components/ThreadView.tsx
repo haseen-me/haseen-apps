@@ -31,6 +31,18 @@ export function ThreadView() {
   const thread = threads.find((t) => t.id === activeThreadId);
   const decryptedSubject = useDecrypt(thread?.subject ?? '');
 
+  // Close menu on outside click
+  useEffect(() => {
+    if (!menuOpen) return;
+    const handler = (e: MouseEvent) => {
+      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
+        setMenuOpen(false);
+      }
+    };
+    document.addEventListener('mousedown', handler);
+    return () => document.removeEventListener('mousedown', handler);
+  }, [menuOpen]);
+
   if (!activeThreadId || !thread) {
     return (
       <div
@@ -185,18 +197,6 @@ export function ThreadView() {
       toast.show(`Failed to move to ${displayName}`);
     }
   };
-
-  // Close menu on outside click
-  useEffect(() => {
-    if (!menuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        setMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [menuOpen]);
 
   return (
     <div style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden' }}>
