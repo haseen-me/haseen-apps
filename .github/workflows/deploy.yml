@@ -31,4 +31,4 @@ jobs:
 
       - name: Build and Restart on Remote Server
         run: |
-          ssh root@${{ secrets.SERVER_IP }} "cd /opt/haseen-me && docker compose -f docker-compose.prod.yml up -d --build"
+          ssh root@${{ secrets.SERVER_IP }} "cd /opt/haseen-me && docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build"
