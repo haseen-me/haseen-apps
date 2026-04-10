@@ -28,15 +28,19 @@ services:
       - redisdata:/data
 
   auth:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.auth
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/auth:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       AUTH_PORT: "8081"
       DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
       REDIS_URL: redis://redis:6379/0
       SESSION_SECRET: ${SESSION_SECRET:?set SESSION_SECRET in .env.production}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8081/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
@@ -44,9 +48,8 @@ services:
         condition: service_started
 
   mail:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.mail
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/mail:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       MAIL_PORT: "8082"
@@ -56,6 +59,11 @@ services:
       SMTP_PORT: ${SMTP_PORT:-587}
       SMTP_USER: ${SMTP_USER:-}
       SMTP_PASSWORD: ${SMTP_PASSWORD:-}
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8082/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
@@ -63,9 +71,8 @@ services:
         condition: service_started
 
   drive:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.drive
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/drive:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       DRIVE_PORT: "8083"
@@ -73,50 +80,66 @@ services:
       BLOB_DIR: /data/blobs
     volumes:
       - drivedata:/data/blobs
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8083/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
 
   keyserver:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.keyserver
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/keyserver:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       KEYSERVER_PORT: "8084"
       DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8084/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
 
   calendar:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.calendar
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/calendar:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       CALENDAR_PORT: "8085"
       DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8085/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
 
   contacts:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.contacts
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/contacts:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       PORT: "4008"
       DATABASE_URL: postgres://${POSTGRES_USER:-haseen}:${POSTGRES_PASSWORD}@postgres:5432/${POSTGRES_DB:-haseen}?sslmode=disable
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:4008/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       postgres:
         condition: service_healthy
 
   gateway:
-    build:
-      context: .
-      dockerfile: deploy/Dockerfile.gateway
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/gateway:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     environment:
       GATEWAY_PORT: "8080"
@@ -129,6 +152,11 @@ services:
       CORS_ALLOWED_ORIGINS: ${CORS_ALLOWED_ORIGINS:-https://haseen.me}
     ports:
       - "127.0.0.1:8080:8080"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1:8080/api/health || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - auth
       - mail
@@ -138,80 +166,86 @@ services:
       - contacts
 
   web:
-    build:
-      context: ..
-      dockerfile: haseen-apps/deploy/Dockerfile.frontend
-      args:
-        APP_PACKAGE: "@haseen-me/web"
-        APP_PATH: apps/web
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/web:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "127.0.0.1:3000:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - gateway
 
   accounts-web:
-    build:
-      context: ..
-      dockerfile: haseen-apps/deploy/Dockerfile.frontend
-      args:
-        APP_PACKAGE: "@haseen-me/accounts-app"
-        APP_PATH: apps/accounts
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/accounts-web:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "127.0.0.1:3003:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - gateway
 
   mail-web:
-    build:
-      context: ..
-      dockerfile: haseen-apps/deploy/Dockerfile.frontend
-      args:
-        APP_PACKAGE: "@haseen-me/mail-app"
-        APP_PATH: apps/mail
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/mail-web:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "127.0.0.1:3001:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - gateway
 
   drive-web:
-    build:
-      context: ..
-      dockerfile: haseen-apps/deploy/Dockerfile.frontend
-      args:
-        APP_PACKAGE: "@haseen-me/drive-app"
-        APP_PATH: apps/drive
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/drive-web:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "127.0.0.1:3002:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - gateway
 
   calendar-web:
-    build:
-      context: ..
-      dockerfile: haseen-apps/deploy/Dockerfile.frontend
-      args:
-        APP_PACKAGE: "@haseen-me/calendar-app"
-        APP_PATH: apps/calendar
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/calendar-web:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "127.0.0.1:3004:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - gateway
 
   contacts-web:
-    build:
-      context: ..
-      dockerfile: haseen-apps/deploy/Dockerfile.frontend
-      args:
-        APP_PACKAGE: "@haseen-me/contacts-app"
-        APP_PATH: apps/contacts
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/contacts-web:${IMAGE_TAG:-latest}
+    pull_policy: always
     restart: unless-stopped
     ports:
       - "127.0.0.1:3005:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
     depends_on:
       - gateway
 

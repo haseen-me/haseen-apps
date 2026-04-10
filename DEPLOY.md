@@ -5,7 +5,7 @@ This repo now supports a production-style Docker deployment for the full suite o
 ## What this setup does
 
 - Runs PostgreSQL, Redis, the Go services, and the gateway with Docker Compose
-- Builds each Vite frontend into its own Nginx container
+- Builds and publishes production images in GitHub Actions, then deploys by pulling images on the server
 - Serves each SPA behind `haseen.me/<app>` path prefixes with `index.html` fallback
 - Proxies `/api/*` from each frontend container to the internal gateway
 - Keeps service ports bound to `127.0.0.1` so you can terminate TLS at a host-level reverse proxy
@@ -56,6 +56,13 @@ cp .env.production.example .env.production
 docker compose --env-file .env.production -f docker-compose.prod.yml up -d --build
 ```
 
+For GitHub Actions based deploys, the production workflow now builds images in CI and the server only runs:
+
+```bash
+IMAGE_TAG=<git-sha> docker compose --env-file .env.production -f docker-compose.prod.yml pull
+IMAGE_TAG=<git-sha> docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --no-build --wait
+```
+
 Check status:
 
 ```bash
@@ -98,5 +105,6 @@ Because each frontend proxies `/api` internally to the Docker `gateway` service,
 ## Notes
 
 - Deep links like `/mail`, `/accounts/sign-in`, and `/calendar` work because Caddy strips the app prefix before proxying and each SPA is built with the matching Vite `base`.
+- Production deploys should avoid `docker compose ... up -d --build` on the VPS unless you intentionally want an emergency local rebuild.
 - If you deploy on domains other than `haseen.me`, set `CORS_ALLOWED_ORIGINS` to those exact origins.
 - The production compose file binds public ports to `127.0.0.1` on purpose. Expose them publicly only if you are not using a reverse proxy.
