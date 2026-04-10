@@ -1,11 +1,10 @@
 import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
 import { FormField, Button, Alert } from '@/components/FormUI';
 
 export function ForgotPasswordPage() {
-  const navigate = useNavigate();
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
