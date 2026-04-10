@@ -85,6 +85,7 @@ jobs:
           - image: ui-docs
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
+            platforms: linux/amd64
             build_args: |
               APP_PACKAGE=@haseen-me/ui-docs
               APP_PATH=apps/ui-docs
