@@ -28,6 +28,14 @@ jobs:
           cache: npm
           cache-dependency-path: haseen-apps/package-lock.json
 
+      - name: Install UI dependencies
+        working-directory: ./ui
+        run: npm ci
+
+      - name: Build UI package
+        working-directory: ./ui
+        run: npm run build
+
       - name: Install dependencies
         working-directory: ./haseen-apps
         run: npm ci
