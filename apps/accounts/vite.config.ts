@@ -2,7 +2,8 @@ import { defineConfig } from 'vite';
 import react from '@vitejs/plugin-react';
 import { resolve } from 'path';
 
-export default defineConfig({
+export default defineConfig(({ command }) => ({
+  base: command === 'build' ? '/accounts/' : '/',
   plugins: [react()],
   resolve: {
     alias: {
@@ -22,4 +23,4 @@ export default defineConfig({
     outDir: 'dist',
     sourcemap: false,
   },
-});
+}));

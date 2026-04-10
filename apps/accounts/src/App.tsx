@@ -13,7 +13,7 @@ import { RequireAuth } from '@/components/RequireAuth';
 export default function App() {
   return (
     <ErrorBoundary>
-    <BrowserRouter>
+    <BrowserRouter basename="/accounts">
       <Routes>
         <Route path="/" element={<Navigate to="/sign-in" replace />} />
         <Route path="/sign-up" element={<SignUpPage />} />

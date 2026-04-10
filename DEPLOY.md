@@ -6,7 +6,7 @@ This repo now supports a production-style Docker deployment for the full suite o
 
 - Runs PostgreSQL, Redis, the Go services, and the gateway with Docker Compose
 - Builds each Vite frontend into its own Nginx container
-- Serves each SPA with `index.html` fallback so deep links work
+- Serves each SPA behind `haseen.me/<app>` path prefixes with `index.html` fallback
 - Proxies `/api/*` from each frontend container to the internal gateway
 - Keeps service ports bound to `127.0.0.1` so you can terminate TLS at a host-level reverse proxy
 
@@ -15,11 +15,11 @@ This repo now supports a production-style Docker deployment for the full suite o
 Use one small VPS and put Caddy or Nginx on the host in front of Docker:
 
 - `haseen.me` -> `127.0.0.1:3000`
-- `mail.haseen.me` -> `127.0.0.1:3001`
-- `accounts.haseen.me` -> `127.0.0.1:3003`
-- `drive.haseen.me` -> `127.0.0.1:3002`
-- `calendar.haseen.me` -> `127.0.0.1:3004`
-- `contacts.haseen.me` -> `127.0.0.1:3005`
+- `haseen.me/mail` -> `127.0.0.1:3001`
+- `haseen.me/accounts` -> `127.0.0.1:3003`
+- `haseen.me/drive` -> `127.0.0.1:3002`
+- `haseen.me/calendar` -> `127.0.0.1:3004`
+- `haseen.me/contacts` -> `127.0.0.1:3005`
 
 ## 1. Prepare the server
 
@@ -69,34 +69,34 @@ Example Caddyfile:
 
 ```caddy
 haseen.me {
+  handle_path /mail* {
+    reverse_proxy 127.0.0.1:3001
+  }
+
+  handle_path /accounts* {
+    reverse_proxy 127.0.0.1:3003
+  }
+
+  handle_path /drive* {
+    reverse_proxy 127.0.0.1:3002
+  }
+
+  handle_path /calendar* {
+    reverse_proxy 127.0.0.1:3004
+  }
+
+  handle_path /contacts* {
+    reverse_proxy 127.0.0.1:3005
+  }
+
   reverse_proxy 127.0.0.1:3000
-}
-
-mail.haseen.me {
-  reverse_proxy 127.0.0.1:3001
-}
-
-accounts.haseen.me {
-  reverse_proxy 127.0.0.1:3003
-}
-
-drive.haseen.me {
-  reverse_proxy 127.0.0.1:3002
-}
-
-calendar.haseen.me {
-  reverse_proxy 127.0.0.1:3004
-}
-
-contacts.haseen.me {
-  reverse_proxy 127.0.0.1:3005
 }
 ```
 
-Because each frontend proxies `/api` internally to the Docker `gateway` service, your browser stays same-origin and you avoid extra frontend env configuration.
+Because each frontend proxies `/api` internally to the Docker `gateway` service, your browser stays same-origin on `https://haseen.me` and you avoid extra frontend env configuration.
 
 ## Notes
 
-- Deep links like `/sign-in` and `/settings/security` work because the Nginx frontend config uses SPA rewrites.
-- If you deploy on domains other than `*.haseen.me`, set `CORS_ALLOWED_ORIGINS` to those exact origins.
+- Deep links like `/mail`, `/accounts/sign-in`, and `/calendar` work because Caddy strips the app prefix before proxying and each SPA is built with the matching Vite `base`.
+- If you deploy on domains other than `haseen.me`, set `CORS_ALLOWED_ORIGINS` to those exact origins.
 - The production compose file binds public ports to `127.0.0.1` on purpose. Expose them publicly only if you are not using a reverse proxy.

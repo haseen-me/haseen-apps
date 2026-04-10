@@ -1,18 +1,18 @@
 import { Mail, HardDrive, CalendarDays, Settings, LogOut, Moon, Sun, Users } from 'lucide-react';
 import { useState, useEffect } from 'react';
+import { PRODUCTS as PRODUCT_PATHS } from '@haseen-me/shared';
 
 const PRODUCTS = [
-  { id: 'mail', label: 'Mail', icon: Mail, port: 3001 },
-  { id: 'drive', label: 'Drive', icon: HardDrive, port: 3002 },
-  { id: 'calendar', label: 'Calendar', icon: CalendarDays, port: 3004 },
-  { id: 'contacts', label: 'Contacts', icon: Users, port: 3005 },
+  { id: 'mail', label: 'Mail', icon: Mail },
+  { id: 'drive', label: 'Drive', icon: HardDrive },
+  { id: 'calendar', label: 'Calendar', icon: CalendarDays },
+  { id: 'contacts', label: 'Contacts', icon: Users },
 ] as const;
 
 const THEME_KEY = 'haseen-theme';
 
-function getProductUrl(port: number): string {
-  const { protocol, hostname } = window.location;
-  return `${protocol}//${hostname}:${port}`;
+function getProductUrl(productId: keyof typeof PRODUCT_PATHS): string {
+  return PRODUCT_PATHS[productId].path;
 }
 
 function getInitialDark(): boolean {
@@ -38,8 +38,7 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
   const handleLogout = () => {
     localStorage.removeItem('haseen-auth');
     localStorage.removeItem('haseen-crypto-keys');
-    const { protocol, hostname } = window.location;
-    window.location.href = `${protocol}//${hostname}:3003/sign-in`;
+    window.location.href = `${PRODUCT_PATHS.accounts.path}/sign-in`;
   };
 
   return (
@@ -58,7 +57,7 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
     >
       {/* Haseen logo */}
       <a
-        href={getProductUrl(3000)}
+        href="/"
         title="Haseen Home"
         style={{
           width: 32,
@@ -79,12 +78,12 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
       </a>
 
       {/* Product icons */}
-      {PRODUCTS.map(({ id, label, icon: Icon, port }) => {
+      {PRODUCTS.map(({ id, label, icon: Icon }) => {
         const isActive = id === activeProduct;
         return (
           <a
             key={id}
-            href={getProductUrl(port)}
+            href={getProductUrl(id)}
             title={label}
             style={{
               width: 36,
@@ -142,7 +141,7 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
 
       {/* Bottom icons */}
       <a
-        href={getProductUrl(3003)}
+        href={PRODUCT_PATHS.accounts.path}
         title="Account Settings"
         style={{
           width: 36,

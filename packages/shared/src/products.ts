@@ -6,7 +6,7 @@ export interface Product {
   port: number;
 }
 
-export type ProductRoute = 'mail' | 'drive' | 'calendar' | 'accounts';
+export type ProductRoute = 'mail' | 'drive' | 'calendar' | 'accounts' | 'contacts';
 
 export const PRODUCTS: Record<ProductRoute, Product> = {
   mail: {
@@ -29,6 +29,13 @@ export const PRODUCTS: Record<ProductRoute, Product> = {
     description: 'Private calendar',
     path: '/calendar',
     port: 3004,
+  },
+  contacts: {
+    id: 'contacts',
+    name: 'Haseen Contacts',
+    description: 'Private contacts',
+    path: '/contacts',
+    port: 3005,
   },
   accounts: {
     id: 'accounts',

@@ -112,3 +112,9 @@ docker compose down              # Stop everything
 - PostgreSQL 16
 - Redis 7
 - Docker & Docker Compose for local dev
+
+## Production Routing
+
+- Host-level reverse proxy should serve the suite from a single origin: `https://haseen.me`
+- Preferred app URLs are `https://haseen.me/mail`, `/accounts`, `/drive`, `/calendar`, and `/contacts`
+- Do not document or configure `mail.haseen.me`-style production routing for this repo unless explicitly requested
