@@ -7,25 +7,27 @@ http://204.168.246.210, https://204.168.246.210 {
 }
 
 haseen.me {
-  handle_path /mail* {
-    reverse_proxy 127.0.0.1:3001
-  }
+    handle_path /mail* {
+        reverse_proxy 127.0.0.1:3001
+    }
 
-  handle_path /accounts* {
-    reverse_proxy 127.0.0.1:3003
-  }
+    handle_path /accounts* {
+        reverse_proxy 127.0.0.1:3003
+    }
 
-  handle_path /drive* {
-    reverse_proxy 127.0.0.1:3002
-  }
+    handle_path /drive* {
+        reverse_proxy 127.0.0.1:3002
+    }
 
-  handle_path /calendar* {
-    reverse_proxy 127.0.0.1:3004
-  }
+    handle_path /calendar* {
+        reverse_proxy 127.0.0.1:3004
+    }
 
-  handle_path /contacts* {
-    reverse_proxy 127.0.0.1:3005
-  }
+    handle_path /contacts* {
+        reverse_proxy 127.0.0.1:3005
+    }
 
-  reverse_proxy 127.0.0.1:3000
+    handle {
+        reverse_proxy 127.0.0.1:3000
+    }
 }
