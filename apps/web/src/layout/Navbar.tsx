@@ -110,18 +110,19 @@ export function Navbar() {
 
         {/* CTA */}
         <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="nav-desktop">
-          <Link
-            to="/pricing"
+          <a
+            href="/accounts"
             style={{
               fontSize: 14,
               fontWeight: 500,
               color: 'var(--hsn-text-secondary)',
+              textDecoration: 'none'
             }}
           >
             Sign in
-          </Link>
-          <Link
-            to="/pricing"
+          </a>
+          <a
+            href="/accounts/sign-up"
             style={{
               fontSize: 14,
               fontWeight: 600,
@@ -130,10 +131,11 @@ export function Navbar() {
               padding: '8px 20px',
               borderRadius: 8,
               transition: 'background 0.15s',
+              textDecoration: 'none'
             }}
           >
             Get Started
-          </Link>
+          </a>
         </div>
 
         {/* Mobile hamburger */}
