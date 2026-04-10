@@ -21,6 +21,7 @@ services:
       - ./migrations/010_drive_starred.up.sql:/docker-entrypoint-initdb.d/010_drive_starred.sql
       - ./migrations/011_contact_groups.up.sql:/docker-entrypoint-initdb.d/011_contact_groups.sql
       - ./migrations/012_user_display_name.up.sql:/docker-entrypoint-initdb.d/012_user_display_name.sql
+      - ./migrations/013_user_admin_flags.up.sql:/docker-entrypoint-initdb.d/013_user_admin_flags.sql
     healthcheck:
       test: ["CMD-SHELL", "pg_isready -U haseen"]
       interval: 5s
