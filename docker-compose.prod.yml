@@ -249,6 +249,20 @@ services:
     depends_on:
       - gateway
 
+  ui-docs:
+    image: ${IMAGE_REGISTRY:-ghcr.io}/${IMAGE_NAMESPACE:-haseen-me}/ui-docs:${IMAGE_TAG:-latest}
+    pull_policy: always
+    restart: unless-stopped
+    ports:
+      - "127.0.0.1:3010:80"
+    healthcheck:
+      test: ["CMD-SHELL", "wget -q -O /dev/null http://127.0.0.1/ || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 6
+    depends_on:
+      - gateway
+
 volumes:
   pgdata:
   redisdata:

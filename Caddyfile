@@ -7,6 +7,10 @@ http://204.168.246.210, https://204.168.246.210 {
 }
 
 haseen.me {
+    handle_path /ui* {
+        reverse_proxy 127.0.0.1:3010
+    }
+
     handle_path /mail* {
         reverse_proxy 127.0.0.1:3001
     }
