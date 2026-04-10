@@ -6,6 +6,7 @@ const NAV_LINKS = [
   { label: 'Features', path: '/features' },
   { label: 'Security', path: '/security' },
   { label: 'Pricing', path: '/pricing' },
+  { label: 'Admin', path: '/admin' },
   { label: 'About', path: '/about' },
 ];
 

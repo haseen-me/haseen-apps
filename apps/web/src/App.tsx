@@ -7,6 +7,7 @@ import { FeaturesPage } from './pages/FeaturesPage';
 import { SecurityPage } from './pages/SecurityPage';
 import { PricingPage } from './pages/PricingPage';
 import { AboutPage } from './pages/AboutPage';
+import { AdminPage } from './pages/AdminPage';
 
 export function App() {
   return (
@@ -19,6 +20,7 @@ export function App() {
         <Route path="/security" element={<SecurityPage />} />
         <Route path="/pricing" element={<PricingPage />} />
         <Route path="/about" element={<AboutPage />} />
+        <Route path="/admin" element={<AdminPage />} />
         <Route
           path="*"
           element={
