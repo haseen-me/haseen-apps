@@ -111,4 +111,21 @@ describe('SRP-6a Client', () => {
     const wrongM2 = 'deadbeef';
     expect(verifyServerProof(eph.public, m1, sessionKey, wrongM2)).toBe(false);
   });
+
+  it('matches the Go-compatible proof vector used by the auth service', () => {
+    const salt = 'abcdef0123456789abcdef0123456789';
+    const email = 'alice@haseen.me';
+    const password = 'correct horse battery staple';
+    const aSecret = '1f2e3d4c5b6a79887766554433221100ffeeddccbbaa99887766554433221100';
+    const aPublic = 'a2b3f86489b5b349e8b5ad6c4f3fdc5b9522507b1c215906a6eb24d94139036eabc7028d010e78176932f22630aeeeb4c757aa5fca6937b773573f93664a9d322a9add2d54d9b63eb17805ce432c32e5166e237b53fbdca8703020089935c8befbaed787607ea90e66fdb64f856ff017065ee8812fddd6c0c6ac4f6159afcb843ca8bd7aa899ff177e69b69880518855bb624090259ced4b49134d5d473c5a1aca6f88923efe91a6ea706d409d7a360888bb7ea2f3b2fc6afded854199f19fe15824b670fc77f9e4ee3700133fc877b2714ddd77d75b3f6af00536098181a7362a2b64a1fef5f752f5e5d4d1720366732534628376f69f3f1ead47083cc29162';
+    const bPublic = '98f7c1e0679f9d7e5a6b24a8a4e6a9240f5d8f4bb0c2fd1f8a76138b5c678fd7';
+
+    expect(computeVerifier(salt, email, password)).toBe(
+      '6d0ea185279494836a266a82c5ed7800350257b9e0887b8697f44743cc41b2f6dcb32bd2801ef89130edb19dfd491d3af2fd79d0ab63083406a2bae87ed44e1d9a5fd1c89dd7b179f499514f977f119f32c97d60409475da4bcc70a1eaf621eabf6397f62f7808af28437f4cbe1c566bfce4425360c867921ba0e8e80b5eda6040c3d0c36b1276fd0e72895596ce966cfc08050fde5aa05e82f34a934054a2e56153f513252bbde65b74a0970fa495f5ef0bcfa06c349d0980b9fc055d67d9e4984c29ec892f18d82101185ec840abecf55c2f8ab062b421261eac32c1653ad4d2849df6eca3e9f677876e95aa0e07d1ef8f2867ee15b4ccea0266a72df4959e',
+    );
+
+    expect(computeClientProof(aSecret, aPublic, bPublic, salt, email, password).m1).toBe(
+      '9dc406dfc2c7ea6407d8ba30c49334961576b41059487e43a09d34ffd0fb6c4a',
+    );
+  });
 });

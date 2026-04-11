@@ -33,9 +33,10 @@ const k = computeK(N, g);
 
 function computeK(n: bigint, gen: bigint): bigint {
   const nBytes = bigToBytes(n);
-  const gBytes = bigToBytes(gen);
-  // NOTE: server currently hashes H(N || g) using raw big-int bytes.
-  // Keep this in sync with server behavior for successful proof verification.
+  const gBytes = padBytes(bigToBytes(gen), nBytes.length);
+  // This must match the Go auth service exactly. A previous client build hashed
+  // raw g bytes instead of PAD(g), which allowed signup but broke login proof
+  // verification with "invalid credentials".
   return bytesToBig(sha256Sync(concatBytes(nBytes, gBytes)));
 }
 
@@ -226,6 +227,13 @@ function concatBytes(...arrays: Uint8Array[]): Uint8Array {
     out.set(a, offset);
     offset += a.length;
   }
+  return out;
+}
+
+function padBytes(bytes: Uint8Array, length: number): Uint8Array {
+  if (bytes.length >= length) return bytes;
+  const out = new Uint8Array(length);
+  out.set(bytes, length - bytes.length);
   return out;
 }
 
