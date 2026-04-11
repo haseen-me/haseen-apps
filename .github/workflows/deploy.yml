@@ -405,7 +405,19 @@ jobs:
           # Step 5: Stop existing containers (graceful shutdown)
           log_info "Stopping existing containers..."
           compose down --remove-orphans --timeout 30 || true
-          
+
+          # Step 5.5: Remove any orphaned network with incorrect Compose labels
+          # This happens when the network was created outside of Compose (e.g. manually),
+          # causing `compose up` to fail with "incorrect label" error.
+          NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
+          if docker network inspect "$NETWORK_NAME" > /dev/null 2>&1; then
+            LABEL_VAL=$(docker network inspect "$NETWORK_NAME" --format '{{ index .Labels "com.docker.compose.network" }}' 2>/dev/null || true)
+            if [[ "$LABEL_VAL" != "default" ]]; then
+              log_info "Removing orphaned network '$NETWORK_NAME' (label='$LABEL_VAL', expected='default')..."
+              docker network rm "$NETWORK_NAME" || true
+            fi
+          fi
+
           # Step 6: Start containers with health checks
           log_info "Starting containers with IMAGE_TAG=${IMAGE_TAG}..."
           if ! compose up -d --remove-orphans --no-build; then
