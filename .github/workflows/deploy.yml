@@ -328,9 +328,15 @@ jobs:
           SERVER_IP: ${{ secrets.SERVER_IP }}
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_ACTOR: ${{ github.actor }}
+          ENV_PRODUCTION: ${{ secrets.ENV_PRODUCTION }}
         run: |
+          ENV_PRODUCTION_B64=""
+          if [[ -n "${ENV_PRODUCTION:-}" ]]; then
+            ENV_PRODUCTION_B64="$(printf '%s' "${ENV_PRODUCTION}" | base64 -w 0)"
+          fi
+
           ssh root@"$SERVER_IP" \
-            "REGISTRY='${REGISTRY}' IMAGE_TAG='${IMAGE_TAG}' GITHUB_TOKEN='${GITHUB_TOKEN}' GITHUB_ACTOR='${GITHUB_ACTOR}' bash -se" << 'DEPLOY_SCRIPT'
+            "REGISTRY='${REGISTRY}' IMAGE_TAG='${IMAGE_TAG}' GITHUB_TOKEN='${GITHUB_TOKEN}' GITHUB_ACTOR='${GITHUB_ACTOR}' ENV_PRODUCTION_B64='${ENV_PRODUCTION_B64}' COMPOSE_PROJECT_NAME='haseen-apps' bash -se" << 'DEPLOY_SCRIPT'
           set -euo pipefail
           
           export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -352,6 +358,23 @@ jobs:
           export REGISTRY="${REGISTRY:-ghcr.io}"
           export GITHUB_TOKEN="${GITHUB_TOKEN:?missing GITHUB_TOKEN}"
           export GITHUB_ACTOR="${GITHUB_ACTOR:?missing GITHUB_ACTOR}"
+          export COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME:-haseen-apps}"
+
+          compose() {
+            IMAGE_TAG="${IMAGE_TAG}" COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}" docker compose --env-file .env.production -f docker-compose.prod.yml "$@"
+          }
+
+          # Ensure runtime env file exists on server
+          if [[ ! -f .env.production ]]; then
+            if [[ -n "${ENV_PRODUCTION_B64:-}" ]]; then
+              log_info "Creating .env.production from ENV_PRODUCTION secret"
+              printf '%s' "${ENV_PRODUCTION_B64}" | base64 -d > .env.production
+              chmod 600 .env.production
+            else
+              log_error ".env.production is missing on server and ENV_PRODUCTION secret is not set"
+              exit 1
+            fi
+          fi
           
           # Step 1: Docker login
           log_info "Authenticating with container registry..."
@@ -374,18 +397,18 @@ jobs:
           
           # Step 4: Pull latest images with retries
           log_info "Pulling container images (IMAGE_TAG=${IMAGE_TAG})..."
-          if ! IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml pull --quiet; then
+          if ! compose pull --quiet; then
             log_error "Failed to pull images"
             exit 1
           fi
           
           # Step 5: Stop existing containers (graceful shutdown)
           log_info "Stopping existing containers..."
-          docker compose --env-file .env.production -f docker-compose.prod.yml down --remove-orphans --timeout 30 || true
+          compose down --remove-orphans --timeout 30 || true
           
           # Step 6: Start containers with health checks
           log_info "Starting containers with IMAGE_TAG=${IMAGE_TAG}..."
-          if ! IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --no-build; then
+          if ! compose up -d --remove-orphans --no-build; then
             log_error "Failed to start containers"
             exit 1
           fi
@@ -397,11 +420,11 @@ jobs:
           interval=5
           
           while [ $elapsed -lt $max_wait ]; do
-            if IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml ps --all | grep -q "healthy\|running"; then
+            if compose ps --all | grep -q "healthy\|running"; then
               log_info "Checking service health..."
-              if IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml ps --all | grep -E "unhealthy|exited"; then
+              if compose ps --all | grep -E "unhealthy|exited|restarting"; then
                 log_error "Some services are unhealthy or exited"
-                docker compose --env-file .env.production -f docker-compose.prod.yml ps --all
+                compose ps --all || true
                 exit 1
               fi
               log_info "All services are healthy"
@@ -414,7 +437,7 @@ jobs:
           
           if [ $elapsed -ge $max_wait ]; then
             log_error "Services did not become healthy within ${max_wait} seconds"
-            docker compose --env-file .env.production -f docker-compose.prod.yml ps --all
+            compose ps --all || true
             exit 1
           fi
           
@@ -436,10 +459,11 @@ jobs:
           set -euo pipefail
           
           export IMAGE_TAG="${IMAGE_TAG:-latest}"
+          export COMPOSE_PROJECT_NAME="haseen-apps"
           
           echo "=== Container Status ==="
           if [ -f /opt/haseen-apps/.env.production ]; then
-            docker compose --env-file /opt/haseen-apps/.env.production -f /opt/haseen-apps/docker-compose.prod.yml ps --all || true
+            IMAGE_TAG="${IMAGE_TAG}" COMPOSE_PROJECT_NAME="${COMPOSE_PROJECT_NAME}" docker compose --env-file /opt/haseen-apps/.env.production -f /opt/haseen-apps/docker-compose.prod.yml ps --all || true
           else
             echo "WARN: /opt/haseen-apps/.env.production not found"
             docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" || true
