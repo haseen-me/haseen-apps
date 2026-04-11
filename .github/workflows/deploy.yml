@@ -282,7 +282,7 @@ jobs:
 
   deploy:
     runs-on: ubuntu-latest
-    timeout-minutes: 30
+    timeout-minutes: 45
     needs:
       - changes
       - build-images
@@ -306,28 +306,137 @@ jobs:
       - name: Add Server to Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.SERVER_IP }}" 2>/dev/null >> ~/.ssh/known_hosts
+          chmod 600 ~/.ssh/known_hosts
 
       - name: Sync Files to Server
         run: |
           rsync -az \
+            --delete \
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.github' \
+            --exclude='*.log' \
             ./haseen-apps/ root@${{ secrets.SERVER_IP }}:/opt/haseen-apps/
 
-      - name: Pull and Restart on Remote Server
+      - name: Validate and Deploy
         env:
           IMAGE_TAG: ${{ needs.changes.outputs.image_tag }}
+          SERVER_IP: ${{ secrets.SERVER_IP }}
+          GITHUB_TOKEN: ${{ github.token }}
+          GITHUB_ACTOR: ${{ github.actor }}
         run: |
-          ssh root@${{ secrets.SERVER_IP }} "
-            set -euo pipefail
-            cd /opt/haseen-apps
-            echo '${{ github.token }}' | docker login ${{ env.REGISTRY }} -u '${{ github.actor }}' --password-stdin
-            install -m 644 Caddyfile /etc/caddy/Caddyfile
-            caddy validate --config /etc/caddy/Caddyfile
-            systemctl reload caddy
-            IMAGE_TAG='${IMAGE_TAG}' docker compose --env-file .env.production -f docker-compose.prod.yml pull
-            IMAGE_TAG='${IMAGE_TAG}' docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --no-build --wait
-            docker logout ${{ env.REGISTRY }}
-          "
+          ssh root@"$SERVER_IP" << 'DEPLOY_SCRIPT'
+          set -euo pipefail
+          
+          export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
+          export IMAGE_TAG="${IMAGE_TAG:-latest}"
+          
+          cd /opt/haseen-apps || exit 1
+          
+          # Logging helper
+          log_info() {
+            echo "$(date '+%Y-%m-%d %H:%M:%S') [INFO] $*"
+          }
+          
+          log_error() {
+            echo "$(date '+%Y-%m-%d %H:%M:%S') [ERROR] $*" >&2
+          }
+          
+          trap 'log_error "Deployment failed"; docker logout "${REGISTRY}" 2>/dev/null || true' EXIT
+          
+          export REGISTRY="${REGISTRY:-ghcr.io}"
+          
+          # Step 1: Docker login
+          log_info "Authenticating with container registry..."
+          echo "${GITHUB_TOKEN}" | docker login "${REGISTRY}" -u "${GITHUB_ACTOR}" --password-stdin >/dev/null 2>&1
+          
+          # Step 2: Validate Caddyfile
+          log_info "Validating Caddyfile..."
+          install -m 644 Caddyfile /etc/caddy/Caddyfile
+          if ! caddy validate --config /etc/caddy/Caddyfile; then
+            log_error "Caddyfile validation failed"
+            exit 1
+          fi
+          
+          # Step 3: Reload Caddy
+          log_info "Reloading Caddy..."
+          if ! systemctl reload caddy; then
+            log_error "Failed to reload Caddy"
+            exit 1
+          fi
+          
+          # Step 4: Pull latest images with retries
+          log_info "Pulling container images (IMAGE_TAG=${IMAGE_TAG})..."
+          if ! IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml pull --quiet; then
+            log_error "Failed to pull images"
+            exit 1
+          fi
+          
+          # Step 5: Stop existing containers (graceful shutdown)
+          log_info "Stopping existing containers..."
+          docker compose --env-file .env.production -f docker-compose.prod.yml down --remove-orphans --timeout 30 || true
+          
+          # Step 6: Start containers with health checks
+          log_info "Starting containers with IMAGE_TAG=${IMAGE_TAG}..."
+          if ! IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --no-build; then
+            log_error "Failed to start containers"
+            exit 1
+          fi
+          
+          # Step 7: Wait for services to be healthy
+          log_info "Waiting for services to be healthy..."
+          max_wait=120
+          elapsed=0
+          interval=5
+          
+          while [ $elapsed -lt $max_wait ]; do
+            if IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml ps --all | grep -q "healthy\|running"; then
+              log_info "Checking service health..."
+              if IMAGE_TAG="${IMAGE_TAG}" docker compose --env-file .env.production -f docker-compose.prod.yml ps --all | grep -E "unhealthy|exited"; then
+                log_error "Some services are unhealthy or exited"
+                docker compose --env-file .env.production -f docker-compose.prod.yml ps --all
+                exit 1
+              fi
+              log_info "All services are healthy"
+              break
+            fi
+            echo "."
+            sleep $interval
+            elapsed=$((elapsed + interval))
+          done
+          
+          if [ $elapsed -ge $max_wait ]; then
+            log_error "Services did not become healthy within ${max_wait} seconds"
+            docker compose --env-file .env.production -f docker-compose.prod.yml ps --all
+            exit 1
+          fi
+          
+          # Step 8: Cleanup
+          log_info "Cleaning up..."
+          docker logout "${REGISTRY}" 2>/dev/null || true
+          docker system prune -f --filter "until=72h" 2>/dev/null || true
+          
+          trap - EXIT
+          
+          log_info "Deployment completed successfully"
+          DEPLOY_SCRIPT
+
+      - name: Verify Deployment
+        if: always()
+        run: |
+          ssh root@${{ secrets.SERVER_IP }} << 'VERIFY_SCRIPT'
+          set -euo pipefail
+          
+          export IMAGE_TAG="${IMAGE_TAG:-latest}"
+          
+          echo "=== Container Status ==="
+          docker compose --env-file /opt/haseen-apps/.env.production -f /opt/haseen-apps/docker-compose.prod.yml ps --all
+          
+          echo ""
+          echo "=== Service Health ==="
+          docker ps --format "table {{.Names}}\t{{.Status}}"
+          
+          VERIFY_SCRIPT
+        env:
+          IMAGE_TAG: ${{ needs.changes.outputs.image_tag }}
