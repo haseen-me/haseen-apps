@@ -8,14 +8,16 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function FormField({ label, error, icon, style, ...props }: FormFieldProps) {
   return (
-    <div style={{ marginBottom: 16 }}>
+    <div style={{ marginBottom: 18 }}>
       <label
         style={{
           display: 'block',
-          fontSize: 13,
-          fontWeight: 500,
+          fontSize: 12,
+          fontWeight: 700,
+          letterSpacing: '0.06em',
+          textTransform: 'uppercase',
           color: 'var(--acc-text-secondary)',
-          marginBottom: 6,
+          marginBottom: 8,
         }}
       >
         {label}
@@ -38,14 +40,17 @@ export function FormField({ label, error, icon, style, ...props }: FormFieldProp
         <input
           style={{
             width: '100%',
-            padding: icon ? '10px 12px 10px 38px' : '10px 12px',
-            borderRadius: 'var(--acc-radius-sm)',
+            padding: icon ? '14px 16px 14px 44px' : '14px 16px',
+            borderRadius: '18px',
             border: `1px solid ${error ? 'var(--acc-danger)' : 'var(--acc-border)'}`,
-            fontSize: 14,
+            fontSize: 15,
+            fontWeight: 600,
+            letterSpacing: '-0.02em',
             fontFamily: 'inherit',
             color: 'var(--acc-text)',
-            background: 'var(--acc-bg-card)',
-            transition: 'border-color 0.15s, box-shadow 0.15s',
+            background: 'var(--acc-bg-elevated)',
+            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
+            transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
             ...style,
           }}
           {...props}
@@ -89,16 +94,24 @@ export function Button({
       disabled={disabled || loading}
       style={{
         width: fullWidth ? '100%' : undefined,
-        padding: '10px 20px',
-        borderRadius: 'var(--acc-radius-sm)',
-        background: bg,
+        padding: '14px 22px',
+        borderRadius: '18px',
+        background:
+          variant === 'primary'
+            ? 'linear-gradient(135deg, var(--acc-brand), var(--acc-brand-2))'
+            : bg,
         color,
         border,
         fontSize: 14,
         fontWeight: 600,
+        letterSpacing: '-0.02em',
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         opacity: disabled || loading ? 0.6 : 1,
-        transition: 'opacity 0.15s, background 0.15s',
+        transition: 'opacity 0.15s, background 0.15s, box-shadow 0.2s',
+        boxShadow:
+          variant === 'primary'
+            ? '0 24px 36px -24px rgba(45, 184, 175, 0.65)'
+            : '0 12px 28px -24px rgba(15, 23, 42, 0.28)',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',
@@ -158,9 +171,9 @@ export function Alert({ type, children }: { type: 'error' | 'success' | 'warning
     <div
       style={{
         padding: '10px 14px',
-        borderRadius: 'var(--acc-radius-sm)',
+        borderRadius: '18px',
         background: c.bg,
-        borderLeft: `3px solid ${c.border}`,
+        border: `1px solid ${c.border}`,
         fontSize: 13,
         color: c.text,
         lineHeight: 1.5,
