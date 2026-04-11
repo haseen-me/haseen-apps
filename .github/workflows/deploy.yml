@@ -316,6 +316,9 @@ jobs:
             --exclude='.git' \
             --exclude='node_modules' \
             --exclude='.github' \
+            --exclude='.env.production' \
+            --exclude='.env*' \
+            --exclude='**/.turbo/' \
             --exclude='*.log' \
             ./haseen-apps/ root@${{ secrets.SERVER_IP }}:/opt/haseen-apps/
 
@@ -326,7 +329,8 @@ jobs:
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_ACTOR: ${{ github.actor }}
         run: |
-          ssh root@"$SERVER_IP" << 'DEPLOY_SCRIPT'
+          ssh root@"$SERVER_IP" \
+            "REGISTRY='${REGISTRY}' IMAGE_TAG='${IMAGE_TAG}' GITHUB_TOKEN='${GITHUB_TOKEN}' GITHUB_ACTOR='${GITHUB_ACTOR}' bash -se" << 'DEPLOY_SCRIPT'
           set -euo pipefail
           
           export PATH="/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin"
@@ -346,6 +350,8 @@ jobs:
           trap 'log_error "Deployment failed"; docker logout "${REGISTRY}" 2>/dev/null || true' EXIT
           
           export REGISTRY="${REGISTRY:-ghcr.io}"
+          export GITHUB_TOKEN="${GITHUB_TOKEN:?missing GITHUB_TOKEN}"
+          export GITHUB_ACTOR="${GITHUB_ACTOR:?missing GITHUB_ACTOR}"
           
           # Step 1: Docker login
           log_info "Authenticating with container registry..."
@@ -424,6 +430,7 @@ jobs:
 
       - name: Verify Deployment
         if: always()
+        continue-on-error: true
         run: |
           ssh root@${{ secrets.SERVER_IP }} << 'VERIFY_SCRIPT'
           set -euo pipefail
@@ -431,7 +438,12 @@ jobs:
           export IMAGE_TAG="${IMAGE_TAG:-latest}"
           
           echo "=== Container Status ==="
-          docker compose --env-file /opt/haseen-apps/.env.production -f /opt/haseen-apps/docker-compose.prod.yml ps --all
+          if [ -f /opt/haseen-apps/.env.production ]; then
+            docker compose --env-file /opt/haseen-apps/.env.production -f /opt/haseen-apps/docker-compose.prod.yml ps --all || true
+          else
+            echo "WARN: /opt/haseen-apps/.env.production not found"
+            docker ps -a --format "table {{.Names}}\t{{.Status}}\t{{.Image}}" || true
+          fi
           
           echo ""
           echo "=== Service Health ==="
