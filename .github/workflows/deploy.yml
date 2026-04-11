@@ -4,19 +4,108 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'README.md'
-      - 'docs/**'
+    paths:
+      - 'Caddyfile'
+      - 'deploy/**'
+      - 'docker-compose.prod.yml'
+      - 'migrations/**'
+      - 'services/**'
+      - 'apps/**'
+      - 'packages/**'
+      - 'package.json'
+      - 'package-lock.json'
+      - 'turbo.json'
+      - 'tsconfig.json'
+      - 'buf.yaml'
+      - 'buf.gen.yaml'
+      - 'go.work'
+      - 'go.work.sum'
   workflow_dispatch:
 
 concurrency:
-  group: production-deploy
+  group: production-deploy-${{ github.ref }}
   cancel-in-progress: true
 
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAMESPACE: haseen-me
+
 jobs:
+  changes:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    outputs:
+      should_build: ${{ steps.detect.outputs.should_build }}
+      image_tag: ${{ steps.detect.outputs.image_tag }}
+      deploy_platforms: ${{ steps.config.outputs.deploy_platforms }}
+      ui_ref: ${{ steps.config.outputs.ui_ref }}
+    steps:
+      - name: Checkout Code
+        uses: actions/checkout@v4
+        with:
+          fetch-depth: 0
+
+      - name: Resolve deploy configuration
+        id: config
+        env:
+          RAW_DEPLOY_PLATFORMS: ${{ vars.DEPLOY_PLATFORMS }}
+          RAW_UI_REF: ${{ vars.UI_REF }}
+        run: |
+          set -euo pipefail
+
+          deploy_platforms="${RAW_DEPLOY_PLATFORMS:-linux/amd64}"
+          ui_ref="${RAW_UI_REF:-main}"
+
+          echo "deploy_platforms=$deploy_platforms" >> "$GITHUB_OUTPUT"
+          echo "ui_ref=$ui_ref" >> "$GITHUB_OUTPUT"
+
+      - name: Detect build-impacting changes
+        id: detect
+        env:
+          EVENT_NAME: ${{ github.event_name }}
+          BEFORE_SHA: ${{ github.event.before }}
+          CURRENT_SHA: ${{ github.sha }}
+        run: |
+          set -euo pipefail
+
+          should_build=false
+
+          if [[ "$EVENT_NAME" == "workflow_dispatch" ]]; then
+            should_build=true
+          else
+            if [[ -n "$BEFORE_SHA" ]] && git cat-file -e "${BEFORE_SHA}^{commit}" 2>/dev/null; then
+              mapfile -t changed_files < <(git diff --name-only "$BEFORE_SHA" "$CURRENT_SHA")
+            elif git rev-parse HEAD^ >/dev/null 2>&1; then
+              mapfile -t changed_files < <(git diff --name-only HEAD^ HEAD)
+            else
+              mapfile -t changed_files < <(git ls-files)
+            fi
+
+            for file in "${changed_files[@]}"; do
+              case "$file" in
+                apps/*|packages/*|services/*|deploy/*|package.json|package-lock.json|turbo.json|tsconfig.json|buf.yaml|buf.gen.yaml|go.work|go.work.sum)
+                  should_build=true
+                  break
+                  ;;
+              esac
+            done
+          fi
+
+          if [[ "$should_build" == "true" ]]; then
+            image_tag="$CURRENT_SHA"
+          else
+            image_tag="latest"
+          fi
+
+          echo "should_build=$should_build" >> "$GITHUB_OUTPUT"
+          echo "image_tag=$image_tag" >> "$GITHUB_OUTPUT"
+
   build-images:
     runs-on: ubuntu-latest
     timeout-minutes: 90
+    needs: changes
+    if: needs.changes.outputs.should_build == 'true'
     permissions:
       contents: read
       packages: write
@@ -27,84 +116,142 @@ jobs:
           - image: auth
             dockerfile: haseen-apps/deploy/Dockerfile.auth
             context: ./haseen-apps
+            cache_from: type=gha,scope=auth
+            cache_to: type=gha,mode=max,scope=auth
           - image: mail
             dockerfile: haseen-apps/deploy/Dockerfile.mail
             context: ./haseen-apps
+            cache_from: type=gha,scope=mail
+            cache_to: type=gha,mode=max,scope=mail
           - image: drive
             dockerfile: haseen-apps/deploy/Dockerfile.drive
             context: ./haseen-apps
+            cache_from: type=gha,scope=drive
+            cache_to: type=gha,mode=max,scope=drive
           - image: keyserver
             dockerfile: haseen-apps/deploy/Dockerfile.keyserver
             context: ./haseen-apps
+            cache_from: type=gha,scope=keyserver
+            cache_to: type=gha,mode=max,scope=keyserver
           - image: calendar
             dockerfile: haseen-apps/deploy/Dockerfile.calendar
             context: ./haseen-apps
+            cache_from: type=gha,scope=calendar
+            cache_to: type=gha,mode=max,scope=calendar
           - image: contacts
             dockerfile: haseen-apps/deploy/Dockerfile.contacts
             context: ./haseen-apps
+            cache_from: type=gha,scope=contacts
+            cache_to: type=gha,mode=max,scope=contacts
           - image: gateway
             dockerfile: haseen-apps/deploy/Dockerfile.gateway
             context: ./haseen-apps
+            cache_from: type=gha,scope=gateway
+            cache_to: type=gha,mode=max,scope=gateway
           - image: web
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
             build_args: |
               APP_PACKAGE=@haseen-me/web
               APP_PATH=apps/web
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=web
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=web
           - image: accounts-web
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
             build_args: |
               APP_PACKAGE=@haseen-me/accounts-app
               APP_PATH=apps/accounts
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=accounts-web
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=accounts-web
           - image: mail-web
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
             build_args: |
               APP_PACKAGE=@haseen-me/mail-app
               APP_PATH=apps/mail
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=mail-web
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=mail-web
           - image: drive-web
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
             build_args: |
               APP_PACKAGE=@haseen-me/drive-app
               APP_PATH=apps/drive
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=drive-web
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=drive-web
           - image: calendar-web
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
-            platforms: linux/amd64
             build_args: |
               APP_PACKAGE=@haseen-me/calendar-app
               APP_PATH=apps/calendar
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=calendar-web
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=calendar-web
           - image: contacts-web
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
             build_args: |
               APP_PACKAGE=@haseen-me/contacts-app
               APP_PATH=apps/contacts
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=contacts-web
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=contacts-web
           - image: ui-docs
             dockerfile: haseen-apps/deploy/Dockerfile.frontend
             context: .
-            platforms: linux/amd64
             build_args: |
               APP_PACKAGE=@haseen-me/ui-docs
               APP_PATH=apps/ui-docs
+            cache_from: |
+              type=gha,scope=frontend
+              type=gha,scope=ui-docs
+            cache_to: |
+              type=gha,mode=max,scope=frontend
+              type=gha,mode=max,scope=ui-docs
     steps:
       - name: Checkout Code
         uses: actions/checkout@v4
         with:
           path: haseen-apps
+          fetch-depth: 1
 
       - name: Checkout UI Repo
         uses: actions/checkout@v4
         with:
           repository: haseen-me/ui
+          ref: ${{ needs.changes.outputs.ui_ref }}
           path: ui
+          fetch-depth: 1
 
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
       - name: Set up QEMU
+        if: contains(needs.changes.outputs.deploy_platforms, 'arm64')
         uses: docker/setup-qemu-action@v3
         with:
           platforms: arm64,amd64
@@ -112,7 +259,7 @@ jobs:
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
-          registry: ghcr.io
+          registry: ${{ env.REGISTRY }}
           username: ${{ github.actor }}
           password: ${{ github.token }}
 
@@ -121,20 +268,26 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          platforms: ${{ matrix.platforms || 'linux/amd64,linux/arm64' }}
+          platforms: ${{ needs.changes.outputs.deploy_platforms }}
+          pull: true
           push: true
           provenance: false
+          sbom: false
           tags: |
-            ghcr.io/haseen-me/${{ matrix.image }}:${{ github.sha }}
-            ghcr.io/haseen-me/${{ matrix.image }}:latest
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.image }}:${{ github.sha }}
+            ${{ env.REGISTRY }}/${{ env.IMAGE_NAMESPACE }}/${{ matrix.image }}:latest
           build-args: ${{ matrix.build_args }}
-          cache-from: type=gha,scope=${{ matrix.image }}
-          cache-to: type=gha,mode=max,scope=${{ matrix.image }}
+          cache-from: ${{ matrix.cache_from }}
+          cache-to: ${{ matrix.cache_to }}
 
   deploy:
     runs-on: ubuntu-latest
     timeout-minutes: 30
-    needs: build-images
+    needs:
+      - changes
+      - build-images
+    if: always() && needs.changes.result == 'success' && (needs.build-images.result == 'success' || needs.build-images.result == 'skipped')
+    environment: production
     permissions:
       contents: read
       packages: read
@@ -143,6 +296,7 @@ jobs:
         uses: actions/checkout@v4
         with:
           path: haseen-apps
+          fetch-depth: 1
 
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
@@ -152,22 +306,28 @@ jobs:
       - name: Add Server to Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H ${{ secrets.SERVER_IP }} >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.SERVER_IP }}" >> ~/.ssh/known_hosts
 
       - name: Sync Files to Server
         run: |
-          rsync -avz --exclude='.git' --exclude='node_modules' --exclude='.github' ./haseen-apps/ root@${{ secrets.SERVER_IP }}:/opt/haseen-apps/
+          rsync -az \
+            --exclude='.git' \
+            --exclude='node_modules' \
+            --exclude='.github' \
+            ./haseen-apps/ root@${{ secrets.SERVER_IP }}:/opt/haseen-apps/
 
       - name: Pull and Restart on Remote Server
+        env:
+          IMAGE_TAG: ${{ needs.changes.outputs.image_tag }}
         run: |
           ssh root@${{ secrets.SERVER_IP }} "
-            set -e
+            set -euo pipefail
             cd /opt/haseen-apps
-            echo '${{ github.token }}' | docker login ghcr.io -u '${{ github.actor }}' --password-stdin
+            echo '${{ github.token }}' | docker login ${{ env.REGISTRY }} -u '${{ github.actor }}' --password-stdin
             install -m 644 Caddyfile /etc/caddy/Caddyfile
             caddy validate --config /etc/caddy/Caddyfile
             systemctl reload caddy
-            IMAGE_TAG='${{ github.sha }}' docker compose --env-file .env.production -f docker-compose.prod.yml pull
-            IMAGE_TAG='${{ github.sha }}' docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --no-build --wait
-            docker logout ghcr.io
+            IMAGE_TAG='${IMAGE_TAG}' docker compose --env-file .env.production -f docker-compose.prod.yml pull
+            IMAGE_TAG='${IMAGE_TAG}' docker compose --env-file .env.production -f docker-compose.prod.yml up -d --remove-orphans --no-build --wait
+            docker logout ${{ env.REGISTRY }}
           "
