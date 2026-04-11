@@ -52,7 +52,7 @@ export function Sidebar() {
       <aside
         className={open ? 'sidebar-open' : ''}
         style={{
-          width: 260,
+          width: 280,
           height: '100vh',
           position: 'fixed',
           top: 0,
@@ -64,6 +64,7 @@ export function Sidebar() {
           overflow: 'hidden',
           zIndex: 20,
           transition: 'transform 0.2s ease',
+          backdropFilter: 'blur(18px) saturate(140%)',
         }}
       >
       {/* Logo */}
@@ -77,20 +78,24 @@ export function Sidebar() {
         flexShrink: 0,
       }}>
         <div style={{
-          width: 28,
-          height: 28,
-          borderRadius: 6,
-          background: 'var(--docs-accent)',
+          width: 32,
+          height: 32,
+          borderRadius: 10,
+          background: 'linear-gradient(135deg, var(--docs-accent), var(--docs-accent-2))',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
           color: '#fff',
-          fontWeight: 700,
+          fontWeight: 800,
           fontSize: 14,
+          boxShadow: '0 18px 28px -20px rgba(45, 184, 175, 0.8)',
         }}>
           H
         </div>
-        <span style={{ fontWeight: 600, fontSize: 15 }}>Haseen</span>
+        <div>
+          <div style={{ fontWeight: 800, fontSize: 15, letterSpacing: '-0.03em' }}>Haseen UI</div>
+          <div style={{ fontSize: 12, color: 'var(--docs-text-tertiary)' }}>Docs and patterns</div>
+        </div>
       </div>
 
       {/* Search */}
@@ -100,9 +105,9 @@ export function Sidebar() {
           alignItems: 'center',
           gap: 8,
           padding: '6px 10px',
-          borderRadius: 8,
+          borderRadius: 14,
           border: '1px solid var(--docs-border)',
-          background: 'var(--docs-bg)',
+          background: 'var(--docs-bg-tertiary)',
           fontSize: 13,
           color: 'var(--docs-text-tertiary)',
         }}>
@@ -129,7 +134,7 @@ export function Sidebar() {
             gap: 2,
             fontSize: 11,
             padding: '2px 6px',
-            borderRadius: 4,
+            borderRadius: 999,
             border: '1px solid var(--docs-border)',
             background: 'var(--docs-bg-tertiary)',
             color: 'var(--docs-text-tertiary)',
@@ -166,15 +171,15 @@ export function Sidebar() {
                   to={item.path}
                   style={{
                     display: 'block',
-                    padding: '6px 12px',
-                    borderRadius: 6,
+                    padding: '9px 12px',
+                    borderRadius: 14,
                     fontSize: 14,
                     color: isActive ? 'var(--docs-accent)' : 'var(--docs-text-secondary)',
                     background: isActive ? 'var(--docs-sidebar-active)' : 'transparent',
-                    fontWeight: isActive ? 500 : 400,
+                    fontWeight: isActive ? 700 : 500,
                     textDecoration: 'none',
                     transition: 'all 0.15s',
-                    borderLeft: isActive ? '2px solid var(--docs-accent)' : '2px solid transparent',
+                    border: isActive ? '1px solid rgba(45, 184, 175, 0.28)' : '1px solid transparent',
                   }}
                 >
                   {item.label}

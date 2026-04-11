@@ -7,49 +7,48 @@
 }
 
 :root {
-  --docs-sidebar-width: 260px;
-  --docs-header-height: 56px;
-  --docs-font-sans: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --docs-font-mono: 'JetBrains Mono', 'Fira Code', monospace;
+  --docs-sidebar-width: 280px;
+  --docs-header-height: 68px;
+  --docs-font-sans: 'Manrope', 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
+  --docs-font-mono: 'JetBrains Mono', 'SFMono-Regular', 'Fira Code', monospace;
   --docs-accent: #2db8af;
+  --docs-accent-2: #5a8cff;
   --docs-accent-hover: #28a79e;
-  --docs-accent-subtle: rgba(45, 184, 175, 0.1);
+  --docs-accent-subtle: rgba(45, 184, 175, 0.14);
 }
 
-/* Light theme */
 [data-theme='light'] {
-  --docs-bg: #ffffff;
-  --docs-bg-secondary: #f8f9fa;
-  --docs-bg-tertiary: #f1f3f5;
-  --docs-bg-code: #f6f8fa;
-  --docs-border: #e1e4e8;
-  --docs-border-subtle: #eaeef2;
-  --docs-text-primary: #1a1a2e;
-  --docs-text-secondary: #57606a;
-  --docs-text-tertiary: #8b949e;
-  --docs-sidebar-bg: #f8f9fa;
-  --docs-sidebar-active: rgba(45, 184, 175, 0.12);
-  --docs-preview-bg: #ffffff;
-  --docs-shadow: 0 1px 3px rgba(0, 0, 0, 0.06), 0 1px 2px rgba(0, 0, 0, 0.04);
-  --docs-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.08);
+  --docs-bg: #eef5fb;
+  --docs-bg-secondary: rgba(255, 255, 255, 0.74);
+  --docs-bg-tertiary: rgba(246, 250, 255, 0.92);
+  --docs-bg-code: rgba(245, 248, 252, 0.94);
+  --docs-border: rgba(15, 23, 42, 0.1);
+  --docs-border-subtle: rgba(15, 23, 42, 0.06);
+  --docs-text-primary: #0d1726;
+  --docs-text-secondary: rgba(13, 23, 38, 0.72);
+  --docs-text-tertiary: rgba(13, 23, 38, 0.48);
+  --docs-sidebar-bg: rgba(255, 255, 255, 0.7);
+  --docs-sidebar-active: rgba(45, 184, 175, 0.14);
+  --docs-preview-bg: rgba(255, 255, 255, 0.84);
+  --docs-shadow: 0 24px 56px -34px rgba(15, 23, 42, 0.22);
+  --docs-shadow-lg: 0 42px 96px -46px rgba(15, 23, 42, 0.28);
 }
 
-/* Dark theme */
 [data-theme='dark'] {
-  --docs-bg: #0d1117;
-  --docs-bg-secondary: #161b22;
-  --docs-bg-tertiary: #1c2128;
-  --docs-bg-code: #161b22;
-  --docs-border: #30363d;
-  --docs-border-subtle: #21262d;
-  --docs-text-primary: #e6edf3;
-  --docs-text-secondary: #8b949e;
-  --docs-text-tertiary: #6e7681;
-  --docs-sidebar-bg: #0d1117;
-  --docs-sidebar-active: rgba(45, 184, 175, 0.15);
-  --docs-preview-bg: #161b22;
-  --docs-shadow: 0 1px 3px rgba(0, 0, 0, 0.3);
-  --docs-shadow-lg: 0 4px 12px rgba(0, 0, 0, 0.4);
+  --docs-bg: #07111f;
+  --docs-bg-secondary: rgba(11, 21, 36, 0.84);
+  --docs-bg-tertiary: rgba(17, 31, 52, 0.92);
+  --docs-bg-code: rgba(9, 18, 31, 0.94);
+  --docs-border: rgba(148, 163, 184, 0.16);
+  --docs-border-subtle: rgba(148, 163, 184, 0.08);
+  --docs-text-primary: #edf5ff;
+  --docs-text-secondary: rgba(221, 232, 246, 0.72);
+  --docs-text-tertiary: rgba(184, 198, 221, 0.54);
+  --docs-sidebar-bg: rgba(8, 16, 28, 0.74);
+  --docs-sidebar-active: rgba(45, 184, 175, 0.18);
+  --docs-preview-bg: rgba(11, 21, 36, 0.84);
+  --docs-shadow: 0 28px 62px -36px rgba(2, 6, 23, 0.76);
+  --docs-shadow-lg: 0 48px 110px -48px rgba(2, 6, 23, 0.9);
 }
 
 html {
@@ -60,10 +59,23 @@ html {
 
 body {
   font-family: var(--docs-font-sans);
-  background: var(--docs-bg);
+  background:
+    radial-gradient(circle at top left, rgba(45, 184, 175, 0.16), transparent 24%),
+    radial-gradient(circle at top right, rgba(90, 140, 255, 0.16), transparent 26%),
+    linear-gradient(180deg, var(--docs-bg) 0%, color-mix(in srgb, var(--docs-bg) 84%, #ffffff 16%) 100%);
   color: var(--docs-text-primary);
   line-height: 1.6;
   transition: background-color 0.2s, color 0.2s;
+}
+
+body::before {
+  content: '';
+  position: fixed;
+  inset: 0;
+  pointer-events: none;
+  background:
+    radial-gradient(circle at 12% 20%, rgba(45, 184, 175, 0.08), transparent 22%),
+    radial-gradient(circle at 88% 10%, rgba(90, 140, 255, 0.08), transparent 24%);
 }
 
 a {
@@ -85,7 +97,6 @@ code {
   color: #fff;
 }
 
-/* Scrollbar */
 ::-webkit-scrollbar {
   width: 6px;
   height: 6px;
@@ -104,7 +115,32 @@ code {
   background: var(--docs-text-tertiary);
 }
 
-/* Mobile responsive */
+.docs-glass {
+  background: var(--docs-bg-secondary);
+  border: 1px solid var(--docs-border);
+  box-shadow: var(--docs-shadow);
+  backdrop-filter: blur(18px) saturate(140%);
+}
+
+.docs-gradient-border {
+  position: relative;
+}
+
+.docs-gradient-border::before {
+  content: '';
+  position: absolute;
+  inset: -1px;
+  border-radius: inherit;
+  padding: 1px;
+  background: linear-gradient(135deg, rgba(45, 184, 175, 0.42), rgba(90, 140, 255, 0.32), rgba(255, 255, 255, 0.08));
+  -webkit-mask:
+    linear-gradient(#fff 0 0) content-box,
+    linear-gradient(#fff 0 0);
+  -webkit-mask-composite: xor;
+  mask-composite: exclude;
+  pointer-events: none;
+}
+
 @media (max-width: 768px) {
   :root {
     --docs-sidebar-width: 0px;

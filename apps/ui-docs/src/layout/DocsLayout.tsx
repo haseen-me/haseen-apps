@@ -10,7 +10,7 @@ interface DocsLayoutProps {
 export function DocsLayout({ children }: DocsLayoutProps) {
   return (
     <MobileNavProvider>
-      <div style={{ display: 'flex', minHeight: '100vh' }}>
+      <div style={{ display: 'flex', minHeight: '100vh', position: 'relative', zIndex: 1 }}>
         <Sidebar />
         <div style={{
           marginLeft: 'var(--docs-sidebar-width)',
@@ -19,9 +19,9 @@ export function DocsLayout({ children }: DocsLayoutProps) {
         }}>
           <Header />
           <main style={{
-            maxWidth: 860,
+            maxWidth: 1040,
             margin: '0 auto',
-            padding: '96px 40px 80px',
+            padding: '116px 40px 88px',
           }}>
             {children}
           </main>
