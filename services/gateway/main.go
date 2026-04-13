@@ -79,7 +79,7 @@ func main() {
 		Addr:         ":" + port,
 		Handler:      r,
 		ReadTimeout:  30 * time.Second,
-		WriteTimeout: 60 * time.Second,
+		WriteTimeout: 0,
 		IdleTimeout:  120 * time.Second,
 	}
 
@@ -108,6 +108,7 @@ func proxyRoute(target, stripPrefix string) func(chi.Router) {
 	}
 
 	proxy := httputil.NewSingleHostReverseProxy(u)
+	proxy.FlushInterval = 100 * time.Millisecond
 	proxy.ErrorHandler = func(w http.ResponseWriter, r *http.Request, err error) {
 		log.Error().Err(err).Str("target", target).Str("path", r.URL.Path).Msg("proxy error")
 		w.Header().Set("Content-Type", "application/json")

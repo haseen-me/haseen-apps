@@ -7,6 +7,7 @@ import (
 	"sync"
 	"time"
 
+	"github.com/haseen-me/haseen-apps/services/mail/internal/events"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
 	"github.com/rs/zerolog"
 )
@@ -24,18 +25,20 @@ type Server struct {
 	Store     *store.Store
 	Log       zerolog.Logger
 	TLSConfig *tls.Config
+	Broker    *events.Broker
 	listener  net.Listener
 	wg        sync.WaitGroup
 	quit      chan struct{}
 }
 
-func NewServer(addr, domain string, st *store.Store, log zerolog.Logger, tlsCfg *tls.Config) *Server {
+func NewServer(addr, domain string, st *store.Store, log zerolog.Logger, tlsCfg *tls.Config, broker *events.Broker) *Server {
 	return &Server{
 		Addr:      addr,
 		Domain:    domain,
 		Store:     st,
 		Log:       log.With().Str("component", "smtp").Logger(),
 		TLSConfig: tlsCfg,
+		Broker:    broker,
 		quit:      make(chan struct{}),
 	}
 }

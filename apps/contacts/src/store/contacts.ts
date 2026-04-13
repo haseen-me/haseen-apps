@@ -1,48 +1,80 @@
 import { create } from 'zustand';
-import type { Contact, ContactGroup } from '@haseen-me/api-client';
+import type { ContactPayload, DecryptedContact, ToastState } from '@/types/contacts';
+import { sortContacts } from '@/lib/contacts';
 
 interface ContactsState {
-  contacts: Contact[];
-  setContacts: (contacts: Contact[]) => void;
+  contacts: DecryptedContact[];
   loading: boolean;
-  setLoading: (v: boolean) => void;
+  vaultKey: Uint8Array | null;
   searchQuery: string;
-  setSearchQuery: (q: string) => void;
   selectedContactId: string | null;
-  setSelectedContactId: (id: string | null) => void;
-  editingContact: Contact | null;
-  setEditingContact: (c: Contact | null) => void;
-  dialogOpen: boolean;
-  setDialogOpen: (v: boolean) => void;
-  groups: ContactGroup[];
-  setGroups: (groups: ContactGroup[]) => void;
-  activeGroupId: string | null;
-  setActiveGroupId: (id: string | null) => void;
-  groupMembers: Map<string, Set<string>>;
-  setGroupMembers: (groupId: string, contactIds: string[]) => void;
+  editorOpen: boolean;
+  editingContactId: string | null;
+  toast: ToastState;
+  setContacts: (contacts: DecryptedContact[]) => void;
+  upsertContact: (contact: DecryptedContact) => void;
+  removeContact: (contactId: string) => void;
+  setLoading: (loading: boolean) => void;
+  setVaultKey: (vaultKey: Uint8Array) => void;
+  setSearchQuery: (searchQuery: string) => void;
+  selectContact: (contactId: string | null) => void;
+  openEditor: (contactId?: string | null) => void;
+  closeEditor: () => void;
+  showToast: (message: string) => void;
+  hideToast: () => void;
+  getSelectedContact: () => DecryptedContact | null;
+  getEditingPayload: () => ContactPayload | null;
 }
+
+const hiddenToast: ToastState = {
+  message: '',
+  visible: false,
+};
 
 export const useContactsStore = create<ContactsState>((set, get) => ({
   contacts: [],
-  setContacts: (contacts) => set({ contacts }),
   loading: false,
-  setLoading: (loading) => set({ loading }),
+  vaultKey: null,
   searchQuery: '',
-  setSearchQuery: (searchQuery) => set({ searchQuery }),
   selectedContactId: null,
-  setSelectedContactId: (selectedContactId) => set({ selectedContactId }),
-  editingContact: null,
-  setEditingContact: (editingContact) => set({ editingContact }),
-  dialogOpen: false,
-  setDialogOpen: (dialogOpen) => set({ dialogOpen }),
-  groups: [],
-  setGroups: (groups) => set({ groups }),
-  activeGroupId: null,
-  setActiveGroupId: (activeGroupId) => set({ activeGroupId }),
-  groupMembers: new Map(),
-  setGroupMembers: (groupId, contactIds) => {
-    const next = new Map(get().groupMembers);
-    next.set(groupId, new Set(contactIds));
-    set({ groupMembers: next });
-  },
+  editorOpen: false,
+  editingContactId: null,
+  toast: hiddenToast,
+  setContacts: (contacts) =>
+    set((state) => {
+      const sorted = sortContacts(contacts);
+      const selectedContactId =
+        state.selectedContactId && sorted.some((contact) => contact.id === state.selectedContactId)
+          ? state.selectedContactId
+          : sorted[0]?.id ?? null;
+      return { contacts: sorted, selectedContactId };
+    }),
+  upsertContact: (contact) =>
+    set((state) => {
+      const next = state.contacts.some((candidate) => candidate.id === contact.id)
+        ? state.contacts.map((candidate) => (candidate.id === contact.id ? contact : candidate))
+        : [...state.contacts, contact];
+      return {
+        contacts: sortContacts(next),
+        selectedContactId: contact.id,
+      };
+    }),
+  removeContact: (contactId) =>
+    set((state) => {
+      const contacts = state.contacts.filter((contact) => contact.id !== contactId);
+      const selectedContactId =
+        state.selectedContactId === contactId ? contacts[0]?.id ?? null : state.selectedContactId;
+      return { contacts, selectedContactId };
+    }),
+  setLoading: (loading) => set({ loading }),
+  setVaultKey: (vaultKey) => set({ vaultKey }),
+  setSearchQuery: (searchQuery) => set({ searchQuery }),
+  selectContact: (selectedContactId) => set({ selectedContactId }),
+  openEditor: (editingContactId = null) => set({ editorOpen: true, editingContactId }),
+  closeEditor: () => set({ editorOpen: false, editingContactId: null }),
+  showToast: (message) => set({ toast: { message, visible: true } }),
+  hideToast: () => set({ toast: hiddenToast }),
+  getSelectedContact: () => get().contacts.find((contact) => contact.id === get().selectedContactId) ?? null,
+  getEditingPayload: () =>
+    get().contacts.find((contact) => contact.id === get().editingContactId)?.payload ?? null,
 }));

@@ -13,6 +13,7 @@
     "dev:mail": "turbo dev --filter=@haseen-me/mail-app",
     "dev:drive": "turbo dev --filter=@haseen-me/drive-app",
     "dev:accounts": "turbo dev --filter=@haseen-me/accounts",
+    "dev:console": "turbo dev --filter=@haseen-me/console-app",
     "dev:ui-docs": "turbo dev --filter=@haseen-me/ui-docs",
     "dev:calendar": "turbo dev --filter=@haseen-me/calendar-app",
     "dev:contacts": "turbo dev --filter=@haseen-me/contacts-app",

@@ -6,7 +6,6 @@ import { SignInPage } from '@/pages/SignInPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
 import { ResetPasswordPage } from '@/pages/ResetPasswordPage';
 import { VerifyEmailPage } from '@/pages/VerifyEmailPage';
-import { AdminCommandPage } from '@/pages/AdminCommandPage';
 import { RecoveryKeyPage } from '@/pages/RecoveryKeyPage';
 import { ProfileSettingsPage } from '@/pages/ProfileSettingsPage';
 import { SecuritySettingsPage } from '@/pages/SecuritySettingsPage';
@@ -14,7 +13,6 @@ import { RecoverySettingsPage } from '@/pages/RecoverySettingsPage';
 import { AppearanceSettingsPage } from '@/pages/AppearanceSettingsPage';
 import { DataExportPage } from '@/pages/DataExportPage';
 import { RequireAuth } from '@/components/RequireAuth';
-import { RequireSuperAdmin } from '@/components/RequireSuperAdmin';
 import { Toast } from '@haseen-me/ui';
 import { useToastStore } from '@haseen-me/shared/toast';
 
@@ -35,7 +33,6 @@ function AppRoutes() {
         <Route path="/settings/recovery" element={<RequireAuth><RecoverySettingsPage /></RequireAuth>} />
         <Route path="/settings/appearance" element={<RequireAuth><AppearanceSettingsPage /></RequireAuth>} />
         <Route path="/settings/export" element={<RequireAuth><DataExportPage /></RequireAuth>} />
-        <Route path="/admin" element={<RequireSuperAdmin><AdminCommandPage /></RequireSuperAdmin>} />
       </Routes>
       <Toast
         message={toast.countdown ? `${toast.message} (${toast.countdown}s)` : toast.message}

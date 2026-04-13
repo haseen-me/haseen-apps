@@ -7,6 +7,12 @@ export const ROUTES = {
     compose: '/mail/compose',
     message: (id: string) => `/mail/${id}`,
   },
+  console: {
+    root: '/console',
+    domains: '/console/domains',
+    users: '/console/users',
+    audit: '/console/audit',
+  },
   drive: {
     root: '/drive',
     folder: (id: string) => `/drive/folder/${id}`,

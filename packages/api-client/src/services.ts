@@ -11,6 +11,115 @@ export interface AuthApi {
   getAccount(): Promise<{ userID: string; email: string; createdAt: string }>;
 }
 
+export interface AdminUser {
+  id: string;
+  email: string;
+  displayName?: string;
+  avatarUrl?: string;
+  emailVerifiedAt?: string;
+  suspendedAt?: string;
+  mfaEnforced: boolean;
+  isAdmin: boolean;
+  isSuperAdmin: boolean;
+  createdAt: string;
+  updatedAt: string;
+  mfaEnabled: boolean;
+  emailVerified: boolean;
+  sessionCount: number;
+  mailQuotaBytes: number;
+  driveQuotaBytes: number;
+}
+
+export interface AdminDomain {
+  id: string;
+  userId: string;
+  domain: string;
+  status: string;
+  mxVerified: boolean;
+  spfVerified: boolean;
+  dkimVerified: boolean;
+  dmarcVerified: boolean;
+  lastCheckedAt?: string | null;
+  verifiedAt?: string | null;
+  createdAt: string;
+}
+
+export interface AdminAuditEvent {
+  id: string;
+  actorId?: string | null;
+  action: string;
+  targetType: string;
+  targetId: string;
+  metadata: Record<string, unknown>;
+  ipAddress?: string;
+  createdAt: string;
+}
+
+export interface AdminOverviewMetrics {
+  activeSessions: number;
+  outboundQueue: {
+    queued: number;
+    sending: number;
+    sent: number;
+    deferred: number;
+    failed: number;
+  };
+  mail: {
+    sentMessages: number;
+    inboxMessages: number;
+  };
+  attachments: {
+    r2RefCount: number;
+    r2RefBytes: number;
+    inlineCount: number;
+    inlineBytes: number;
+  };
+  drive: {
+    usedBytes: number;
+  };
+}
+
+export interface AdminSmtpQueueMetrics {
+  queued: number;
+  pendingDelivery: number;
+  sending: number;
+  delivered: number;
+  bounced: number;
+}
+
+export interface AdminAttachmentMetrics {
+  attachmentCount: number;
+  totalBytes: number;
+}
+
+export interface AdminPoolMetrics {
+  dbPoolAcquired: number;
+  dbPoolIdle: number;
+  dbPoolMax: number;
+}
+
+export interface AdminLatencyMetrics {
+  authDbPingMs: number;
+}
+
+export interface AdminApi {
+  users(params?: { q?: string; limit?: number; offset?: number }): Promise<{ users: AdminUser[]; total: number }>;
+  user(id: string): Promise<AdminUser>;
+  suspendUser(id: string): Promise<{ ok: boolean }>;
+  reactivateUser(id: string): Promise<{ ok: boolean }>;
+  verifyUserEmail(id: string): Promise<{ ok: boolean }>;
+  enforceUserMfa(id: string, enforced: boolean): Promise<{ ok: boolean }>;
+  setUserQuotas(id: string, quotas: { mailQuotaBytes: number; driveQuotaBytes: number }): Promise<{ ok: boolean }>;
+  domains(): Promise<{ domains: AdminDomain[] }>;
+  verifyDomainOverride(id: string): Promise<{ ok: boolean }>;
+  overview(): Promise<AdminOverviewMetrics>;
+  smtpQueue(): Promise<AdminSmtpQueueMetrics>;
+  attachments(): Promise<AdminAttachmentMetrics>;
+  pool(): Promise<AdminPoolMetrics>;
+  latency(): Promise<AdminLatencyMetrics>;
+  audit(limit?: number): Promise<{ events: AdminAuditEvent[] }>;
+}
+
 /** Email address type matching backend model */
 export interface EmailAddress {
   name?: string;
@@ -23,6 +132,75 @@ export interface Attachment {
   filename: string;
   contentType: string;
   size: number;
+}
+
+export interface DNSRecord {
+  type: string;
+  host: string;
+  value: string;
+  verified: boolean;
+}
+
+export interface DomainDNSRecords {
+  mx: DNSRecord;
+  spf: DNSRecord;
+  dkim: DNSRecord;
+  dmarc: DNSRecord;
+}
+
+export interface CustomDomain {
+  id: string;
+  userId: string;
+  domain: string;
+  status: 'pending' | 'verifying' | 'verified' | 'failed';
+  mxVerified: boolean;
+  spfVerified: boolean;
+  dkimVerified: boolean;
+  dmarcVerified: boolean;
+  verificationToken: string;
+  lastCheckedAt: string | null;
+  verifiedAt: string | null;
+  createdAt: string;
+  updatedAt: string;
+}
+
+export interface DomainMailbox {
+  id: string;
+  domainId: string;
+  userId: string;
+  localPart: string;
+  displayName: string;
+  isCatchAll: boolean;
+  createdAt: string;
+}
+
+export interface DomainResponse {
+  domain: CustomDomain;
+  dnsRecords: DomainDNSRecords;
+  mailboxes: DomainMailbox[];
+}
+
+export interface DNSCheckLog {
+  id: string;
+  domainId: string;
+  checkType: 'mx' | 'spf' | 'dkim' | 'dmarc';
+  passed: boolean;
+  expectedValue: string;
+  actualValue: string;
+  checkedAt: string;
+}
+
+export interface DomainsApi {
+  list(): Promise<CustomDomain[]>;
+  add(domain: string): Promise<DomainResponse>;
+  get(domainId: string): Promise<DomainResponse>;
+  delete(domainId: string): Promise<{ ok: boolean }>;
+  verify(domainId: string): Promise<CustomDomain>;
+  getDNSRecords(domainId: string): Promise<DomainDNSRecords>;
+  getDNSLogs(domainId: string): Promise<DNSCheckLog[]>;
+  addMailbox(domainId: string, localPart: string, displayName: string, isCatchAll: boolean): Promise<DomainMailbox>;
+  listMailboxes(domainId: string): Promise<DomainMailbox[]>;
+  deleteMailbox(domainId: string, mailboxId: string): Promise<{ ok: boolean }>;
 }
 
 /** Mail service API types */
@@ -42,6 +220,18 @@ export interface MailApi {
   createLabel(params: { name: string; color: string }): Promise<{ id: string; name: string; color: string }>;
   deleteLabel(labelID: string): Promise<void>;
   listLabels(): Promise<{ id: string; name: string; color: string; isSystem: boolean }[]>;
+  getEventStreamUrl(since?: string): string;
+}
+
+export interface MailEvent {
+  id: string;
+  type: 'message.created' | 'message.updated' | 'message.deleted';
+  userId: string;
+  mailboxId: string;
+  threadId?: string;
+  messageId?: string;
+  occurredAt: string;
+  label?: string;
 }
 
 export interface SendMessageParams {

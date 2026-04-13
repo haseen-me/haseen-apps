@@ -134,3 +134,14 @@ type OkResponse struct {
 type SearchResponse struct {
 	Threads []Thread `json:"threads"`
 }
+
+type MailEvent struct {
+	ID         string `json:"id"`
+	Type       string `json:"type"`
+	UserID     string `json:"userId"`
+	MailboxID  string `json:"mailboxId"`
+	ThreadID   string `json:"threadId,omitempty"`
+	MessageID  string `json:"messageId,omitempty"`
+	OccurredAt string `json:"occurredAt"`
+	Label      string `json:"label,omitempty"`
+}

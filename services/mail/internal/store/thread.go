@@ -5,6 +5,7 @@ import (
 	"fmt"
 	"time"
 
+	"github.com/jackc/pgx/v5"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/model"
 )
 
@@ -26,7 +27,8 @@ func (s *Store) GetThreadsByLabel(ctx context.Context, mailboxID, labelID string
 		query = `SELECT DISTINCT t.id, t.created_at
 		 FROM mail_threads t
 		 JOIN mail_messages m ON m.thread_id = t.id
-		 WHERE t.mailbox_id = $1 AND m.label_id = $2 AND t.created_at < $3
+		 WHERE t.mailbox_id = $1 AND m.label_id = $2
+		   AND t.created_at < TO_TIMESTAMP($3::double precision / 1000000.0)
 		 ORDER BY t.created_at DESC
 		 LIMIT $4`
 		args = []interface{}{mailboxID, labelID, cursor, fetchLimit}
@@ -112,6 +114,33 @@ func (s *Store) FindThreadBySubject(ctx context.Context, mailboxID, subject stri
 		 ORDER BY t.created_at DESC LIMIT 1`,
 		mailboxID, clean,
 	).Scan(&id)
+	return id, err
+}
+
+func (s *Store) FindThreadByMessageHeaders(ctx context.Context, mailboxID, inReplyTo string, references []string) (string, error) {
+	candidates := make([]string, 0, len(references)+1)
+	if inReplyTo != "" {
+		candidates = append(candidates, inReplyTo)
+	}
+	candidates = append(candidates, references...)
+	if len(candidates) == 0 {
+		return "", ErrNotFound
+	}
+
+	var id string
+	err := s.DB.QueryRow(ctx,
+		`SELECT t.id
+		 FROM mail_threads t
+		 JOIN mail_messages m ON m.thread_id = t.id
+		 WHERE t.mailbox_id = $1
+		   AND (m.message_id_header = ANY($2) OR m.in_reply_to_header = ANY($2))
+		 ORDER BY t.updated_at DESC
+		 LIMIT 1`,
+		mailboxID, candidates,
+	).Scan(&id)
+	if err == pgx.ErrNoRows {
+		return "", ErrNotFound
+	}
 	return id, err
 }
 

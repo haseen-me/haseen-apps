@@ -3,7 +3,11 @@ package handler
 import (
 	"encoding/json"
 	"net/http"
+	"fmt"
+	"time"
 
+	"github.com/haseen-me/haseen-apps/services/mail/internal/events"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/model"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/worker"
 	"github.com/rs/zerolog"
@@ -15,6 +19,7 @@ type Handler struct {
 	Log       zerolog.Logger
 	Domain    string // e.g. "haseen.me"
 	DNSWorker *worker.DNSWorker
+	Broker    *events.Broker
 }
 
 // JSON writes a JSON response.
@@ -49,3 +54,19 @@ func UserID(r *http.Request) string {
 type contextKey string
 
 const ctxKeyUserID contextKey = "userID"
+
+func (h *Handler) PublishEvent(userID, mailboxID, eventType, threadID, messageID, label string) {
+	if h.Broker == nil || userID == "" || mailboxID == "" {
+		return
+	}
+	h.Broker.Publish(model.MailEvent{
+		ID:         fmt.Sprintf("%d", time.Now().UnixNano()),
+		Type:       eventType,
+		UserID:     userID,
+		MailboxID:  mailboxID,
+		ThreadID:   threadID,
+		MessageID:  messageID,
+		OccurredAt: time.Now().UTC().Format(time.RFC3339Nano),
+		Label:      label,
+	})
+}

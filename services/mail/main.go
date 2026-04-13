@@ -16,6 +16,7 @@ import (
 	"github.com/rs/zerolog/log"
 
 	"github.com/haseen-me/haseen-apps/services/mail/internal/dkim"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/events"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/handler"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/middleware"
 	smtppkg "github.com/haseen-me/haseen-apps/services/mail/internal/smtp"
@@ -63,11 +64,13 @@ func main() {
 	defer relayWorker.Stop()
 
 	// Handler
+	broker := events.NewBroker()
 	h := &handler.Handler{
 		Store:     st,
 		Log:       log.Logger,
 		Domain:    domain,
 		DNSWorker: dnsWorker,
+		Broker:    broker,
 	}
 
 	// Router
@@ -115,6 +118,9 @@ func main() {
 		// Search
 		r.Post("/search", h.Search)
 
+		// Realtime
+		r.Get("/events", h.StreamEvents)
+
 		// Drafts
 		r.Post("/drafts", h.SaveDraft)
 		r.Put("/drafts/{messageID}", h.UpdateDraft)
@@ -136,7 +142,7 @@ func main() {
 	})
 
 	// SMTP Server (inbound)
-	smtpSrv := smtppkg.NewServer(":"+smtpPort, domain, st, log.Logger, nil)
+	smtpSrv := smtppkg.NewServer(":"+smtpPort, domain, st, log.Logger, nil, broker)
 	if err := smtpSrv.Start(); err != nil {
 		log.Fatal().Err(err).Msg("SMTP server failed to start")
 	}
