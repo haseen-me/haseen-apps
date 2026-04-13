@@ -139,7 +139,7 @@ func (h *Handler) SendDraft(w http.ResponseWriter, r *http.Request) {
 		Subject:  msg.Subject,
 		BodyHtml: msg.BodyHtml,
 	}
-	go h.deliverToRecipients(req, fromAddr, senderEmail)
+	go h.deliverToRecipients(req, fromAddr, senderEmail, userID)
 
 	h.JSON(w, http.StatusOK, model.SendResponse{ID: draftID})
 }

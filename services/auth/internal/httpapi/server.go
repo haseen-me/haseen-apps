@@ -29,6 +29,7 @@ const (
 	sessionDataKey = "webauthn_session"
 	localUserID    = "userID"
 	localSuper     = "isSuperAdmin"
+	allowedDomain  = "haseen.me"
 )
 
 // Server wires HTTP routes to the identity store.
@@ -234,6 +235,9 @@ func (s *Server) handleRegister(c *fiber.Ctx) error {
 	if req.Email == "" || req.Password == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "email and password are required")
 	}
+	if !strings.HasSuffix(req.Email, "@"+allowedDomain) {
+		return fiber.NewError(fiber.StatusBadRequest, "email must be an @haseen.me address")
+	}
 	if len(req.PublicKey) == 0 || len(req.SigningKey) == 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "publicKey and signingKey are required")
 	}
@@ -251,6 +255,10 @@ func (s *Server) handleRegister(c *fiber.Ctx) error {
 	if err != nil {
 		s.Log.Error().Err(err).Msg("create user")
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to create account")
+	}
+	if err := s.Store.ProvisionUserResources(c.Context(), user.ID); err != nil {
+		s.Log.Error().Err(err).Msg("provision user resources")
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to provision account")
 	}
 	sig := req.Signature
 	if sig == nil {
@@ -500,6 +508,9 @@ func (s *Server) handleUpdateAccount(c *fiber.Ctx) error {
 	uid := s.userID(c)
 	if req.Email != "" {
 		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if !strings.HasSuffix(email, "@"+allowedDomain) {
+			return fiber.NewError(fiber.StatusBadRequest, "email must be an @haseen.me address")
+		}
 		existing, err := s.Store.GetUserByEmail(c.Context(), email)
 		if err == nil && existing.ID != uid {
 			return fiber.NewError(fiber.StatusConflict, "email already in use")

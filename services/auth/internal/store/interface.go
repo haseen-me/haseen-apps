@@ -22,6 +22,10 @@ type DataStore interface {
 	SetMFAEnforced(ctx context.Context, id string, enforced bool) error
 	DeleteUser(ctx context.Context, id string) error
 
+	// ProvisionUserResources creates the per-user resources required by other services.
+	// It should be safe to call multiple times (idempotent).
+	ProvisionUserResources(ctx context.Context, userID string) error
+
 	CreateSession(ctx context.Context, userID, userAgent, ipAddress string) (string, error)
 	ValidateSession(ctx context.Context, token string) (*model.Session, error)
 	DeleteSession(ctx context.Context, token string) error

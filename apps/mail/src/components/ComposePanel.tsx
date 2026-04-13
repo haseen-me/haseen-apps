@@ -3,7 +3,7 @@ import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@haseen-me/shared/toast';
 import { sealEnvelope } from '@haseen-me/crypto';
-import { mailApi, keysApi } from '@/api/client';
+import { authApi, mailApi, keysApi } from '@/api/client';
 import type { ComposeMessage, EmailAddress } from '@/types/mail';
 import { X, Minus, Maximize2, Send, Paperclip, Lock, LockOpen, ChevronDown, ChevronUp, Save, Bold, Italic, Underline, Strikethrough, List, ListOrdered, Link, Code, RemoveFormatting, Pen } from 'lucide-react';
 import { RecipientInput } from './RecipientInput';
@@ -33,6 +33,19 @@ export function ComposePanel() {
   const bodyRef = useRef<HTMLDivElement>(null);
   const fileInputRef = useRef<HTMLInputElement>(null);
   const { initializeKeys, encryptionKeyPair, signingKeyPair, initialized } = useCryptoStore();
+  const meEmailRef = useRef<string>('');
+  const replyToMessageIdRef = useRef<string | null>(null);
+  const pendingSendRef = useRef<{
+    to: Recipient[];
+    cc: Recipient[];
+    bcc: Recipient[];
+    subject: string;
+    body: string;
+    attachments: File[];
+    encrypted: boolean;
+    draftId: string | null;
+    replyToMessageId: string | null;
+  } | null>(null);
 
   const hasContent = to.length > 0 || subject.trim() !== '' || body.trim() !== '';
 
@@ -58,7 +71,12 @@ export function ComposePanel() {
   }, [to, cc, bcc, subject, body, draftId, hasContent]);
 
   // Get current user's email for reply logic
-  const getUserEmail = (): string => '';
+  useEffect(() => {
+    // Best-effort; compose should still work if auth service is unavailable.
+    authApi.getAccount()
+      .then((acc) => { meEmailRef.current = String((acc as any).email || (acc as any).user?.email || ''); })
+      .catch(() => {});
+  }, []);
 
   // Auto-fill reply info
   useEffect(() => {
@@ -66,8 +84,9 @@ export function ComposePanel() {
       const thread = threads.find((t) => t.id === replyToThreadId);
       if (thread) {
         const lastMsg = thread.messages[thread.messages.length - 1];
-        const myEmail = getUserEmail();
+        const myEmail = (meEmailRef.current || '').toLowerCase();
         const senderIsMe = lastMsg.from.address.toLowerCase() === myEmail;
+        replyToMessageIdRef.current = lastMsg.id;
 
         if (senderIsMe) {
           // Replying to own message — reply to the original recipients instead
@@ -107,6 +126,7 @@ export function ComposePanel() {
       const thread = threads.find((t) => t.id === forwardFromThreadId);
       if (thread) {
         const lastMsg = thread.messages[thread.messages.length - 1];
+        replyToMessageIdRef.current = null;
         setTo([]); // Forward: user needs to enter recipient
         setSubject(thread.subject.startsWith('Fwd:') ? thread.subject : `Fwd: ${thread.subject}`);
         const date = new Date(lastMsg.date).toLocaleString();
@@ -171,16 +191,28 @@ export function ComposePanel() {
 
   const doSend = async () => {
     try {
+      const pending = pendingSendRef.current;
+      const sendTo = pending?.to ?? to;
+      const sendCc = pending?.cc ?? cc;
+      const sendBcc = pending?.bcc ?? bcc;
+      const sendSubject = pending?.subject ?? subject;
+      const sendBody = pending?.body ?? body;
+      const sendEncrypted = pending?.encrypted ?? encrypted;
+      const sendAttachments = pending?.attachments ?? attachments;
+      const sendDraftId = pending?.draftId ?? draftId;
+      const replyToMessageId = pending?.replyToMessageId ?? replyToMessageIdRef.current;
+
       // Clean up draft if one was auto-saved
-      if (draftId) {
-        mailApi.deleteMessage(draftId).catch(() => {});
+      if (sendDraftId) {
+        mailApi.deleteMessage(sendDraftId).catch(() => {});
       }
 
-      const recipientAddrs = to.map((r) => ({ address: r.address }));
-      const ccAddrs = cc.map((r) => ({ address: r.address }));
-      const bccAddrs = bcc.map((r) => ({ address: r.address }));
+      const recipientAddrs = sendTo.map((r) => ({ address: r.address }));
+      const ccAddrs = sendCc.map((r) => ({ address: r.address }));
+      const bccAddrs = sendBcc.map((r) => ({ address: r.address }));
+      const replyTo = replyToMessageId || undefined;
 
-      if (encrypted && encryptionKeyPair && signingKeyPair) {
+      if (sendEncrypted && encryptionKeyPair && signingKeyPair) {
         // Look up recipient public keys from keyserver
         const allEmails = [...recipientAddrs, ...ccAddrs, ...bccAddrs].map((a) => a.address);
         const recipientPubKeys: Uint8Array[] = [encryptionKeyPair.publicKey]; // always encrypt to self
@@ -199,13 +231,13 @@ export function ComposePanel() {
         }
 
         const { envelope: subjectEnvelope, encryptedSessionKeys: subjectKeys } = sealEnvelope(
-          subject || '(no subject)',
+          sendSubject || '(no subject)',
           encryptionKeyPair,
           signingKeyPair,
           recipientPubKeys,
         );
         const { envelope: bodyEnvelope, encryptedSessionKeys: bodyKeys } = sealEnvelope(
-          body || '',
+          sendBody || '',
           encryptionKeyPair,
           signingKeyPair,
           recipientPubKeys,
@@ -221,16 +253,17 @@ export function ComposePanel() {
           to: recipientAddrs,
           cc: ccAddrs,
           bcc: bccAddrs,
-          subject: subject || '(no subject)',
-          bodyHtml: body || '',
+          subject: sendSubject || '(no subject)',
+          bodyHtml: sendBody || '',
+          ...(replyTo ? { replyToMessageId: replyTo } : {}),
           encryptedSubject: JSON.stringify(subjectEnvelope),
           encryptedBody: JSON.stringify(bodyEnvelope),
           encryptedSessionKeys: sessionKeys,
         });
 
         // Upload attachments after message is created
-        if (attachments.length > 0 && result.id) {
-          await Promise.all(attachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
+        if (sendAttachments.length > 0 && result.id) {
+          await Promise.all(sendAttachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
         }
       } else {
         // Unencrypted fallback
@@ -238,25 +271,41 @@ export function ComposePanel() {
           to: recipientAddrs,
           cc: ccAddrs,
           bcc: bccAddrs,
-          subject: subject || '(no subject)',
-          bodyHtml: body || '',
+          subject: sendSubject || '(no subject)',
+          bodyHtml: sendBody || '',
+          ...(replyTo ? { replyToMessageId: replyTo } : {}),
         });
 
-        if (attachments.length > 0 && result.id) {
-          await Promise.all(attachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
+        if (sendAttachments.length > 0 && result.id) {
+          await Promise.all(sendAttachments.map((f) => mailApi.uploadAttachment(result.id, f).catch(() => {})));
         }
       }
-      toast.show(encrypted ? 'Encrypted message sent' : 'Message sent');
+      toast.show(sendEncrypted ? 'Encrypted message sent' : 'Message sent');
     } catch (err) {
       // Backend may be offline in development — show toast and close gracefully
       console.warn('[Mail] Send failed:', err);
       toast.show('Message could not be sent — backend unavailable');
+    } finally {
+      pendingSendRef.current = null;
     }
   };
 
   const handleSend = () => {
     const UNDO_SECONDS = 5;
-    // Close compose immediately
+    // Snapshot state so delayed send doesn't depend on UI state.
+    pendingSendRef.current = {
+      to,
+      cc,
+      bcc,
+      subject,
+      body,
+      attachments,
+      encrypted,
+      draftId,
+      replyToMessageId: replyToMessageIdRef.current,
+    };
+    // Close compose immediately (but preserve reply context for the delayed send).
+    // We clear UI state; the send will use refs captured from the reply/forward effects.
     handleClose(true);
 
     let remaining = UNDO_SECONDS;
@@ -268,7 +317,7 @@ export function ComposePanel() {
           clearTimeout(sendTimerRef.current);
           clearInterval(countdownRef.current);
           toast.hide();
-          // Re-open compose with the same content
+          // Re-open compose with the same content (reply context still present via store IDs).
           setComposeOpen(true);
         },
       },

@@ -6,6 +6,7 @@ import (
 
 	"github.com/go-chi/chi/v5"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/model"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
 )
 
 // GetMessage returns a single message by ID.
@@ -99,26 +100,42 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 	}
 
 	// Deliver to recipients
-	go h.deliverToRecipients(req, fromAddr, senderEmail)
+	go h.deliverToRecipients(req, fromAddr, senderEmail, userID)
 
 	h.JSON(w, http.StatusCreated, model.SendResponse{ID: msgID})
 }
 
 // deliverToRecipients routes messages to local or external recipients.
-func (h *Handler) deliverToRecipients(req model.SendMessageRequest, from model.EmailAddress, senderEmail string) {
+func (h *Handler) deliverToRecipients(req model.SendMessageRequest, from model.EmailAddress, senderEmail, senderUserID string) {
 	for _, rcpt := range append(req.To, append(req.Cc, req.Bcc...)...) {
-		h.deliverToRecipient(rcpt.Address, from, &req, senderEmail)
+		h.deliverToRecipient(rcpt.Address, from, &req, senderEmail, senderUserID)
 	}
 }
 
-func (h *Handler) deliverToRecipient(recipientAddr string, from model.EmailAddress, req *model.SendMessageRequest, senderEmail string) {
+func (h *Handler) deliverToRecipient(recipientAddr string, from model.EmailAddress, req *model.SendMessageRequest, senderEmail, senderUserID string) {
 	ctx := context.Background()
 
 	// Check if recipient is a local user
 	recipientUserID, err := h.Store.GetUserByEmail(ctx, recipientAddr)
 	if err != nil {
 		// External recipient — queue for SMTP delivery
-		h.Log.Info().Str("to", recipientAddr).Msg("external delivery queued")
+		out := &model.OutboundMessage{
+			UserID:       senderUserID,
+			DomainID:     nil,
+			FromAddress:  senderEmail,
+			ToAddresses:  []string{recipientAddr},
+			CcAddresses:  store.FormatAddresses(req.Cc),
+			BccAddresses: store.FormatAddresses(req.Bcc),
+			Subject:      req.Subject,
+			BodyHTML:     req.BodyHtml,
+			BodyText:     "",
+		}
+		_, qerr := h.Store.EnqueueOutbound(ctx, out)
+		if qerr != nil {
+			h.Log.Error().Err(qerr).Str("to", recipientAddr).Msg("enqueue outbound failed")
+			return
+		}
+		h.Log.Info().Str("to", recipientAddr).Str("msgID", out.ID).Msg("external delivery queued")
 		return
 	}
 
