@@ -1,7 +1,6 @@
 import { useState } from 'react';
 import { Download, Mail, Users, Calendar, HardDrive, Loader2, CheckCircle } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
-import { useAuthStore } from '@/store/auth';
 
 type ExportSection = 'mail' | 'contacts' | 'calendar' | 'drive';
 
@@ -30,7 +29,6 @@ function downloadBlob(data: string, filename: string, mime: string) {
 }
 
 export function DataExportPage() {
-  const { token } = useAuthStore();
   const [selected, setSelected] = useState<Set<ExportSection>>(new Set());
   const [status, setStatus] = useState<ExportStatus>({
     mail: 'idle',
@@ -49,22 +47,19 @@ export function DataExportPage() {
     });
   };
 
-  const headers: Record<string, string> = {};
-  if (token) headers['Authorization'] = `Bearer ${token}`;
-
   const exportSection = async (key: ExportSection) => {
     setStatus((s) => ({ ...s, [key]: 'exporting' }));
     try {
       const now = new Date().toISOString().slice(0, 10);
       switch (key) {
         case 'mail': {
-          const res = await fetch('/api/v1/mail/mailbox', { credentials: 'include', headers });
+          const res = await fetch('/api/v1/mail/mailbox', { credentials: 'include' });
           const data = await res.json();
           downloadBlob(JSON.stringify(data, null, 2), `haseen-mail-export-${now}.json`, 'application/json');
           break;
         }
         case 'contacts': {
-          const res = await fetch('/api/v1/contacts/contacts', { credentials: 'include', headers });
+          const res = await fetch('/api/v1/contacts/contacts', { credentials: 'include' });
           const data = await res.json();
           const contacts = data.contacts || [];
           const csv = [
@@ -78,13 +73,13 @@ export function DataExportPage() {
           break;
         }
         case 'calendar': {
-          const res = await fetch('/api/v1/calendar/events', { credentials: 'include', headers });
+          const res = await fetch('/api/v1/calendar/events', { credentials: 'include' });
           const data = await res.json();
           downloadBlob(JSON.stringify(data, null, 2), `haseen-calendar-export-${now}.json`, 'application/json');
           break;
         }
         case 'drive': {
-          const res = await fetch('/api/v1/drive/files', { credentials: 'include', headers });
+          const res = await fetch('/api/v1/drive/files', { credentials: 'include' });
           const data = await res.json();
           downloadBlob(JSON.stringify(data, null, 2), `haseen-drive-export-${now}.json`, 'application/json');
           break;

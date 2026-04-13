@@ -12,16 +12,17 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@haseen-me/ui": "file:../../../ui",
-    "@haseen-me/crypto": "*",
+    "@floating-ui/react": "^0.27.0",
     "@haseen-me/api-client": "*",
+    "@haseen-me/crypto": "*",
     "@haseen-me/shared": "*",
+    "@haseen-me/ui": "*",
+    "@simplewebauthn/browser": "^13.3.0",
+    "framer-motion": "^12.0.0",
+    "lucide-react": "^0.475.0",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",
     "react-router-dom": "^7.4.0",
-    "framer-motion": "^12.0.0",
-    "lucide-react": "^0.475.0",
-    "@floating-ui/react": "^0.27.0",
     "zustand": "^5.0.0"
   },
   "devDependencies": {

@@ -4,10 +4,9 @@ import { SettingsLayout } from '@/layout/SettingsLayout';
 import { Button, FormField, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
 import { authApi } from '@/api/auth';
-import { generateSalt, computeVerifier } from '@haseen-me/crypto';
 
 export function SecuritySettingsPage() {
-  const { user, token, setUser } = useAuthStore();
+  const { user, setUser } = useAuthStore();
   const [mfaStep, setMfaStep] = useState<'idle' | 'setup' | 'verify'>('idle');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaSecret, setMfaSecret] = useState('');
@@ -21,16 +20,15 @@ export function SecuritySettingsPage() {
   const [pwLoading, setPwLoading] = useState(false);
   const [pwSuccess, setPwSuccess] = useState(false);
   const [pwError, setPwError] = useState<string | null>(null);
-  const [sessions, setSessions] = useState<Array<{ id: string; userAgent: string; ipAddress: string; createdAt: string }>>([]);
+  const [sessions, setSessions] = useState<Array<{ id: string; userAgent: string; ipAddress: string; createdAt: string; current?: boolean }>>([]);
   const [sessionsLoading, setSessionsLoading] = useState(false);
   const [revokingId, setRevokingId] = useState<string | null>(null);
 
   const handleEnableMfa = async () => {
-    if (!token) return;
     setMfaLoading(true);
     setMfaError(null);
     try {
-      const { secret, otpAuthUrl } = await authApi.setupMfa(token);
+      const { secret, otpAuthUrl } = await authApi.setupMfa();
       setMfaSecret(secret);
       setMfaOtpAuthUrl(otpAuthUrl);
       setMfaStep('setup');
@@ -42,11 +40,11 @@ export function SecuritySettingsPage() {
   };
 
   const handleVerifyMfa = async () => {
-    if (mfaCode.length !== 6 || !user || !token) return;
+    if (mfaCode.length !== 6 || !user) return;
     setMfaLoading(true);
     setMfaError(null);
     try {
-      await authApi.verifyMfa(token, mfaCode);
+      await authApi.verifyMfa(mfaCode);
       setUser({ ...user, mfaEnabled: true });
       setMfaStep('idle');
       setMfaCode('');
@@ -58,11 +56,11 @@ export function SecuritySettingsPage() {
   };
 
   const handleDisableMfa = async () => {
-    if (!user || !token) return;
+    if (!user) return;
     setMfaLoading(true);
     setMfaError(null);
     try {
-      await authApi.disableMfa(token);
+      await authApi.disableMfa();
       setUser({ ...user, mfaEnabled: false });
     } catch (err) {
       setMfaError(err instanceof Error ? err.message : 'Failed to disable MFA');
@@ -72,13 +70,11 @@ export function SecuritySettingsPage() {
   };
 
   const handlePasswordChange = async () => {
-    if (newPassword.length < 8 || newPassword !== confirmPassword || !token || !user) return;
+    if (newPassword.length < 10 || newPassword !== confirmPassword) return;
     setPwLoading(true);
     setPwError(null);
     try {
-      const salt = generateSalt();
-      const verifier = computeVerifier(salt, user.email, newPassword);
-      await authApi.changePassword(token, salt, verifier);
+      await authApi.changePassword(currentPassword, newPassword);
       setPwSuccess(true);
       setTimeout(() => setPwSuccess(false), 3000);
       setShowPasswordChange(false);
@@ -93,10 +89,9 @@ export function SecuritySettingsPage() {
   };
 
   const loadSessions = async () => {
-    if (!token) return;
     setSessionsLoading(true);
     try {
-      const data = await authApi.listSessions(token);
+      const data = await authApi.listSessions();
       setSessions(data);
     } catch {
       // silently fail — sessions will show empty
@@ -106,10 +101,9 @@ export function SecuritySettingsPage() {
   };
 
   const handleRevokeSession = async (sessionID: string) => {
-    if (!token) return;
     setRevokingId(sessionID);
     try {
-      await authApi.revokeSession(token, sessionID);
+      await authApi.revokeSession(sessionID);
       setSessions((prev) => prev.filter((s) => s.id !== sessionID));
     } catch {
       // ignore
@@ -120,7 +114,7 @@ export function SecuritySettingsPage() {
 
   useEffect(() => {
     loadSessions();
-  }, [token]);
+  }, []);
 
   return (
     <SettingsLayout activeTab="/settings/security">
@@ -348,7 +342,10 @@ export function SecuritySettingsPage() {
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
                   <Monitor size={16} style={{ color: 'var(--acc-text-muted)' }} />
                   <div>
-                    <strong>{session.userAgent || 'Unknown device'}</strong>
+                    <strong>
+                      {session.userAgent || 'Unknown device'}
+                      {session.current ? ' (This device)' : ''}
+                    </strong>
                     <p style={{ color: 'var(--acc-text-muted)', fontSize: 12, marginTop: 2 }}>
                       {session.ipAddress || 'Unknown IP'} · Created {new Date(session.createdAt).toLocaleDateString()}
                     </p>

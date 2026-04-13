@@ -18,21 +18,15 @@ describe('createAuthApi', () => {
 
   it('register calls POST /auth/register', async () => {
     const api = createAuthApi(client);
-    const params = { email: 'a@b.com', srpSalt: 's', srpVerifier: 'v', publicKey: 'pk', signingKey: 'spk' };
+    const params = { email: 'a@b.com', password: 'password-12345', displayName: 'A', publicKey: 'pk', signingKey: 'spk', signature: 'sig' };
     await api.register(params);
     expect(client.post).toHaveBeenCalledWith('/auth/register', params);
   });
 
-  it('loginInit calls POST /auth/login/init', async () => {
+  it('login calls POST /auth/login', async () => {
     const api = createAuthApi(client);
-    await api.loginInit({ email: 'a@b.com', srpA: 'aaa' });
-    expect(client.post).toHaveBeenCalledWith('/auth/login/init', { email: 'a@b.com', srpA: 'aaa' });
-  });
-
-  it('loginVerify calls POST /auth/login/verify', async () => {
-    const api = createAuthApi(client);
-    await api.loginVerify({ email: 'a@b.com', srpM1: 'mmm' });
-    expect(client.post).toHaveBeenCalledWith('/auth/login/verify', { email: 'a@b.com', srpM1: 'mmm' });
+    await api.login({ email: 'a@b.com', password: 'password-12345' });
+    expect(client.post).toHaveBeenCalledWith('/auth/login', { email: 'a@b.com', password: 'password-12345' });
   });
 
   it('logout calls POST /auth/logout', async () => {
@@ -45,6 +39,12 @@ describe('createAuthApi', () => {
     const api = createAuthApi(client);
     await api.getAccount();
     expect(client.get).toHaveBeenCalledWith('/auth/account');
+  });
+
+  it('me calls GET /auth/me', async () => {
+    const api = createAuthApi(client);
+    await api.me();
+    expect(client.get).toHaveBeenCalledWith('/auth/me');
   });
 });
 

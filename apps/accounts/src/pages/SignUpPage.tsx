@@ -7,12 +7,11 @@ import { useAuthStore } from '@/store/auth';
 import {
   generateKeyPair,
   generateSigningKeyPair,
-  generateSalt,
-  computeVerifier,
   encryptPrivateKeys,
   sign,
 } from '@haseen-me/crypto';
 import { authApi } from '@/api/auth';
+import { useToastStore } from '@haseen-me/shared/toast';
 
 function toBase64(bytes: Uint8Array): string {
   return btoa(String.fromCharCode(...bytes));
@@ -20,6 +19,7 @@ function toBase64(bytes: Uint8Array): string {
 
 export function SignUpPage() {
   const navigate = useNavigate();
+  const toast = useToastStore();
   const { loginSuccess, setRecoveryKey, setLoading, setError, loading, error } = useAuthStore();
 
   const [name, setName] = useState('');
@@ -34,7 +34,7 @@ export function SignUpPage() {
     if (!name.trim()) errs['name'] = 'Name is required';
     if (!email.trim()) errs['email'] = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs['email'] = 'Invalid email';
-    if (password.length < 8) errs['password'] = 'At least 8 characters';
+    if (password.length < 10) errs['password'] = 'At least 10 characters (server policy)';
     if (password !== confirmPassword) errs['confirm'] = 'Passwords do not match';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
@@ -50,75 +50,56 @@ export function SignUpPage() {
     setError(null);
 
     try {
-      // 1. Generate NaCl key pairs on device
       setStatus('Generating encryption keys...');
       const encKP = generateKeyPair();
       const sigKP = generateSigningKeyPair();
 
-      // 2. Encrypt private keys with password-derived key (PBKDF2)
       setStatus('Deriving key from password...');
-      const encryptedKeys = await encryptPrivateKeys(
-        password,
-        encKP.secretKey,
-        sigKP.secretKey,
-      );
-
-      // Store encrypted private keys locally
+      const encryptedKeys = await encryptPrivateKeys(password, encKP.secretKey, sigKP.secretKey);
       localStorage.setItem('haseen-encrypted-keys', toBase64(encryptedKeys));
 
-      // 3. Derive SRP verifier from password
-      setStatus('Computing SRP verifier...');
-      const srpSalt = generateSalt();
-      const srpVerifier = computeVerifier(srpSalt, normalizedEmail, password);
-
-      // 4. Create self-signature (sign public key with signing key)
       const selfSig = sign(encKP.publicKey, sigKP.secretKey).signature;
 
-      // 5. Register with server (Go []byte fields expect base64 in JSON)
       setStatus('Creating account...');
       const response = await authApi.register({
         email: normalizedEmail,
-        srpSalt,
-        srpVerifier,
-        publicKey: btoa(String.fromCharCode(...encKP.publicKey)),
-        signingKey: btoa(String.fromCharCode(...sigKP.publicKey)),
-        signature: btoa(String.fromCharCode(...selfSig)),
+        password,
+        displayName: name.trim(),
+        publicKey: toBase64(encKP.publicKey),
+        signingKey: toBase64(sigKP.publicKey),
+        signature: toBase64(selfSig),
       });
 
-      // 6. Store auth state with persistence
-      loginSuccess(
-        {
-          id: response.user.id,
-          email: normalizedEmail,
-          displayName: name,
-          mfaEnabled: false,
-          createdAt: new Date().toISOString(),
-        },
-        response.token,
-      );
+      loginSuccess({
+        id: response.user.id,
+        email: response.user.email,
+        displayName: response.user.displayName || name.trim(),
+        mfaEnabled: false,
+        createdAt: response.user.createdAt,
+      });
 
       if (response.recoveryKey) {
         setRecoveryKey(response.recoveryKey);
       }
 
-      // 7. Publish public keys to keyserver (base64 for Go []byte)
       setStatus('Publishing keys...');
       try {
-        await fetch('/api/v1/keys/keys/publish', {
+        await fetch('/api/v1/keys/publish', {
           method: 'POST',
-          headers: {
-            'Content-Type': 'application/json',
-            Authorization: `Bearer ${response.token}`,
-          },
+          credentials: 'include',
+          headers: { 'Content-Type': 'application/json' },
           body: JSON.stringify({
-            encryptionPublicKey: btoa(String.fromCharCode(...encKP.publicKey)),
-            signingPublicKey: btoa(String.fromCharCode(...sigKP.publicKey)),
-            selfSignature: btoa(String.fromCharCode(...selfSig)),
+            encryptionPublicKey: toBase64(encKP.publicKey),
+            signingPublicKey: toBase64(sigKP.publicKey),
+            selfSignature: toBase64(selfSig),
           }),
         });
       } catch {
-        // Non-fatal: keys can be published later
         console.warn('[SignUp] Could not publish keys to keyserver');
+      }
+
+      if (response.verifyUrl) {
+        toast.show('Verify your email using the link shown on the next screen.', { countdown: 6 });
       }
 
       setStatus('');
@@ -158,7 +139,7 @@ export function SignUpPage() {
         <FormField
           label="Password"
           type="password"
-          placeholder="At least 8 characters"
+          placeholder="At least 10 characters"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
           icon={<Lock size={16} />}
@@ -178,7 +159,7 @@ export function SignUpPage() {
 
         <div style={{ marginTop: 2, marginBottom: 12 }}>
           <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', lineHeight: 1.5 }}>
-            Your password never leaves your device.
+            Your vault keys stay on this device. The server stores only Argon2-hashed credentials and your public keys.
           </p>
         </div>
 

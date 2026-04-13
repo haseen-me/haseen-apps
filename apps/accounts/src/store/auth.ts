@@ -1,4 +1,5 @@
 import { create } from 'zustand';
+import { authApi } from '@/api/auth';
 
 export interface User {
   id: string;
@@ -8,70 +9,63 @@ export interface User {
   createdAt: string;
 }
 
-const STORAGE_KEY = 'haseen-auth';
-
-function loadPersistedAuth(): { user: User | null; token: string | null } {
-  try {
-    const raw = localStorage.getItem(STORAGE_KEY);
-    if (!raw) return { user: null, token: null };
-    const data = JSON.parse(raw);
-    return { user: data.user ?? null, token: data.token ?? null };
-  } catch {
-    return { user: null, token: null };
-  }
-}
-
-function persistAuth(user: User | null, token: string | null) {
-  if (user && token) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify({ user, token }));
-  } else {
-    localStorage.removeItem(STORAGE_KEY);
-  }
-}
-
 interface AuthState {
   user: User | null;
-  token: string | null;
+  hydrated: boolean;
   loading: boolean;
   error: string | null;
   recoveryKey: string | null;
-  setUser: (user: User | null) => void;
-  setToken: (token: string | null) => void;
   setLoading: (loading: boolean) => void;
   setError: (error: string | null) => void;
   setRecoveryKey: (key: string | null) => void;
-  loginSuccess: (user: User, token: string) => void;
-  logout: () => void;
+  setUser: (user: User | null) => void;
+  fetchSession: () => Promise<void>;
+  loginSuccess: (user: User) => void;
+  logout: () => Promise<void>;
 }
 
-const persisted = loadPersistedAuth();
+function mapUser(u: { id: string; email: string; displayName?: string; createdAt: string }, mfa?: boolean): User {
+  return {
+    id: u.id,
+    email: u.email,
+    displayName: u.displayName ?? u.email.split('@')[0] ?? '',
+    mfaEnabled: mfa ?? false,
+    createdAt: u.createdAt,
+  };
+}
 
 export const useAuthStore = create<AuthState>((set) => ({
-  user: persisted.user,
-  token: persisted.token,
+  user: null,
+  hydrated: false,
   loading: false,
   error: null,
   recoveryKey: null,
-  setUser: (user) => {
-    set((s) => {
-      persistAuth(user, s.token);
-      return { user };
-    });
-  },
-  setToken: (token) => set({ token }),
   setLoading: (loading) => set({ loading }),
   setError: (error) => set({ error }),
   setRecoveryKey: (recoveryKey) => set({ recoveryKey }),
-  loginSuccess: (user, token) => {
-    persistAuth(user, token);
-    set({ user, token, error: null });
+  setUser: (user) => set({ user }),
+  fetchSession: async () => {
+    try {
+      const acc = await authApi.getAccount();
+      set({
+        user: mapUser(acc.user, acc.mfaEnabled),
+        hydrated: true,
+        error: null,
+      });
+    } catch {
+      set({ user: null, hydrated: true });
+    }
   },
-  logout: () => {
-    persistAuth(null, null);
-    localStorage.removeItem('haseen-mail-keypairs');
-    localStorage.removeItem('haseen-drive-keypairs');
-    localStorage.removeItem('haseen-calendar-keypairs');
-    localStorage.removeItem('haseen-encrypted-keys');
-    set({ user: null, token: null, recoveryKey: null });
+  loginSuccess: (user) => set({ user, error: null }),
+  logout: async () => {
+    try {
+      await authApi.logout();
+    } finally {
+      localStorage.removeItem('haseen-mail-keypairs');
+      localStorage.removeItem('haseen-drive-keypairs');
+      localStorage.removeItem('haseen-calendar-keypairs');
+      localStorage.removeItem('haseen-encrypted-keys');
+      set({ user: null, recoveryKey: null });
+    }
   },
 }));

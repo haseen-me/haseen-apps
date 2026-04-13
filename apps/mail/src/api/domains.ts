@@ -2,22 +2,12 @@ import type { CustomDomain, DomainResponse, DomainMailbox, DomainDNSRecords, DNS
 
 const API_BASE = '/api/v1';
 
-function getAuthHeaders(): Record<string, string> {
-  try {
-    const raw = localStorage.getItem('haseen-auth');
-    if (!raw) return {};
-    const token = JSON.parse(raw).token;
-    if (token) return { Authorization: `Bearer ${token}` };
-  } catch {}
-  return {};
-}
-
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
-      ...getAuthHeaders(),
       ...options.headers,
     },
   });

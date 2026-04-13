@@ -1,8 +1,14 @@
 const API_BASE = '/api/v1/auth';
 
+async function parseError(res: Response): Promise<string> {
+  const body = await res.json().catch(() => ({ error: 'Request failed' }));
+  return (body as { error?: string }).error || `HTTP ${res.status}`;
+}
+
 async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   const res = await fetch(`${API_BASE}${path}`, {
     ...options,
+    credentials: 'include',
     headers: {
       'Content-Type': 'application/json',
       ...options.headers,
@@ -10,8 +16,11 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
   });
 
   if (!res.ok) {
-    const body = await res.json().catch(() => ({ error: 'Request failed' }));
-    throw new Error(body.error || `HTTP ${res.status}`);
+    throw new Error(await parseError(res));
+  }
+
+  if (res.status === 204) {
+    return undefined as T;
   }
 
   return res.json();
@@ -19,168 +28,177 @@ async function request<T>(path: string, options: RequestInit = {}): Promise<T> {
 
 export interface RegisterPayload {
   email: string;
-  srpVerifier: string;
-  srpSalt: string;
+  password: string;
+  displayName: string;
+  /** Base64-encoded raw public key bytes */
   publicKey: string;
   signingKey: string;
-  signature?: string;
+  signature: string;
 }
 
-export interface LoginInitPayload {
+export interface UserDTO {
+  id: string;
   email: string;
-  srpA: string;
-}
-
-export interface LoginVerifyPayload {
-  email: string;
-  srpM1: string;
+  displayName: string;
+  avatarUrl?: string;
+  mfaEnforced?: boolean;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
+  createdAt: string;
 }
 
 export interface RegisterResponse {
-  userId: string;
-  sessionToken: string;
+  user: UserDTO;
   recoveryKey: string;
+  emailVerified: boolean;
+  verifyUrl: string;
 }
 
-export interface LoginVerifyResponse {
-  sessionToken: string;
-  srpM2: string;
-  user: {
-    id: string;
-    email: string;
-    displayName: string;
-    mfaEnabled: boolean;
-    createdAt: string;
-  };
+export interface LoginResponse {
+  user: UserDTO;
   mfaRequired?: boolean;
-}
-
-// Keep backward compat alias
-export interface AuthResponse {
-  token: string;
-  user: {
-    id: string;
-    email: string;
-    displayName: string;
-    mfaEnabled: boolean;
-    createdAt: string;
-  };
-  recoveryKey?: string;
-  mfaRequired?: boolean;
+  mfaToken?: string;
+  emailVerified: boolean;
 }
 
 export const authApi = {
-  register: async (data: RegisterPayload): Promise<AuthResponse> => {
-    const res = await request<RegisterResponse>('/register', {
+  register: (data: RegisterPayload) =>
+    request<RegisterResponse>('/register', {
       method: 'POST',
       body: JSON.stringify({
         email: data.email,
-        srpSalt: data.srpSalt,
-        srpVerifier: data.srpVerifier,
+        password: data.password,
+        displayName: data.displayName,
         publicKey: data.publicKey,
         signingKey: data.signingKey,
-        signature: data.signature ?? '',
+        signature: data.signature,
       }),
-    });
-    return {
-      token: res.sessionToken,
-      user: { id: res.userId, email: data.email, displayName: '', mfaEnabled: false, createdAt: new Date().toISOString() },
-      recoveryKey: res.recoveryKey,
-    };
-  },
-
-  loginInit: (data: LoginInitPayload) =>
-    request<{ srpB: string; srpSalt: string }>('/login/init', { method: 'POST', body: JSON.stringify(data) }),
-
-  loginVerify: async (data: LoginVerifyPayload): Promise<AuthResponse> => {
-    const res = await request<LoginVerifyResponse>('/login/verify', {
-      method: 'POST',
-      body: JSON.stringify(data),
-    });
-    if (res.mfaRequired) {
-      return { token: '', user: { id: '', email: data.email, displayName: '', mfaEnabled: true, createdAt: '' }, mfaRequired: true };
-    }
-    return {
-      token: res.sessionToken,
-      user: res.user,
-    };
-  },
-
-  logout: (token: string) =>
-    request<{ ok: boolean }>('/logout', {
-      method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
     }),
 
-  getAccount: (token: string) =>
-    request<AuthResponse['user']>('/account', {
-      headers: { Authorization: `Bearer ${token}` },
+  login: (email: string, password: string) =>
+    request<LoginResponse>('/login', { method: 'POST', body: JSON.stringify({ email, password }) }),
+
+  loginMfa: (mfaToken: string, code: string) =>
+    request<LoginResponse>('/login/mfa', { method: 'POST', body: JSON.stringify({ mfaToken, code }) }),
+
+  logout: () => request<{ ok: boolean }>('/logout', { method: 'POST' }),
+
+  me: () => request<{ user: UserDTO }>('/me'),
+
+  verifyEmail: (token: string) =>
+    fetch(`${API_BASE}/verify-email?token=${encodeURIComponent(token)}`, { credentials: 'include' }).then(async (res) => {
+      if (!res.ok) throw new Error(await parseError(res));
+      return res.json() as Promise<{ ok: boolean }>;
     }),
 
-  updateAccount: (token: string, data: { displayName?: string; email?: string }) =>
-    request<AuthResponse['user']>('/account', {
+  getAccount: () =>
+    request<{ user: UserDTO; mfaEnabled: boolean; hasRecoveryKey: boolean }>('/account'),
+
+  updateAccount: (data: { displayName?: string; email?: string; avatarUrl?: string }) =>
+    request<UserDTO>('/account', { method: 'PUT', body: JSON.stringify(data) }),
+
+  changePassword: (currentPassword: string, newPassword: string) =>
+    request<{ ok: boolean }>('/account/password', {
       method: 'PUT',
-      body: JSON.stringify(data),
-      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ currentPassword, newPassword }),
     }),
 
-  changePassword: (token: string, newSrpSalt: string, newSrpVerifier: string) =>
-    request<{ sessionToken: string }>('/account/password', {
-      method: 'PUT',
-      body: JSON.stringify({ newSrpSalt, newSrpVerifier }),
-      headers: { Authorization: `Bearer ${token}` },
-    }),
+  deleteAccount: () => request<{ ok: boolean }>('/account', { method: 'DELETE' }),
 
-  deleteAccount: (token: string) =>
-    request<{ ok: boolean }>('/account', {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    }),
+  setupMfa: () =>
+    request<{ secret: string; qrCode: string; otpAuthUrl: string }>('/mfa/setup', { method: 'POST' }),
 
-  setupMfa: (token: string) =>
-    request<{ secret: string; qrCode: string; otpAuthUrl: string }>('/mfa/setup', {
+  verifyMfa: (code: string) =>
+    request<{ ok: boolean }>('/mfa/verify', { method: 'POST', body: JSON.stringify({ code }) }),
+
+  disableMfa: () => request<{ ok: boolean }>('/mfa', { method: 'DELETE' }),
+
+  generateRecoveryKey: () =>
+    request<{ recoveryKey: string }>('/account/recovery-key', { method: 'POST' }),
+
+  listSessions: () =>
+    request<Array<{ id: string; userAgent: string; ipAddress: string; expiresAt: string; createdAt: string; current: boolean }>>(
+      '/sessions',
+    ),
+
+  revokeSession: (sessionID: string) =>
+    request<{ ok: boolean }>(`/sessions/${sessionID}`, { method: 'DELETE' }),
+
+  forgotPassword: (email: string) =>
+    request<{ ok: boolean; resetUrl?: string }>('/password/forgot', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ email }),
     }),
 
-  verifyMfa: (token: string, code: string) =>
-    request<{ ok: boolean }>('/mfa/verify', {
+  resetPassword: (token: string, newPassword: string) =>
+    request<{ ok: boolean }>('/password/reset', {
       method: 'POST',
-      body: JSON.stringify({ code }),
-      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify({ token, newPassword }),
     }),
 
-  verifyMfaLogin: async (email: string, code: string): Promise<AuthResponse> => {
-    const res = await request<LoginVerifyResponse>('/mfa/verify-login', {
+  webauthnRegisterBegin: () =>
+    request<unknown>('/webauthn/register/begin', { method: 'POST', body: JSON.stringify({}) }),
+
+  webauthnRegisterFinish: (credential: unknown, name?: string) => {
+    const q = name ? `?name=${encodeURIComponent(name)}` : '';
+    return request<{ ok: boolean }>(`/webauthn/register/finish${q}`, {
       method: 'POST',
-      body: JSON.stringify({ email, code }),
+      body: JSON.stringify(credential ?? {}),
     });
-    return {
-      token: res.sessionToken,
-      user: res.user,
-    };
   },
 
-  disableMfa: (token: string) =>
-    request<{ ok: boolean }>('/mfa', {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    }),
+  webauthnLoginBegin: (email: string) =>
+    request<unknown>('/webauthn/login/begin', { method: 'POST', body: JSON.stringify({ email }) }),
 
-  generateRecoveryKey: (token: string) =>
-    request<{ recoveryKey: string }>('/account/recovery-key', {
+  webauthnLoginFinish: (credential: unknown) =>
+    request<LoginResponse>('/webauthn/login/finish', {
       method: 'POST',
-      headers: { Authorization: `Bearer ${token}` },
+      body: JSON.stringify(credential ?? {}),
     }),
 
-  listSessions: (token: string) =>
-    request<Array<{ id: string; userAgent: string; ipAddress: string; expiresAt: string; createdAt: string }>>('/sessions', {
-      headers: { Authorization: `Bearer ${token}` },
+  listPasskeys: () => request<Array<{ id: string; name: string; createdAt: string; credentialId: string }>>('/webauthn/credentials'),
+
+  deletePasskey: (credID: string) =>
+    request<{ ok: boolean }>(`/webauthn/credentials/${encodeURIComponent(credID)}`, { method: 'DELETE' }),
+
+  adminUsers: (params?: { q?: string; limit?: number; offset?: number }) => {
+    const qs = new URLSearchParams();
+    if (params?.q) qs.set('q', params.q);
+    if (params?.limit != null) qs.set('limit', String(params.limit));
+    if (params?.offset != null) qs.set('offset', String(params.offset));
+    const q = qs.toString();
+    return request<{ users: unknown[]; total: number }>(`/admin/users${q ? `?${q}` : ''}`);
+  },
+
+  adminUser: (id: string) => request<unknown>(`/admin/users/${id}`),
+
+  adminSuspend: (id: string) =>
+    request<{ ok: boolean }>(`/admin/users/${id}/suspend`, { method: 'POST', body: '{}' }),
+
+  adminReactivate: (id: string) =>
+    request<{ ok: boolean }>(`/admin/users/${id}/reactivate`, { method: 'POST', body: '{}' }),
+
+  adminVerifyEmail: (id: string) =>
+    request<{ ok: boolean }>(`/admin/users/${id}/verify-email`, { method: 'POST', body: '{}' }),
+
+  adminMfaEnforce: (id: string, enforced: boolean) =>
+    request<{ ok: boolean }>(`/admin/users/${id}/mfa-enforce`, {
+      method: 'POST',
+      body: JSON.stringify({ enforced }),
     }),
 
-  revokeSession: (token: string, sessionID: string) =>
-    request<{ ok: boolean }>(`/sessions/${sessionID}`, {
-      method: 'DELETE',
-      headers: { Authorization: `Bearer ${token}` },
-    }),
+  adminDomains: () => request<{ domains: unknown[] }>('/admin/domains'),
+
+  adminDomainOverride: (id: string) =>
+    request<{ ok: boolean }>(`/admin/domains/${id}/verify-override`, { method: 'POST', body: '{}' }),
+
+  adminSmtpQueue: () => request<Record<string, unknown>>('/admin/metrics/smtp-queue'),
+
+  adminAttachments: () => request<Record<string, unknown>>('/admin/metrics/attachments'),
+
+  adminPool: () => request<Record<string, unknown>>('/admin/metrics/pool'),
+
+  adminLatency: () => request<Record<string, unknown>>('/admin/metrics/latency'),
+
+  adminAudit: () => request<{ events: unknown[] }>('/admin/audit'),
 };

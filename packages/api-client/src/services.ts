@@ -1,8 +1,12 @@
 /** Auth service API types */
 export interface AuthApi {
-  register(params: { email: string; srpSalt: string; srpVerifier: string; publicKey: string; signingKey: string; signature?: string }): Promise<{ userId: string; sessionToken: string; recoveryKey: string }>;
-  loginInit(params: { email: string; srpA: string }): Promise<{ srpB: string; srpSalt: string }>;
-  loginVerify(params: { email: string; srpM1: string }): Promise<{ sessionToken: string; srpM2: string; user: { id: string; email: string }; mfaRequired?: boolean }>;
+  /** @deprecated legacy SRP — prefer cookie session + REST identity */
+  register(params: Record<string, unknown>): Promise<unknown>;
+  loginInit(params: Record<string, unknown>): Promise<unknown>;
+  loginVerify(params: Record<string, unknown>): Promise<unknown>;
+  login(params: { email: string; password: string }): Promise<unknown>;
+  loginMfa(params: { mfaToken: string; code: string }): Promise<unknown>;
+  me(): Promise<unknown>;
   logout(): Promise<void>;
   getAccount(): Promise<{ userID: string; email: string; createdAt: string }>;
 }
