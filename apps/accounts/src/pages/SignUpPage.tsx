@@ -29,22 +29,35 @@ export function SignUpPage() {
   const [fieldErrors, setFieldErrors] = useState<Record<string, string>>({});
   const [status, setStatus] = useState('');
 
-  const validate = () => {
+  const validate = (values: { name: string; email: string; password: string; confirmPassword: string }) => {
     const errs: Record<string, string> = {};
-    if (!name.trim()) errs['name'] = 'Name is required';
-    if (!email.trim()) errs['email'] = 'Email is required';
-    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) errs['email'] = 'Invalid email';
-    if (password.length < 10) errs['password'] = 'At least 10 characters (server policy)';
-    if (password !== confirmPassword) errs['confirm'] = 'Passwords do not match';
+    if (!values.name.trim()) errs['name'] = 'Name is required';
+    if (!values.email.trim()) errs['email'] = 'Email is required';
+    else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errs['email'] = 'Invalid email';
+    if (values.password.length < 10) errs['password'] = 'At least 10 characters (server policy)';
+    if (values.password !== values.confirmPassword) errs['confirm'] = 'Passwords do not match';
     setFieldErrors(errs);
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = async (e: FormEvent) => {
+  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
     e.preventDefault();
-    if (!validate()) return;
 
-    const normalizedEmail = email.trim().toLowerCase();
+    const formData = new FormData(e.currentTarget);
+    const submittedName = String(formData.get('name') ?? name);
+    const submittedEmail = String(formData.get('email') ?? email);
+    const submittedPassword = String(formData.get('password') ?? password);
+    const submittedConfirmPassword = String(formData.get('confirmPassword') ?? confirmPassword);
+
+    if (!validate({
+      name: submittedName,
+      email: submittedEmail,
+      password: submittedPassword,
+      confirmPassword: submittedConfirmPassword,
+    })) return;
+
+    const normalizedEmail = submittedEmail.trim().toLowerCase();
+    const normalizedName = submittedName.trim();
 
     setLoading(true);
     setError(null);
@@ -63,8 +76,8 @@ export function SignUpPage() {
       setStatus('Creating account...');
       const response = await authApi.register({
         email: normalizedEmail,
-        password,
-        displayName: name.trim(),
+        password: submittedPassword,
+        displayName: normalizedName,
         publicKey: toBase64(encKP.publicKey),
         signingKey: toBase64(sigKP.publicKey),
         signature: toBase64(selfSig),
@@ -73,7 +86,7 @@ export function SignUpPage() {
       loginSuccess({
         id: response.user.id,
         email: response.user.email,
-        displayName: response.user.displayName || name.trim(),
+        displayName: response.user.displayName || normalizedName,
         mfaEnabled: false,
         createdAt: response.user.createdAt,
       });
@@ -119,6 +132,7 @@ export function SignUpPage() {
       <form onSubmit={handleSubmit}>
         <FormField
           label="Full name"
+          name="name"
           placeholder="John Doe"
           value={name}
           onChange={(e) => setName(e.target.value)}
@@ -128,6 +142,7 @@ export function SignUpPage() {
         />
         <FormField
           label="Email address"
+          name="email"
           type="email"
           placeholder="john@example.com"
           value={email}
@@ -138,6 +153,7 @@ export function SignUpPage() {
         />
         <FormField
           label="Password"
+          name="password"
           type="password"
           placeholder="At least 10 characters"
           value={password}
@@ -148,6 +164,7 @@ export function SignUpPage() {
         />
         <FormField
           label="Confirm password"
+          name="confirmPassword"
           type="password"
           placeholder="Repeat your password"
           value={confirmPassword}
