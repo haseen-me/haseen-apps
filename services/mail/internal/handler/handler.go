@@ -5,14 +5,16 @@ import (
 	"net/http"
 
 	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/worker"
 	"github.com/rs/zerolog"
 )
 
 // Handler holds dependencies for all HTTP handlers.
 type Handler struct {
-	Store  *store.Store
-	Log    zerolog.Logger
-	Domain string // e.g. "haseen.me"
+	Store     *store.Store
+	Log       zerolog.Logger
+	Domain    string // e.g. "haseen.me"
+	DNSWorker *worker.DNSWorker
 }
 
 // JSON writes a JSON response.

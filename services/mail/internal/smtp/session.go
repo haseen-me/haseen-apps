@@ -167,21 +167,28 @@ func (s *Session) handleRCPT(arg string) {
 		return
 	}
 
-	// Verify the recipient domain is ours
 	parts := strings.SplitN(to, "@", 2)
 	if len(parts) != 2 {
 		s.writeLine("550 Invalid address")
 		return
 	}
-	if !strings.EqualFold(parts[1], s.server.Domain) {
-		s.writeLine("550 Relay not permitted")
-		return
-	}
+	recipientDomain := parts[1]
 
-	// Verify the user exists
-	_, err := s.server.Store.GetUserByEmail(context.Background(), to)
-	if err != nil {
-		s.writeLine("550 No such user")
+	// Accept mail for our primary domain or any verified custom domain
+	if strings.EqualFold(recipientDomain, s.server.Domain) {
+		_, err := s.server.Store.GetUserByEmail(context.Background(), to)
+		if err != nil {
+			s.writeLine("550 No such user")
+			return
+		}
+	} else if s.server.Store.IsCustomDomain(context.Background(), recipientDomain) {
+		_, err := s.server.Store.GetUserByDomainEmail(context.Background(), to)
+		if err != nil {
+			s.writeLine("550 No such user")
+			return
+		}
+	} else {
+		s.writeLine("550 Relay not permitted")
 		return
 	}
 
@@ -259,10 +266,22 @@ func (s *Session) deliverMessage(raw []byte) error {
 
 	// Deliver to each local recipient
 	for _, rcpt := range toAddrs {
-		userID, err := s.server.Store.GetUserByEmail(ctx, rcpt)
-		if err != nil {
-			s.log.Warn().Str("rcpt", rcpt).Msg("recipient not found, skipping")
-			continue
+		rcptParts := strings.SplitN(rcpt, "@", 2)
+		var userID string
+		if len(rcptParts) == 2 && strings.EqualFold(rcptParts[1], s.server.Domain) {
+			uid, err := s.server.Store.GetUserByEmail(ctx, rcpt)
+			if err != nil {
+				s.log.Warn().Str("rcpt", rcpt).Msg("recipient not found, skipping")
+				continue
+			}
+			userID = uid
+		} else {
+			uid, err := s.server.Store.GetUserByDomainEmail(ctx, rcpt)
+			if err != nil {
+				s.log.Warn().Str("rcpt", rcpt).Msg("custom domain recipient not found, skipping")
+				continue
+			}
+			userID = uid
 		}
 
 		mb, err := s.server.Store.EnsureMailbox(ctx, userID)
