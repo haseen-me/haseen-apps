@@ -98,6 +98,7 @@ func (h *Handler) SendMessage(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusInternalServerError, "failed to store message")
 		return
 	}
+	h.PublishEvent(userID, mb.ID, "message.created", threadID, msgID, "sent")
 
 	// Deliver to recipients
 	go h.deliverToRecipients(req, fromAddr, senderEmail, userID)
@@ -163,15 +164,27 @@ func (h *Handler) deliverToRecipient(recipientAddr string, from model.EmailAddre
 		}
 	}
 
-	_, err = h.Store.CreateInboundMessage(ctx, mb.ID, threadID, inboxLabel.ID,
+	messageID, err := h.Store.CreateInboundMessage(
+		ctx,
+		mb.ID,
+		threadID,
+		inboxLabel.ID,
+		senderEmail,
 		senderEmail,
 		[]string{recipientAddr},
 		nil,
-		req.Subject, req.BodyHtml, "",
+		req.Subject,
+		req.BodyHtml,
+		"",
+		"",
+		"",
+		nil,
 	)
 	if err != nil {
 		h.Log.Error().Err(err).Str("to", recipientAddr).Msg("deliver local")
+		return
 	}
+	h.PublishEvent(recipientUserID, mb.ID, "message.created", threadID, messageID, "inbox")
 }
 
 // UpdateMessage updates a message's read/starred flags.
@@ -197,6 +210,7 @@ func (h *Handler) UpdateMessage(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return
 	}
+	h.PublishEvent(userID, mb.ID, "message.updated", msg.ThreadID, msg.ID, activeLabelForMessage(msg))
 	h.JSON(w, http.StatusOK, msg)
 }
 
@@ -216,6 +230,7 @@ func (h *Handler) DeleteMessage(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return
 	}
+	h.PublishEvent(userID, mb.ID, "message.deleted", "", msgID, "")
 	h.JSON(w, http.StatusOK, model.OkResponse{OK: true})
 }
 
@@ -248,5 +263,13 @@ func (h *Handler) MoveMessage(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusNotFound, "message not found")
 		return
 	}
+	h.PublishEvent(userID, mb.ID, "message.updated", msg.ThreadID, msg.ID, req.Label)
 	h.JSON(w, http.StatusOK, msg)
+}
+
+func activeLabelForMessage(msg *model.Message) string {
+	if msg == nil || len(msg.Labels) == 0 {
+		return ""
+	}
+	return msg.Labels[0]
 }

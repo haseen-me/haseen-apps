@@ -10,6 +10,9 @@ interface MailboxState {
   threads: Thread[];
   setThreads: (threads: Thread[]) => void;
   appendThreads: (threads: Thread[]) => void;
+  upsertThread: (thread: Thread) => void;
+  removeThread: (threadId: string) => void;
+  patchThread: (threadId: string, updater: (thread: Thread) => Thread) => void;
   loading: boolean;
   setLoading: (v: boolean) => void;
 
@@ -73,6 +76,22 @@ export const useMailStore = create<MailboxState>((set, get) => ({
     const newThreads = threads.filter((t) => !existingIds.has(t.id));
     return { threads: [...s.threads, ...newThreads] };
   }),
+  upsertThread: (thread) => set((s) => {
+    const index = s.threads.findIndex((existing) => existing.id === thread.id);
+    if (index === -1) {
+      return { threads: [thread, ...s.threads] };
+    }
+    const next = [...s.threads];
+    next[index] = thread;
+    return { threads: next };
+  }),
+  removeThread: (threadId) => set((s) => ({
+    threads: s.threads.filter((thread) => thread.id !== threadId),
+    activeThreadId: s.activeThreadId === threadId ? null : s.activeThreadId,
+  })),
+  patchThread: (threadId, updater) => set((s) => ({
+    threads: s.threads.map((thread) => (thread.id === threadId ? updater(thread) : thread)),
+  })),
   loading: false,
   setLoading: (loading) => set({ loading }),
 

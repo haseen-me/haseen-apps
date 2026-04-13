@@ -1,5 +1,14 @@
 import type { ApiClient } from './client';
-import type { AuthApi, MailApi, DriveApi, KeysApi, CalendarApi, ContactsApi } from './services';
+import type {
+  AuthApi,
+  MailApi,
+  DriveApi,
+  KeysApi,
+  CalendarApi,
+  ContactsApi,
+  DomainsApi,
+  AdminApi,
+} from './services';
 
 export function createAuthApi(client: ApiClient): AuthApi {
   return {
@@ -48,6 +57,50 @@ export function createMailApi(client: ApiClient): MailApi {
     createLabel: (params) => client.post('/mail/labels', params),
     deleteLabel: (labelID) => client.del(`/mail/labels/${labelID}`),
     listLabels: () => client.get('/mail/labels'),
+    getEventStreamUrl: (since) => `/api/v1/mail/events${since ? `?since=${encodeURIComponent(since)}` : ''}`,
+  };
+}
+
+export function createDomainsApi(client: ApiClient): DomainsApi {
+  return {
+    list: () => client.get('/mail/domains'),
+    add: (domain) => client.post('/mail/domains', { domain }),
+    get: (domainID) => client.get(`/mail/domains/${domainID}`),
+    delete: (domainID) => client.del(`/mail/domains/${domainID}`),
+    verify: (domainID) => client.post(`/mail/domains/${domainID}/verify`, {}),
+    getDNSRecords: (domainID) => client.get(`/mail/domains/${domainID}/dns`),
+    getDNSLogs: (domainID) => client.get(`/mail/domains/${domainID}/dns/logs`),
+    addMailbox: (domainID, localPart, displayName, isCatchAll) =>
+      client.post(`/mail/domains/${domainID}/mailboxes`, { localPart, displayName, isCatchAll }),
+    listMailboxes: (domainID) => client.get(`/mail/domains/${domainID}/mailboxes`),
+    deleteMailbox: (domainID, mailboxID) => client.del(`/mail/domains/${domainID}/mailboxes/${mailboxID}`),
+  };
+}
+
+export function createAdminApi(client: ApiClient): AdminApi {
+  return {
+    users: (params) => {
+      const qs = new URLSearchParams();
+      if (params?.q) qs.set('q', params.q);
+      if (params?.limit != null) qs.set('limit', String(params.limit));
+      if (params?.offset != null) qs.set('offset', String(params.offset));
+      const query = qs.toString();
+      return client.get(`/auth/admin/users${query ? `?${query}` : ''}`);
+    },
+    user: (id) => client.get(`/auth/admin/users/${id}`),
+    suspendUser: (id) => client.post(`/auth/admin/users/${id}/suspend`, {}),
+    reactivateUser: (id) => client.post(`/auth/admin/users/${id}/reactivate`, {}),
+    verifyUserEmail: (id) => client.post(`/auth/admin/users/${id}/verify-email`, {}),
+    enforceUserMfa: (id, enforced) => client.post(`/auth/admin/users/${id}/mfa-enforce`, { enforced }),
+    setUserQuotas: (id, quotas) => client.post(`/auth/admin/users/${id}/quotas`, quotas),
+    domains: () => client.get('/auth/admin/domains'),
+    verifyDomainOverride: (id) => client.post(`/auth/admin/domains/${id}/verify-override`, {}),
+    overview: () => client.get('/auth/admin/metrics/overview'),
+    smtpQueue: () => client.get('/auth/admin/metrics/smtp-queue'),
+    attachments: () => client.get('/auth/admin/metrics/attachments'),
+    pool: () => client.get('/auth/admin/metrics/pool'),
+    latency: () => client.get('/auth/admin/metrics/latency'),
+    audit: (limit) => client.get(`/auth/admin/audit${limit ? `?limit=${limit}` : ''}`),
   };
 }
 

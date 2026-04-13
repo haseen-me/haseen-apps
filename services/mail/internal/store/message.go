@@ -46,19 +46,28 @@ func (s *Store) CreateMessage(ctx context.Context, mailboxID, threadID string, m
 }
 
 // CreateInboundMessage stores a message received via SMTP.
-func (s *Store) CreateInboundMessage(ctx context.Context, mailboxID, threadID, labelID string, from string, to, cc []string, subject, bodyHTML, bodyText string) (string, error) {
+func (s *Store) CreateInboundMessage(
+	ctx context.Context,
+	mailboxID, threadID, labelID string,
+	envelopeFrom, from string,
+	to, cc []string,
+	subject, bodyHTML, bodyText, messageIDHeader, inReplyToHeader string,
+	referencesHeader []string,
+) (string, error) {
 	var id string
 	err := s.DB.QueryRow(ctx,
 		`INSERT INTO mail_messages
 		   (thread_id, mailbox_id, from_address, to_addresses, cc_addresses,
 		    encrypted_subject, encrypted_body, encrypted_session_key,
-		    subject, body_html, body_text, is_read, starred, label_id)
-		 VALUES ($1,$2,$3,$4,$5, $6,$7,$8, $9,$10,$11, $12,$13,$14)
+		    subject, body_html, body_text, is_read, starred, label_id,
+		    envelope_from, message_id_header, in_reply_to_header, references_header, received_at)
+		 VALUES ($1,$2,$3,$4,$5, $6,$7,$8, $9,$10,$11, $12,$13,$14, $15,$16,$17,$18,NOW())
 		 RETURNING id`,
 		threadID, mailboxID, from, to, cc,
 		[]byte{}, []byte{}, []byte{},
 		subject, bodyHTML, bodyText,
 		false, false, labelID,
+		envelopeFrom, messageIDHeader, inReplyToHeader, referencesHeader,
 	).Scan(&id)
 	return id, err
 }

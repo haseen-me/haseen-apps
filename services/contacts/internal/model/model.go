@@ -2,76 +2,23 @@ package model
 
 import "time"
 
-type Contact struct {
-ID        string    `json:"id"`
-UserID    string    `json:"-"`
-Email     string    `json:"email"`
-Name      string    `json:"name"`
-Notes     string    `json:"notes,omitempty"`
-Phone     string    `json:"phone,omitempty"`
-Company   string    `json:"company,omitempty"`
-Address   string    `json:"address,omitempty"`
-Birthday  string    `json:"birthday,omitempty"`
-CreatedAt time.Time `json:"createdAt"`
-UpdatedAt time.Time `json:"updatedAt"`
+type ContactRecord struct {
+	ID            string    `json:"id"`
+	UserID        string    `json:"-"`
+	EncryptedData string    `json:"encryptedData"`
+	CreatedAt     time.Time `json:"createdAt"`
+	UpdatedAt     time.Time `json:"updatedAt"`
 }
 
-type CreateContactRequest struct {
-Email    string `json:"email"`
-Name     string `json:"name"`
-Notes    string `json:"notes,omitempty"`
-Phone    string `json:"phone,omitempty"`
-Company  string `json:"company,omitempty"`
-Address  string `json:"address,omitempty"`
-Birthday string `json:"birthday,omitempty"`
-}
-
-type UpdateContactRequest struct {
-Name     *string `json:"name,omitempty"`
-Email    *string `json:"email,omitempty"`
-Notes    *string `json:"notes,omitempty"`
-Phone    *string `json:"phone,omitempty"`
-Company  *string `json:"company,omitempty"`
-Address  *string `json:"address,omitempty"`
-Birthday *string `json:"birthday,omitempty"`
-}
-
-type SearchRequest struct {
-Query string `json:"query"`
+type UpsertContactRequest struct {
+	EncryptedData string `json:"encryptedData"`
 }
 
 type ListResponse struct {
-Contacts []Contact `json:"contacts"`
-Total    int       `json:"total"`
+	Contacts []ContactRecord `json:"contacts"`
+	Total    int             `json:"total"`
 }
 
 type OkResponse struct {
-OK bool `json:"ok"`
-}
-// ---------- Groups ----------
-
-type Group struct {
-	ID        string    `json:"id"`
-	UserID    string    `json:"-"`
-	Name      string    `json:"name"`
-	Color     string    `json:"color"`
-	CreatedAt time.Time `json:"createdAt"`
-}
-
-type CreateGroupRequest struct {
-	Name  string `json:"name"`
-	Color string `json:"color"`
-}
-
-type UpdateGroupRequest struct {
-	Name  *string `json:"name,omitempty"`
-	Color *string `json:"color,omitempty"`
-}
-
-type GroupListResponse struct {
-	Groups []Group `json:"groups"`
-}
-
-type GroupMembersResponse struct {
-	ContactIDs []string `json:"contactIds"`
+	OK bool `json:"ok"`
 }

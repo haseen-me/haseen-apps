@@ -1,339 +1,483 @@
-import { useEffect, useRef, useState } from 'react';
-import { Search, Plus, Users, Upload, Download, FolderPlus, Tag, X } from 'lucide-react';
+import { useEffect, useMemo, useState, type ReactNode } from 'react';
+import {
+  Building2,
+  LockKeyhole,
+  Mail,
+  MapPin,
+  Pencil,
+  Phone,
+  Plus,
+  Search,
+  ShieldCheck,
+  Tags,
+  Trash2,
+  Users,
+} from 'lucide-react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
-import { HaseenThemeProvider } from '@haseen-me/ui';
 import { ProductRail } from '@haseen-me/shared/ProductRail';
-import { ContactList } from '@/components/ContactList';
-import { ContactDetail } from '@/components/ContactDetail';
-import { ContactDialog } from '@/components/ContactDialog';
-import { useContactsStore } from '@/store/contacts';
-import { useToastStore } from '@haseen-me/shared/toast';
+import { requireAuth } from '@haseen-me/shared';
+import {
+  Banner,
+  Button,
+  HaseenThemeProvider,
+  Input,
+  InputField,
+  Toast,
+  Typography,
+  TypographySize,
+  TypographyWeight,
+} from '@haseen-me/ui';
+import { Size, Type } from '@haseen-me/ui';
 import { contactsApi } from '@/api/client';
-import type { Contact } from '@haseen-me/api-client';
-
-function csvEscape(value: string): string {
-  if (value.includes(',') || value.includes('"') || value.includes('\n')) {
-    return `"${value.replace(/"/g, '""')}"`;
-  }
-  return value;
-}
-
-function parseCsvLine(line: string): string[] {
-  const fields: string[] = [];
-  let current = '';
-  let inQuotes = false;
-  for (let i = 0; i < line.length; i++) {
-    const ch = line[i];
-    if (inQuotes) {
-      if (ch === '"' && line[i + 1] === '"') {
-        current += '"';
-        i++;
-      } else if (ch === '"') {
-        inQuotes = false;
-      } else {
-        current += ch;
-      }
-    } else if (ch === '"') {
-      inQuotes = true;
-    } else if (ch === ',') {
-      fields.push(current);
-      current = '';
-    } else {
-      current += ch;
-    }
-  }
-  fields.push(current);
-  return fields;
-}
+import { ContactEditorDialog } from '@/components/ContactEditorDialog';
+import { decryptRecord, encryptPayload, getOrCreateVaultKey } from '@/lib/crypto';
+import {
+  getPrimaryAddress,
+  getPrimaryField,
+  normalizeContactPayload,
+} from '@/lib/contacts';
+import { useContactsStore } from '@/store/contacts';
 
 function ContactsApp() {
-  const { contacts, setContacts, setLoading, searchQuery, setSearchQuery, setDialogOpen, setEditingContact, groups, setGroups, activeGroupId, setActiveGroupId, setGroupMembers } = useContactsStore();
-  const toast = useToastStore();
-  const fileInputRef = useRef<HTMLInputElement>(null);
-  const [newGroupName, setNewGroupName] = useState('');
-  const [showGroupInput, setShowGroupInput] = useState(false);
+  const [authed, setAuthed] = useState(false);
+  const [saving, setSaving] = useState(false);
+  const {
+    contacts,
+    loading,
+    vaultKey,
+    searchQuery,
+    selectedContactId,
+    editorOpen,
+    editingContactId,
+    toast,
+    setContacts,
+    upsertContact,
+    removeContact,
+    setLoading,
+    setVaultKey,
+    setSearchQuery,
+    selectContact,
+    openEditor,
+    closeEditor,
+    showToast,
+    hideToast,
+  } = useContactsStore();
 
   useEffect(() => {
-    setLoading(true);
-    contactsApi.listContacts()
-      .then((res: { contacts: Contact[] }) => setContacts(res.contacts))
-      .catch(() => {})
-      .finally(() => setLoading(false));
-    // Load groups
-    contactsApi.listGroups()
-      .then((res) => setGroups(res.groups))
-      .catch(() => {});
-  }, [setContacts, setLoading, setGroups]);
-
-  // Load group members when active group changes
-  useEffect(() => {
-    if (!activeGroupId) return;
-    contactsApi.getGroupMembers(activeGroupId)
-      .then((res) => setGroupMembers(activeGroupId, res.contactIds))
-      .catch(() => {});
-  }, [activeGroupId, setGroupMembers]);
-
-  const handleCreateGroup = async () => {
-    if (!newGroupName.trim()) return;
-    try {
-      const g = await contactsApi.createGroup({ name: newGroupName.trim(), color: '#6366f1' });
-      setGroups([...groups, g]);
-      setNewGroupName('');
-      setShowGroupInput(false);
-      toast.show(`Group "${g.name}" created`);
-    } catch {
-      toast.show('Failed to create group');
-    }
-  };
-
-  const handleDeleteGroup = async (id: string) => {
-    try {
-      await contactsApi.deleteGroup(id);
-      setGroups(groups.filter((g) => g.id !== id));
-      if (activeGroupId === id) setActiveGroupId(null);
-      toast.show('Group deleted');
-    } catch {
-      toast.show('Failed to delete group');
-    }
-  };
-
-  const handleNew = () => {
-    setEditingContact(null);
-    setDialogOpen(true);
-  };
-
-  const handleExport = () => {
-    if (contacts.length === 0) {
-      toast.show('No contacts to export');
-      return;
-    }
-    const header = 'Name,Email,Phone,Company,Address,Birthday,Notes';
-    const rows = contacts.map((c: Contact) => {
-      const name = csvEscape(c.name);
-      const email = csvEscape(c.email);
-      const phone = csvEscape(c.phone || '');
-      const company = csvEscape(c.company || '');
-      const address = csvEscape(c.address || '');
-      const birthday = csvEscape(c.birthday || '');
-      const notes = csvEscape(c.notes || '');
-      return `${name},${email},${phone},${company},${address},${birthday},${notes}`;
-    });
-    const csv = [header, ...rows].join('\n');
-    const blob = new Blob([csv], { type: 'text/csv' });
-    const url = URL.createObjectURL(blob);
-    const a = document.createElement('a');
-    a.href = url;
-    a.download = 'contacts.csv';
-    a.click();
-    URL.revokeObjectURL(url);
-    toast.show(`Exported ${contacts.length} contacts`);
-  };
-
-  const handleImport = async (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0];
-    if (!file) return;
-    e.target.value = '';
-    const text = await file.text();
-    const lines = text.split(/\r?\n/).filter((l) => l.trim());
-    if (lines.length < 2) {
-      toast.show('CSV file is empty or has no data rows');
-      return;
-    }
-    // Skip header row
-    const headerLower = lines[0]!.toLowerCase();
-    const startIdx = headerLower.includes('name') || headerLower.includes('email') ? 1 : 0;
-    let imported = 0;
-    for (let i = startIdx; i < lines.length; i++) {
-      const fields = parseCsvLine(lines[i]!);
-      const name = fields[0]?.trim();
-      const email = fields[1]?.trim();
-      if (!email) continue;
-      try {
-        const created = await contactsApi.createContact({
-          name: name || email, email,
-          phone: fields[2]?.trim() || '',
-          company: fields[3]?.trim() || '',
-          address: fields[4]?.trim() || '',
-          birthday: fields[5]?.trim() || '',
-          notes: fields[6]?.trim() || '',
-        });
-        setContacts([...useContactsStore.getState().contacts, created]);
-        imported++;
-      } catch {
-        // Skip duplicate or failed entries
+    void requireAuth().then((ok) => {
+      if (!ok) {
+        return;
       }
+
+      setAuthed(true);
+      setVaultKey(getOrCreateVaultKey());
+    });
+  }, [setVaultKey]);
+
+  useEffect(() => {
+    if (!authed || !vaultKey) {
+      return;
     }
-    toast.show(imported > 0 ? `Imported ${imported} contacts` : 'No new contacts imported');
+
+    let cancelled = false;
+    setLoading(true);
+
+    void contactsApi
+      .listContacts()
+      .then((response) => {
+        if (cancelled) {
+          return;
+        }
+
+        const decrypted = response.contacts.flatMap((record) => {
+          try {
+            return [decryptRecord(record, vaultKey)];
+          } catch {
+            return [];
+          }
+        });
+
+        setContacts(decrypted);
+        if (response.contacts.length > decrypted.length) {
+          showToast('Some encrypted contacts could not be decrypted with the local vault key.');
+        }
+      })
+      .catch(() => {
+        if (!cancelled) {
+          showToast('Unable to load contacts right now.');
+        }
+      })
+      .finally(() => {
+        if (!cancelled) {
+          setLoading(false);
+        }
+      });
+
+    return () => {
+      cancelled = true;
+    };
+  }, [authed, setContacts, setLoading, showToast, vaultKey]);
+
+  const filteredContacts = useMemo(() => {
+    const query = searchQuery.trim().toLowerCase();
+    if (!query) {
+      return contacts;
+    }
+
+    return contacts.filter((contact) => contact.searchIndex.includes(query));
+  }, [contacts, searchQuery]);
+
+  const selectedContact =
+    contacts.find((contact) => contact.id === selectedContactId) ?? filteredContacts[0] ?? null;
+  const editingPayload =
+    contacts.find((contact) => contact.id === editingContactId)?.payload ?? null;
+
+  useEffect(() => {
+    if (selectedContact && selectedContact.id !== selectedContactId) {
+      selectContact(selectedContact.id);
+    }
+  }, [selectContact, selectedContact, selectedContactId]);
+
+  const handleSave = async (payload: Parameters<typeof normalizeContactPayload>[0]) => {
+    if (!vaultKey) {
+      showToast('The local encryption key is not ready yet.');
+      return;
+    }
+
+    setSaving(true);
+    try {
+      const normalized = normalizeContactPayload(payload, editingPayload?.createdAt);
+      const encryptedData = encryptPayload(normalized, vaultKey);
+      const record = editingContactId
+        ? await contactsApi.updateContact(editingContactId, { encryptedData })
+        : await contactsApi.createContact({ encryptedData });
+
+      upsertContact(decryptRecord(record, vaultKey));
+      closeEditor();
+      showToast(editingContactId ? 'Encrypted contact updated.' : 'Encrypted contact created.');
+    } catch {
+      showToast('Unable to save the encrypted contact.');
+    } finally {
+      setSaving(false);
+    }
   };
+
+  const handleDelete = async () => {
+    if (!selectedContact) {
+      return;
+    }
+
+    const confirmed = window.confirm('Delete this encrypted contact?');
+    if (!confirmed) {
+      return;
+    }
+
+    try {
+      await contactsApi.deleteContact(selectedContact.id);
+      removeContact(selectedContact.id);
+      showToast('Encrypted contact deleted.');
+    } catch {
+      showToast('Unable to delete the contact.');
+    }
+  };
+
+  if (!authed) {
+    return null;
+  }
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
+    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden', background: 'var(--hsn-bg-app)' }}>
       <ProductRail activeProduct="contacts" />
 
-      {/* Sidebar */}
-      <div
+      <aside
         style={{
-          width: 320, borderRight: '1px solid var(--hsn-border-primary)',
-          display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%', overflow: 'hidden',
+          width: 360,
+          flexShrink: 0,
+          borderRight: '1px solid var(--hsn-border-primary)',
+          display: 'flex',
+          flexDirection: 'column',
           background: 'var(--hsn-bg-app)',
         }}
       >
-        {/* Header */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--hsn-border-primary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Users size={18} style={{ color: 'var(--hsn-accent-teal)' }} />
-              <h1 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Contacts</h1>
+        <div style={{ padding: 20, display: 'grid', gap: 16, borderBottom: '1px solid var(--hsn-border-primary)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', gap: 12, alignItems: 'flex-start' }}>
+            <div style={{ display: 'grid', gap: 6 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                <Users size={18} color="var(--hsn-accent-teal-primary)" />
+                <Typography size={TypographySize.BODY} weight={TypographyWeight.BOLD}>
+                  Contacts
+                </Typography>
+              </div>
+              <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+                Google Contacts-style organization with client-side encryption by default.
+              </Typography>
             </div>
-            <button
-              onClick={handleNew}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                padding: '6px 12px', borderRadius: '6px',
-                border: 'none', background: 'var(--hsn-accent-teal)', color: '#fff',
-                fontSize: 12, fontWeight: 600, cursor: 'pointer',
-              }}
-            >
-              <Plus size={14} /> New
-            </button>
+            <Button type={Type.PRIMARY} size={Size.SMALL} onClick={() => openEditor(null)} startIcon={<Plus size={14} />}>
+              New
+            </Button>
           </div>
 
-          {/* Import / Export row */}
-          <div style={{ display: 'flex', gap: 6, marginBottom: 10 }}>
-            <label
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                padding: '5px 10px', borderRadius: '6px',
-                border: '1px solid var(--hsn-border-primary)', background: 'none',
-                color: 'var(--hsn-text-tertiary)', fontSize: 11, cursor: 'pointer',
-              }}
-            >
-              <Upload size={12} /> Import CSV
-              <input ref={fileInputRef} type="file" accept=".csv" style={{ display: 'none' }} onChange={handleImport} />
-            </label>
-            <button
-              onClick={handleExport}
-              style={{
-                display: 'flex', alignItems: 'center', gap: 4,
-                padding: '5px 10px', borderRadius: '6px',
-                border: '1px solid var(--hsn-border-primary)', background: 'none',
-                color: 'var(--hsn-text-tertiary)', fontSize: 11, cursor: 'pointer',
-              }}
-            >
-              <Download size={12} /> Export CSV
-            </button>
-          </div>
-          <div style={{ position: 'relative' }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--hsn-text-tertiary)' }} />
-            <input
+          <Banner color="info">
+            Search runs only after local decryption. The contacts service stores opaque encrypted blobs.
+          </Banner>
+
+          <InputField label="Search decrypted contacts">
+            <Input
               value={searchQuery}
-              onChange={(e) => setSearchQuery(e.target.value)}
-              placeholder="Search contacts..."
-              style={{
-                width: '100%', padding: '7px 10px 7px 30px',
-                border: '1px solid var(--hsn-border-primary)', borderRadius: '6px',
-                fontSize: 13, fontFamily: 'inherit', outline: 'none',
-                background: 'var(--hsn-bg-l0-solid)', color: 'var(--hsn-text-primary)',
-              }}
+              onChange={(event) => setSearchQuery(event.target.value)}
+              placeholder="Name, email, phone, label..."
+              startIcon={<Search size={16} />}
             />
-          </div>
+          </InputField>
         </div>
 
-        {/* Groups */}
-        <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--hsn-border-primary)' }}>
-          <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--hsn-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
-              Groups
-            </span>
-            <button
-              onClick={() => setShowGroupInput(!showGroupInput)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hsn-text-tertiary)', padding: 2, display: 'flex' }}
-            >
-              {showGroupInput ? <X size={12} /> : <FolderPlus size={12} />}
-            </button>
-          </div>
-          {showGroupInput && (
-            <form onSubmit={(e) => { e.preventDefault(); handleCreateGroup(); }} style={{ display: 'flex', gap: 4, marginBottom: 6 }}>
-              <input
-                value={newGroupName}
-                onChange={(e) => setNewGroupName(e.target.value)}
-                placeholder="Group name..."
-                autoFocus
-                style={{
-                  flex: 1, padding: '4px 8px', fontSize: 12, border: '1px solid var(--hsn-border-primary)',
-                  borderRadius: '6px', background: 'var(--hsn-bg-l0-solid)', color: 'var(--hsn-text-primary)',
-                  outline: 'none', fontFamily: 'inherit',
-                }}
-              />
-              <button type="submit" style={{ padding: '4px 8px', fontSize: 11, border: 'none', borderRadius: '6px', background: 'var(--hsn-accent-teal)', color: '#fff', cursor: 'pointer' }}>
-                Add
-              </button>
-            </form>
-          )}
-          <button
-            onClick={() => setActiveGroupId(null)}
-            style={{
-              display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '5px 8px',
-              borderRadius: '6px', border: 'none', background: !activeGroupId ? 'rgba(45,184,175,0.08)' : 'transparent',
-              color: !activeGroupId ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)', fontSize: 12, fontWeight: 500,
-              cursor: 'pointer', textAlign: 'left',
-            }}
-          >
-            <Tag size={12} /> All Contacts
-          </button>
-          {groups.map((g) => (
-            <div
-              key={g.id}
-              style={{ display: 'flex', alignItems: 'center', gap: 4 }}
-            >
-              <button
-                onClick={() => setActiveGroupId(g.id)}
-                style={{
-                  display: 'flex', alignItems: 'center', gap: 6, flex: 1, padding: '5px 8px',
-                  borderRadius: '6px', border: 'none',
-                  background: activeGroupId === g.id ? 'rgba(45,184,175,0.08)' : 'transparent',
-                  color: activeGroupId === g.id ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)', fontSize: 12, fontWeight: 500,
-                  cursor: 'pointer', textAlign: 'left',
-                }}
-              >
-                <span style={{ width: 8, height: 8, borderRadius: '50%', background: g.color, flexShrink: 0 }} />
-                {g.name}
-              </button>
-              <button
-                onClick={() => handleDeleteGroup(g.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hsn-text-tertiary)', padding: 2, display: 'flex', opacity: 0.5 }}
-                title="Delete group"
-              >
-                <X size={10} />
-              </button>
+        <div style={{ overflow: 'auto', padding: 12, display: 'grid', gap: 8 }}>
+          {loading ? (
+            <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)', padding: 8 }}>
+              Decrypting contacts...
+            </Typography>
+          ) : null}
+
+          {!loading && filteredContacts.length === 0 ? (
+            <div style={{ padding: 16, border: '1px dashed var(--hsn-border-primary)', borderRadius: 10 }}>
+              <Typography size={TypographySize.BODY} weight={TypographyWeight.SEMIBOLD}>
+                No visible contacts
+              </Typography>
+              <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)', marginTop: 6 }}>
+                Create your first encrypted contact or refine the local search query.
+              </Typography>
             </div>
-          ))}
+          ) : null}
+
+          {filteredContacts.map((contact) => {
+            const active = contact.id === selectedContact?.id;
+            const primaryEmail = getPrimaryField(contact.payload.emails);
+            const primaryPhone = getPrimaryField(contact.payload.phones);
+
+            return (
+              <button
+                key={contact.id}
+                type="button"
+                onClick={() => selectContact(contact.id)}
+                style={{
+                  textAlign: 'left',
+                  borderRadius: 12,
+                  border: active ? '1px solid var(--hsn-border-input-focus)' : '1px solid var(--hsn-border-primary)',
+                  background: active ? 'var(--hsn-bg-cell-selected)' : 'var(--hsn-bg-l1-solid)',
+                  padding: 14,
+                  display: 'grid',
+                  gap: 6,
+                  cursor: 'pointer',
+                }}
+              >
+                <Typography size={TypographySize.BODY} weight={TypographyWeight.SEMIBOLD}>
+                  {contact.payload.name.displayName || primaryEmail || primaryPhone || 'Untitled contact'}
+                </Typography>
+                <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+                  {primaryEmail || 'No email'}
+                </Typography>
+                <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+                  {primaryPhone || 'No phone'}
+                </Typography>
+              </button>
+            );
+          })}
         </div>
+      </aside>
 
-        <ContactList />
-      </div>
+      <main style={{ flex: 1, overflow: 'auto', padding: 28 }}>
+        {selectedContact ? (
+          <div style={{ maxWidth: 880, margin: '0 auto', display: 'grid', gap: 20 }}>
+            <div
+              style={{
+                border: '1px solid var(--hsn-border-primary)',
+                borderRadius: 16,
+                padding: 24,
+                background: 'var(--hsn-bg-l1-solid)',
+                display: 'grid',
+                gap: 18,
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start', gap: 16 }}>
+                <div style={{ display: 'grid', gap: 8 }}>
+                  <Typography size={TypographySize.BODY} weight={TypographyWeight.BOLD} style={{ fontSize: '1.375rem' }}>
+                    {selectedContact.payload.name.displayName || 'Untitled contact'}
+                  </Typography>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, color: 'var(--hsn-text-secondary)' }}>
+                    <ShieldCheck size={16} />
+                    <Typography size={TypographySize.CAPTION}>
+                      Stored as encrypted payload, last updated {new Date(selectedContact.updatedAt).toLocaleString()}
+                    </Typography>
+                  </div>
+                </div>
+                <div style={{ display: 'flex', gap: 8 }}>
+                  <Button type={Type.SECONDARY} size={Size.SMALL} onClick={() => openEditor(selectedContact.id)} startIcon={<Pencil size={14} />}>
+                    Edit
+                  </Button>
+                  <Button type={Type.DESTRUCTIVE} size={Size.SMALL} onClick={() => void handleDelete()} startIcon={<Trash2 size={14} />}>
+                    Delete
+                  </Button>
+                </div>
+              </div>
 
-      {/* Detail panel */}
-      <ContactDetail />
+              <Banner color="success">
+                <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                  <LockKeyhole size={16} />
+                  <span>Zero-knowledge mode: the backend only stores the encrypted blob in `encrypted_data`.</span>
+                </div>
+              </Banner>
 
-      {/* Dialog */}
-      <ContactDialog />
+              <DetailSection
+                icon={<Mail size={16} />}
+                title="Emails"
+                items={selectedContact.payload.emails.map((item) => formatLabeledValue(item.label, item.customLabel, item.value))}
+                empty="No encrypted email values saved."
+              />
+              <DetailSection
+                icon={<Phone size={16} />}
+                title="Phones"
+                items={selectedContact.payload.phones.map((item) => formatLabeledValue(item.label, item.customLabel, item.value))}
+                empty="No encrypted phone values saved."
+              />
+              <DetailSection
+                icon={<Building2 size={16} />}
+                title="Organization"
+                items={[selectedContact.payload.company, selectedContact.payload.jobTitle].filter(Boolean)}
+                empty="No encrypted organization fields saved."
+              />
+              <DetailSection
+                icon={<MapPin size={16} />}
+                title="Addresses"
+                items={selectedContact.payload.addresses.map((address) => formatAddress(address))}
+                empty="No encrypted addresses saved."
+              />
+              <DetailSection
+                icon={<Tags size={16} />}
+                title="Labels"
+                items={selectedContact.payload.labels}
+                empty="No encrypted labels saved."
+              />
+              <DetailSection
+                icon={<Users size={16} />}
+                title="Relationships"
+                items={selectedContact.payload.relationships.map((relationship) =>
+                  formatLabeledValue(relationship.label, relationship.customLabel, relationship.name),
+                )}
+                empty="No encrypted relationships saved."
+              />
+              <DetailSection
+                icon={<ShieldCheck size={16} />}
+                title="Events"
+                items={selectedContact.payload.events.map((event) =>
+                  formatLabeledValue(event.label, event.customLabel, event.dateIso),
+                )}
+                empty="No encrypted events saved."
+              />
 
-      {/* Toast */}
-      {toast.visible && (
-        <div
-          style={{
-            position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-            background: 'var(--hsn-text-primary)', color: 'var(--hsn-bg-app)', padding: '10px 20px',
-            borderRadius: '8px', fontSize: 13, fontWeight: 500,
-            boxShadow: 'var(--hsn-shadow-l3)', zIndex: 200, animation: 'fadeIn 0.15s ease',
-          }}
-        >
-          {toast.message}
-        </div>
-      )}
+              <div style={{ display: 'grid', gap: 8 }}>
+                <Typography size={TypographySize.BODY} weight={TypographyWeight.SEMIBOLD}>
+                  Notes
+                </Typography>
+                <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)', whiteSpace: 'pre-wrap' }}>
+                  {selectedContact.payload.notes || 'No encrypted notes saved.'}
+                </Typography>
+              </div>
+
+              <div style={{ display: 'grid', gap: 4 }}>
+                <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+                  Primary email: {getPrimaryField(selectedContact.payload.emails) || 'None'}
+                </Typography>
+                <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+                  Primary phone: {getPrimaryField(selectedContact.payload.phones) || 'None'}
+                </Typography>
+                <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+                  Primary address: {getPrimaryAddress(selectedContact.payload.addresses) || 'None'}
+                </Typography>
+              </div>
+            </div>
+          </div>
+        ) : (
+          <div style={{ maxWidth: 720, margin: '64px auto 0', display: 'grid', gap: 16 }}>
+            <Typography size={TypographySize.BODY} weight={TypographyWeight.BOLD} style={{ fontSize: '1.25rem' }}>
+              Encrypted contacts stay client-readable only
+            </Typography>
+            <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+              The contacts service only stores encrypted records with `id`, `user_id`, `encrypted_data`, and timestamps. Create a contact to start building the encrypted address book.
+            </Typography>
+            <Button type={Type.PRIMARY} size={Size.MEDIUM} onClick={() => openEditor(null)} startIcon={<Plus size={16} />} style={{ justifySelf: 'flex-start' }}>
+              Create encrypted contact
+            </Button>
+          </div>
+        )}
+      </main>
+
+      <ContactEditorDialog
+        open={editorOpen}
+        initialValue={editingPayload}
+        saving={saving}
+        onClose={closeEditor}
+        onSave={handleSave}
+      />
+      <Toast message={toast.message} visible={toast.visible} onDismiss={hideToast} />
     </div>
   );
+}
+
+interface DetailSectionProps {
+  icon: ReactNode;
+  title: string;
+  items: string[];
+  empty: string;
+}
+
+function DetailSection({ icon, title, items, empty }: DetailSectionProps) {
+  return (
+    <section style={{ display: 'grid', gap: 8 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+        {icon}
+        <Typography size={TypographySize.BODY} weight={TypographyWeight.SEMIBOLD}>
+          {title}
+        </Typography>
+      </div>
+      {items.length ? (
+        <div style={{ display: 'grid', gap: 6 }}>
+          {items.map((item) => (
+            <Typography key={item} size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+              {item}
+            </Typography>
+          ))}
+        </div>
+      ) : (
+        <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
+          {empty}
+        </Typography>
+      )}
+    </section>
+  );
+}
+
+function formatLabeledValue(label: string, customLabel: string, value: string): string {
+  const resolvedLabel = label === 'custom' ? customLabel || 'Custom' : capitalize(label);
+  return `${resolvedLabel}: ${value}`;
+}
+
+function formatAddress(address: Parameters<typeof getPrimaryAddress>[0][number]): string {
+  const label = address.label === 'custom' ? address.customLabel || 'Custom' : capitalize(address.label);
+  const lines = [
+    address.streetLine1,
+    address.streetLine2,
+    address.city,
+    address.region,
+    address.postalCode,
+    address.country,
+  ]
+    .filter(Boolean)
+    .join(', ');
+  return `${label}: ${lines}`;
+}
+
+function capitalize(value: string): string {
+  return value.charAt(0).toUpperCase() + value.slice(1);
 }
 
 export function App() {

@@ -7,14 +7,12 @@ import (
 	"crypto/tls"
 	"fmt"
 	"io"
-	"mime"
-	"mime/multipart"
 	"net"
 	"net/mail"
 	"strings"
 	"time"
 
-	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/model"
 	"github.com/rs/zerolog"
 )
 
@@ -248,8 +246,12 @@ func (s *Session) deliverMessage(raw []byte) error {
 		return fmt.Errorf("parse message: %w", err)
 	}
 
-	subject := msg.Header.Get("Subject")
-	from := s.mailFrom
+	parsed := parseIncomingMessage(msg)
+	subject := parsed.Subject
+	from := parsed.From
+	if from == "" {
+		from = s.mailFrom
+	}
 	toAddrs := s.rcptTo
 
 	// Extract CC from headers
@@ -260,9 +262,6 @@ func (s *Session) deliverMessage(raw []byte) error {
 			ccAddrs = append(ccAddrs, a.Address)
 		}
 	}
-
-	// Parse body — handle MIME multipart or plain text
-	bodyHTML, bodyText := parseBody(msg)
 
 	// Deliver to each local recipient
 	for _, rcpt := range toAddrs {
@@ -295,8 +294,10 @@ func (s *Session) deliverMessage(raw []byte) error {
 			return fmt.Errorf("get inbox label: %w", err)
 		}
 
-		// Thread by subject
-		threadID, err := s.server.Store.FindThreadBySubject(ctx, mb.ID, subject)
+		threadID, err := s.server.Store.FindThreadByMessageHeaders(ctx, mb.ID, parsed.InReplyTo, parsed.References)
+		if err != nil {
+			threadID, err = s.server.Store.FindThreadBySubject(ctx, mb.ID, subject)
+		}
 		if err != nil {
 			threadID, err = s.server.Store.CreateThread(ctx, mb.ID)
 			if err != nil {
@@ -304,17 +305,61 @@ func (s *Session) deliverMessage(raw []byte) error {
 			}
 		}
 
-		_, err = s.server.Store.CreateInboundMessage(ctx, mb.ID, threadID, inboxLabel.ID,
-			from, toAddrs, ccAddrs, subject, bodyHTML, bodyText,
+		messageID, err := s.server.Store.CreateInboundMessage(
+			ctx,
+			mb.ID,
+			threadID,
+			inboxLabel.ID,
+			s.mailFrom,
+			from,
+			toAddrs,
+			ccAddrs,
+			subject,
+			parsed.BodyHTML,
+			parsed.BodyText,
+			parsed.MessageID,
+			parsed.InReplyTo,
+			parsed.References,
 		)
 		if err != nil {
 			return fmt.Errorf("store message for %s: %w", rcpt, err)
+		}
+
+		for index, attachment := range parsed.Attachments {
+			filename := attachment.Filename
+			if filename == "" {
+				filename = fmt.Sprintf("attachment-%d.bin", index+1)
+			}
+			if _, err := s.server.Store.CreateAttachment(
+				ctx,
+				messageID,
+				filename,
+				attachment.ContentType,
+				int64(len(attachment.Data)),
+				attachment.Data,
+			); err != nil {
+				return fmt.Errorf("store attachment for %s: %w", rcpt, err)
+			}
+		}
+
+		if s.server.Broker != nil {
+			s.server.Broker.Publish(model.MailEvent{
+				ID:         fmt.Sprintf("%d", time.Now().UnixNano()),
+				Type:       "message.created",
+				UserID:     userID,
+				MailboxID:  mb.ID,
+				ThreadID:   threadID,
+				MessageID:  messageID,
+				OccurredAt: time.Now().UTC().Format(time.RFC3339Nano),
+				Label:      "inbox",
+			})
 		}
 
 		s.log.Info().
 			Str("from", from).
 			Str("to", rcpt).
 			Str("subject", subject).
+			Int("attachments", len(parsed.Attachments)).
 			Msg("message delivered")
 	}
 	return nil
@@ -361,53 +406,4 @@ func extractMailParam(arg, prefix string) string {
 		rest = rest[1 : len(rest)-1]
 	}
 	return rest
-}
-
-// parseBody extracts HTML and plain text from a MIME message.
-func parseBody(msg *mail.Message) (html string, text string) {
-	contentType := msg.Header.Get("Content-Type")
-	if contentType == "" {
-		contentType = "text/plain"
-	}
-
-	mediaType, params, err := mime.ParseMediaType(contentType)
-	if err != nil {
-		// Fallback: read entire body as text
-		body, _ := io.ReadAll(io.LimitReader(msg.Body, maxMessageSize))
-		return "", string(body)
-	}
-
-	if strings.HasPrefix(mediaType, "multipart/") {
-		boundary := params["boundary"]
-		if boundary == "" {
-			body, _ := io.ReadAll(io.LimitReader(msg.Body, maxMessageSize))
-			return "", string(body)
-		}
-		mr := multipart.NewReader(msg.Body, boundary)
-		for {
-			part, err := mr.NextPart()
-			if err != nil {
-				break
-			}
-			partType := part.Header.Get("Content-Type")
-			partBody, _ := io.ReadAll(io.LimitReader(part, maxMessageSize))
-
-			if strings.HasPrefix(partType, "text/html") {
-				html = string(partBody)
-			} else if strings.HasPrefix(partType, "text/plain") || partType == "" {
-				text = string(partBody)
-			}
-			part.Close()
-		}
-		if html == "" && text != "" {
-			html = "<pre>" + text + "</pre>"
-		}
-		return html, text
-	}
-
-	body, _ := io.ReadAll(io.LimitReader(msg.Body, maxMessageSize))
-	if strings.HasPrefix(mediaType, "text/html") {
-		return string(body), store.StripHTMLHelper(string(body))
-	}
-	return "<pre>" + string(body) + "</pre>", string(body)
 }
