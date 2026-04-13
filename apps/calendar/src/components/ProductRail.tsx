@@ -140,7 +140,7 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
 
       {/* Bottom icons */}
       <a
-        href={PRODUCT_PATHS.accounts.path}
+        href={`${PRODUCT_PATHS.accounts.path}/settings`}
         title="Account Settings"
         style={{
           width: 36,

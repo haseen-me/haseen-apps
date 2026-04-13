@@ -1,5 +1,5 @@
-import { useState, type FormEvent } from 'react';
-import { Link, useNavigate } from 'react-router-dom';
+import { useEffect, useState, type FormEvent } from 'react';
+import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, Lock } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
 import { FormField, Button, Alert } from '@/components/FormUI';
@@ -20,13 +20,41 @@ function fromBase64(str: string): Uint8Array {
 
 export function SignInPage() {
   const navigate = useNavigate();
-  const { loginSuccess, setLoading, setError, loading, error } = useAuthStore();
+  const location = useLocation();
+  const { token, loginSuccess, setLoading, setError, loading, error } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
   const [mfaRequired, setMfaRequired] = useState(false);
   const [status, setStatus] = useState('');
+
+  const getSafeReturnTo = () => {
+    const raw = new URLSearchParams(location.search).get('returnTo');
+    if (!raw) return null;
+    try {
+      const parsed = new URL(raw, window.location.origin);
+      if (parsed.origin !== window.location.origin) return null;
+      return `${parsed.pathname}${parsed.search}${parsed.hash}`;
+    } catch {
+      return raw.startsWith('/') ? raw : null;
+    }
+  };
+
+  const redirectAfterLogin = () => {
+    const returnTo = getSafeReturnTo();
+    if (returnTo) {
+      window.location.assign(returnTo);
+      return;
+    }
+    navigate('/settings');
+  };
+
+  useEffect(() => {
+    if (token) {
+      redirectAfterLogin();
+    }
+  }, [token]);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -55,7 +83,7 @@ export function SignInPage() {
             mfaResult.token,
           );
           setStatus('');
-          navigate('/settings');
+          redirectAfterLogin();
         }
         return;
       }
@@ -121,7 +149,7 @@ export function SignInPage() {
           result.token,
         );
         setStatus('');
-        navigate('/settings');
+        redirectAfterLogin();
       }
     } catch (err) {
       setStatus('');

@@ -104,7 +104,7 @@ export function ProductRail({ activeProduct }: { activeProduct: string }) {
       </button>
 
       <a
-        href={PRODUCT_PATHS.accounts.path}
+        href={`${PRODUCT_PATHS.accounts.path}/settings`}
         title="Account Settings"
         style={{
           width: 36, height: 36, borderRadius: 8,

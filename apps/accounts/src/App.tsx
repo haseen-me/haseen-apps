@@ -16,7 +16,7 @@ export default function App() {
     <ErrorBoundary>
     <BrowserRouter basename="/accounts">
       <Routes>
-        <Route path="/" element={<Navigate to="/sign-in" replace />} />
+        <Route path="/" element={<Navigate to="/settings" replace />} />
         <Route path="/sign-up" element={<SignUpPage />} />
         <Route path="/sign-in" element={<SignInPage />} />
         <Route path="/forgot-password" element={<ForgotPasswordPage />} />
