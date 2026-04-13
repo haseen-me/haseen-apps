@@ -11,6 +11,7 @@ import {
   Search,
   PanelLeftClose,
   PanelLeftOpen,
+  Globe,
 } from 'lucide-react';
 import { useState } from 'react';
 import { useMailStore } from '@/store/mail';
@@ -265,6 +266,36 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
           </div>
         )}
       </nav>
+
+      {/* Custom Domains */}
+      {!sidebarCollapsed && (
+        <div style={{ padding: '4px 8px', borderTop: '1px solid var(--mail-border-subtle)' }}>
+          <button
+            onClick={() => {
+              const { settingsView, setSettingsView } = useMailStore.getState();
+              setSettingsView(settingsView === 'domains' ? 'mail' : 'domains');
+            }}
+            style={{
+              width: '100%',
+              padding: '8px 10px',
+              borderRadius: 'var(--mail-radius-sm)',
+              background: useMailStore.getState().settingsView === 'domains' ? 'var(--mail-brand-subtle)' : 'transparent',
+              color: useMailStore.getState().settingsView === 'domains' ? 'var(--mail-brand)' : 'var(--mail-text-secondary)',
+              border: 'none',
+              fontSize: 13,
+              fontWeight: 500,
+              display: 'flex',
+              alignItems: 'center',
+              gap: 10,
+              cursor: 'pointer',
+              transition: 'all 0.1s',
+            }}
+          >
+            <Globe size={16} />
+            Custom Domains
+          </button>
+        </div>
+      )}
 
       {/* Footer */}
       {!sidebarCollapsed && (

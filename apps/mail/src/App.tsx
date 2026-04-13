@@ -6,6 +6,7 @@ import { MailboxList } from '@/components/MailboxList';
 import { ThreadView } from '@/components/ThreadView';
 import { ComposePanel } from '@/components/ComposePanel';
 import { SearchOverlay } from '@/components/SearchOverlay';
+import { DomainsPage } from '@/components/domains/DomainsPage';
 import { useMailStore } from '@/store/mail';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@haseen-me/shared/toast';
@@ -15,7 +16,7 @@ import { Toast } from '@haseen-me/ui';
 
 export function App() {
   const [authed, setAuthed] = useState(false);
-  const { activeLabel, activeThreadId, threads, setThreads, appendThreads, setCursor, setHasMore, setLoading, setUserLabels, setComposeOpen, setActiveThreadId, setReplyToThreadId, setForwardFromThreadId } = useMailStore();
+  const { activeLabel, activeThreadId, threads, setThreads, appendThreads, setCursor, setHasMore, setLoading, setUserLabels, setComposeOpen, setActiveThreadId, setReplyToThreadId, setForwardFromThreadId, settingsView } = useMailStore();
   const initializeKeys = useCryptoStore((s) => s.initializeKeys);
   const initialized = useCryptoStore((s) => s.initialized);
   const toast = useToastStore();
@@ -157,16 +158,22 @@ export function App() {
   return (
     <ErrorBoundary>
     <MailLayout>
-      <div style={{ display: 'flex', flex: 1, overflow: 'hidden', paddingTop: 'var(--mail-mobile-header, 0px)' }}>
-        <div className={`mail-thread-list${activeThreadId ? ' mobile-hidden' : ''}`}>
-          <MailboxList />
-        </div>
-        <div className={`mail-thread-detail${!activeThreadId ? ' mobile-hidden' : ''}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
-          <ThreadView />
-        </div>
-      </div>
-      <ComposePanel />
-      <SearchOverlay />
+      {settingsView === 'domains' ? (
+        <DomainsPage />
+      ) : (
+        <>
+          <div style={{ display: 'flex', flex: 1, overflow: 'hidden', paddingTop: 'var(--mail-mobile-header, 0px)' }}>
+            <div className={`mail-thread-list${activeThreadId ? ' mobile-hidden' : ''}`}>
+              <MailboxList />
+            </div>
+            <div className={`mail-thread-detail${!activeThreadId ? ' mobile-hidden' : ''}`} style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+              <ThreadView />
+            </div>
+          </div>
+          <ComposePanel />
+          <SearchOverlay />
+        </>
+      )}
       <Toast
         message={toast.countdown ? `${toast.message} (${toast.countdown}s)` : toast.message}
         visible={toast.visible}
