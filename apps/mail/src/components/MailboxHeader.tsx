@@ -4,14 +4,14 @@ import {
   CheckSquare,
   ArrowDownAZ,
   MailOpen,
-  MoreHorizontal,
   RefreshCw,
   Square,
   Star,
   Tag,
   Trash2,
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useState } from 'react';
+import { IconButton, Dropdown, DropdownItem, DropdownItemColor, Typography, TypographySize, Type, Size } from '@haseen-me/ui';
 import { useMailStore } from '@/store/mail';
 import { useToastStore } from '@haseen-me/shared/toast';
 import { mailApi } from '@/api/client';
@@ -34,147 +34,69 @@ export function MailboxHeader() {
   const toast = useToastStore();
   const [labelMenuOpen, setLabelMenuOpen] = useState(false);
   const [sortMenuOpen, setSortMenuOpen] = useState(false);
-  const labelRef = useRef<HTMLDivElement>(null);
-  const sortRef = useRef<HTMLDivElement>(null);
+  const labelAnchorRef = useRef<HTMLButtonElement>(null);
+  const sortAnchorRef = useRef<HTMLButtonElement>(null);
 
-  const labelName =
-    SYSTEM_LABELS.find((l) => l.id === activeLabel)?.name ?? activeLabel;
-
+  const labelName = SYSTEM_LABELS.find((l) => l.id === activeLabel)?.name ?? activeLabel;
   const filteredThreads = threads.filter((t) => t.labels.includes(activeLabel));
   const allSelected = filteredThreads.length > 0 && selectedIds.size === filteredThreads.length;
   const someSelected = selectedIds.size > 0;
-
   const selectedThreads = threads.filter((t) => selectedIds.has(t.id));
 
   const handleBulkArchive = async () => {
     try {
-      const moves = selectedThreads.flatMap((t) =>
-        t.messages.map((m) => mailApi.moveMessage(m.id, 'archive')),
-      );
-      await Promise.all(moves);
+      await Promise.all(selectedThreads.flatMap((t) => t.messages.map((m) => mailApi.moveMessage(m.id, 'archive'))));
       setThreads(threads.filter((t) => !selectedIds.has(t.id)));
       clearSelection();
       toast.show(`${selectedIds.size} archived`);
-    } catch {
-      toast.show('Failed to archive');
-    }
+    } catch { toast.show('Failed to archive'); }
   };
 
   const handleBulkStar = async () => {
     try {
-      const updates = selectedThreads.flatMap((t) =>
-        t.messages.map((m) => mailApi.updateMessage(m.id, { starred: true })),
-      );
-      await Promise.all(updates);
-      setThreads(
-        threads.map((t) =>
-          selectedIds.has(t.id)
-            ? { ...t, messages: t.messages.map((m) => ({ ...m, starred: true })) }
-            : t,
-        ),
-      );
+      await Promise.all(selectedThreads.flatMap((t) => t.messages.map((m) => mailApi.updateMessage(m.id, { starred: true }))));
+      setThreads(threads.map((t) => selectedIds.has(t.id) ? { ...t, messages: t.messages.map((m) => ({ ...m, starred: true })) } : t));
       clearSelection();
       toast.show(`${selectedIds.size} starred`);
-    } catch {
-      toast.show('Failed to star');
-    }
+    } catch { toast.show('Failed to star'); }
   };
 
   const handleBulkTrash = async () => {
     try {
-      const moves = selectedThreads.flatMap((t) =>
-        t.messages.map((m) => mailApi.moveMessage(m.id, 'trash')),
-      );
-      await Promise.all(moves);
+      await Promise.all(selectedThreads.flatMap((t) => t.messages.map((m) => mailApi.moveMessage(m.id, 'trash'))));
       setThreads(threads.filter((t) => !selectedIds.has(t.id)));
       clearSelection();
       toast.show(`${selectedIds.size} moved to trash`);
-    } catch {
-      toast.show('Failed to move to trash');
-    }
+    } catch { toast.show('Failed to move to trash'); }
   };
 
   const handleBulkMarkRead = async () => {
     try {
-      const updates = selectedThreads.flatMap((t) =>
-        t.messages.map((m) => mailApi.updateMessage(m.id, { read: true })),
-      );
-      await Promise.all(updates);
-      setThreads(
-        threads.map((t) =>
-          selectedIds.has(t.id)
-            ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) }
-            : t,
-        ),
-      );
+      await Promise.all(selectedThreads.flatMap((t) => t.messages.map((m) => mailApi.updateMessage(m.id, { read: true }))));
+      setThreads(threads.map((t) => selectedIds.has(t.id) ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) } : t));
       clearSelection();
       toast.show(`${selectedIds.size} marked as read`);
-    } catch {
-      toast.show('Failed to mark as read');
-    }
+    } catch { toast.show('Failed to mark as read'); }
   };
 
   const handleBulkApplyLabel = async (labelId: string) => {
     setLabelMenuOpen(false);
     try {
-      const moves = selectedThreads.flatMap((t) =>
-        t.messages.map((m) => mailApi.moveMessage(m.id, labelId)),
-      );
-      await Promise.all(moves);
+      await Promise.all(selectedThreads.flatMap((t) => t.messages.map((m) => mailApi.moveMessage(m.id, labelId))));
       clearSelection();
-      const labelName = userLabels.find((l) => l.id === labelId)?.name ?? labelId;
-      toast.show(`Moved ${selectedIds.size} to ${labelName}`);
-    } catch {
-      toast.show('Failed to apply label');
-    }
+      const lName = userLabels.find((l) => l.id === labelId)?.name ?? labelId;
+      toast.show(`Moved ${selectedIds.size} to ${lName}`);
+    } catch { toast.show('Failed to apply label'); }
   };
-
-  // Close label menu on outside click
-  useEffect(() => {
-    if (!labelMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (labelRef.current && !labelRef.current.contains(e.target as Node)) {
-        setLabelMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [labelMenuOpen]);
-
-  // Close sort menu on outside click
-  useEffect(() => {
-    if (!sortMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (sortRef.current && !sortRef.current.contains(e.target as Node)) {
-        setSortMenuOpen(false);
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [sortMenuOpen]);
 
   const handleMarkAllRead = async () => {
     const unread = filteredThreads.filter((t) => t.unreadCount > 0);
-    if (unread.length === 0) {
-      toast.show('All messages already read');
-      return;
-    }
+    if (unread.length === 0) { toast.show('All messages already read'); return; }
     try {
-      const updates = unread.flatMap((t) =>
-        t.messages.filter((m) => !m.read).map((m) => mailApi.updateMessage(m.id, { read: true })),
-      );
-      await Promise.all(updates);
-      setThreads(
-        threads.map((t) =>
-          t.labels.includes(activeLabel)
-            ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) }
-            : t,
-        ),
-      );
+      await Promise.all(unread.flatMap((t) => t.messages.filter((m) => !m.read).map((m) => mailApi.updateMessage(m.id, { read: true }))));
+      setThreads(threads.map((t) => t.labels.includes(activeLabel) ? { ...t, unreadCount: 0, messages: t.messages.map((m) => ({ ...m, read: true })) } : t));
       toast.show(`Marked ${unread.length} threads as read`);
-    } catch {
-      toast.show('Failed to mark all as read');
-    }
+    } catch { toast.show('Failed to mark all as read'); }
   };
 
   const handleRefresh = async () => {
@@ -192,127 +114,74 @@ export function MailboxHeader() {
   return (
     <div
       style={{
-        height: 'var(--mail-header-height)',
-        borderBottom: '1px solid var(--mail-border)',
+        height: 'var(--mail-header-height, 48px)',
+        borderBottom: '1px solid var(--hsn-border-primary)',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 16px',
-        gap: 8,
+        padding: '0 8px',
+        gap: 4,
         flexShrink: 0,
-        background: 'var(--mail-bg)',
+        background: 'var(--hsn-bg-l1-solid)',
       }}
     >
       {/* Select all */}
-      <button
+      <IconButton
+        icon={allSelected ? <CheckSquare size={18} /> : someSelected ? <CheckSquare size={18} /> : <Square size={18} />}
         onClick={() => (allSelected ? clearSelection() : selectAll())}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: someSelected ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
-          padding: 4,
-          borderRadius: 4,
-          display: 'flex',
-        }}
-        title={allSelected ? 'Deselect all' : 'Select all'}
-      >
-        {allSelected ? <CheckSquare size={18} /> : someSelected ? <CheckSquare size={18} /> : <Square size={18} />}
-      </button>
+        type={someSelected ? Type.PRIMARY : Type.TERTIARY}
+        size={Size.SMALL}
+        tooltip={allSelected ? 'Deselect all' : 'Select all'}
+      />
 
       {/* Label name */}
-      <h1
-        style={{
-          fontSize: 16,
-          fontWeight: 600,
-          flex: 1,
-          whiteSpace: 'nowrap',
-        }}
-      >
+      <Typography size={TypographySize.LARGE} style={{ flex: 1, fontWeight: 600, whiteSpace: 'nowrap', paddingLeft: 8 }}>
         {labelName}
-        <span
-          style={{
-            fontSize: 13,
-            fontWeight: 400,
-            color: 'var(--mail-text-muted)',
-            marginLeft: 8,
-          }}
-        >
+        <span style={{ fontSize: 13, fontWeight: 400, color: 'var(--hsn-text-tertiary)', marginLeft: 8 }}>
           {filteredThreads.length} {filteredThreads.length === 1 ? 'thread' : 'threads'}
         </span>
-      </h1>
+      </Typography>
 
-      {/* Bulk actions (show when selected) */}
+      {/* Bulk actions */}
       {someSelected && (
         <div style={{ display: 'flex', gap: 2, alignItems: 'center' }}>
-          <HeaderButton icon={<Archive size={16} />} label="Archive" onClick={handleBulkArchive} />
-          <HeaderButton icon={<Star size={16} />} label="Star" onClick={handleBulkStar} />
-          <HeaderButton icon={<Trash2 size={16} />} label="Delete" onClick={handleBulkTrash} />
-          <HeaderButton icon={<MailOpen size={16} />} label="Mark read" onClick={handleBulkMarkRead} />
+          <IconButton icon={<Archive size={16} />} type={Type.TERTIARY} size={Size.SMALL} tooltip="Archive" onClick={handleBulkArchive} />
+          <IconButton icon={<Star size={16} />} type={Type.TERTIARY} size={Size.SMALL} tooltip="Star" onClick={handleBulkStar} />
+          <IconButton icon={<Trash2 size={16} />} type={Type.TERTIARY} size={Size.SMALL} tooltip="Delete" onClick={handleBulkTrash} />
+          <IconButton icon={<MailOpen size={16} />} type={Type.TERTIARY} size={Size.SMALL} tooltip="Mark read" onClick={handleBulkMarkRead} />
           {userLabels.length > 0 && (
-            <div ref={labelRef} style={{ position: 'relative' }}>
-              <HeaderButton icon={<Tag size={16} />} label="Move to label" onClick={() => setLabelMenuOpen(!labelMenuOpen)} />
-              {labelMenuOpen && (
-                <div
-                  style={{
-                    position: 'absolute',
-                    top: '100%',
-                    right: 0,
-                    marginTop: 4,
-                    background: 'var(--mail-bg)',
-                    border: '1px solid var(--mail-border)',
-                    borderRadius: 'var(--mail-radius)',
-                    boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-                    zIndex: 100,
-                    minWidth: 160,
-                    overflow: 'hidden',
-                  }}
-                >
-                  {userLabels.map((label) => (
-                    <button
-                      key={label.id}
-                      onClick={() => handleBulkApplyLabel(label.id)}
-                      style={{
-                        display: 'flex',
-                        alignItems: 'center',
-                        gap: 8,
-                        width: '100%',
-                        padding: '8px 12px',
-                        background: 'none',
-                        border: 'none',
-                        color: 'var(--mail-text)',
-                        fontSize: 13,
-                        cursor: 'pointer',
-                        textAlign: 'left',
-                      }}
-                      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
-                      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-                    >
-                      <span
-                        style={{
-                          width: 10,
-                          height: 10,
-                          borderRadius: '50%',
-                          background: label.color,
-                          flexShrink: 0,
-                        }}
-                      />
-                      {label.name}
-                    </button>
-                  ))}
-                </div>
-              )}
+            <div style={{ position: 'relative' }}>
+              <IconButton
+                ref={labelAnchorRef}
+                icon={<Tag size={16} />}
+                type={Type.TERTIARY}
+                size={Size.SMALL}
+                tooltip="Move to label"
+                onClick={() => setLabelMenuOpen(!labelMenuOpen)}
+              />
+              <Dropdown open={labelMenuOpen} onClose={() => setLabelMenuOpen(false)} anchor={labelAnchorRef} width={180}>
+                {userLabels.map((label) => (
+                  <DropdownItem
+                    key={label.id}
+                    label={label.name}
+                    icon={<span style={{ width: 10, height: 10, borderRadius: '50%', background: label.color, display: 'inline-block' }} />}
+                    onClick={() => handleBulkApplyLabel(label.id)}
+                  />
+                ))}
+              </Dropdown>
             </div>
           )}
         </div>
       )}
 
-      {/* Sort dropdown + Mark all read */}
-      <div ref={sortRef} style={{ position: 'relative' }}>
+      {/* Sort */}
+      <div style={{ position: 'relative' }}>
         <button
+          ref={sortAnchorRef}
           onClick={() => setSortMenuOpen(!sortMenuOpen)}
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             padding: '4px 8px',
             borderRadius: 4,
             display: 'flex',
@@ -321,119 +190,31 @@ export function MailboxHeader() {
             fontSize: 12,
             cursor: 'pointer',
           }}
-          title="Sort by"
         >
           <ArrowDownAZ size={14} />
           {sortBy === 'date' ? 'Date' : sortBy === 'sender' ? 'Sender' : 'Subject'}
         </button>
-        {sortMenuOpen && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: 4,
-              background: 'var(--mail-bg)',
-              border: '1px solid var(--mail-border)',
-              borderRadius: 'var(--mail-radius)',
-              boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-              zIndex: 100,
-              minWidth: 120,
-              overflow: 'hidden',
-            }}
-          >
-            {(['date', 'sender', 'subject'] as const).map((opt) => (
-              <button
-                key={opt}
-                onClick={() => { setSortBy(opt); setSortMenuOpen(false); }}
-                style={{
-                  display: 'flex',
-                  alignItems: 'center',
-                  gap: 8,
-                  width: '100%',
-                  padding: '8px 12px',
-                  background: sortBy === opt ? 'var(--mail-bg-hover)' : 'none',
-                  border: 'none',
-                  color: 'var(--mail-text)',
-                  fontSize: 13,
-                  cursor: 'pointer',
-                  textAlign: 'left',
-                  fontWeight: sortBy === opt ? 600 : 400,
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = sortBy === opt ? 'var(--mail-bg-hover)' : 'none')}
-              >
-                {opt.charAt(0).toUpperCase() + opt.slice(1)}
-                {sortBy === opt && <Check size={12} />}
-              </button>
-            ))}
-          </div>
-        )}
+        <Dropdown open={sortMenuOpen} onClose={() => setSortMenuOpen(false)} anchor={sortAnchorRef} width={140}>
+          {(['date', 'sender', 'subject'] as const).map((opt) => (
+            <DropdownItem
+              key={opt}
+              label={opt.charAt(0).toUpperCase() + opt.slice(1)}
+              active={sortBy === opt}
+              endElement={sortBy === opt ? <Check size={12} /> : undefined}
+              onClick={() => { setSortBy(opt); setSortMenuOpen(false); }}
+            />
+          ))}
+        </Dropdown>
       </div>
 
-      <button
-        onClick={handleMarkAllRead}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--mail-text-muted)',
-          padding: '4px 8px',
-          borderRadius: 4,
-          display: 'flex',
-          alignItems: 'center',
-          gap: 4,
-          fontSize: 12,
-          cursor: 'pointer',
-        }}
-        title="Mark all as read"
-      >
-        <MailOpen size={14} />
-      </button>
-
-      {/* Refresh */}
-      <button
+      <IconButton icon={<MailOpen size={14} />} type={Type.TERTIARY} size={Size.SMALL} tooltip="Mark all as read" onClick={handleMarkAllRead} />
+      <IconButton
+        icon={<RefreshCw size={16} style={{ animation: loading ? 'spin 0.8s linear infinite' : undefined }} />}
+        type={Type.TERTIARY}
+        size={Size.SMALL}
+        tooltip="Refresh"
         onClick={handleRefresh}
-        style={{
-          background: 'none',
-          border: 'none',
-          color: 'var(--mail-text-muted)',
-          padding: 4,
-          borderRadius: 4,
-          display: 'flex',
-          cursor: 'pointer',
-        }}
-        title="Refresh"
-      >
-        <RefreshCw
-          size={16}
-          style={{
-            animation: loading ? 'spin 0.8s linear infinite' : undefined,
-          }}
-        />
-      </button>
+      />
     </div>
-  );
-}
-
-function HeaderButton({ icon, label, onClick }: { icon: React.ReactNode; label: string; onClick?: () => void }) {
-  return (
-    <button
-      title={label}
-      onClick={onClick}
-      style={{
-        background: 'none',
-        border: 'none',
-        color: 'var(--mail-text-muted)',
-        padding: '5px 8px',
-        borderRadius: 'var(--mail-radius-sm)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: 4,
-        fontSize: 13,
-        cursor: 'pointer',
-      }}
-    >
-      {icon}
-    </button>
   );
 }

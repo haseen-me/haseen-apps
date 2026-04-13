@@ -1,12 +1,12 @@
 import { Link, useLocation } from 'react-router-dom';
 import { useState, useEffect } from 'react';
 import { Menu, X } from 'lucide-react';
+import { Button, IconButton, Type, Size } from '@haseen-me/ui';
 
 const NAV_LINKS = [
   { label: 'Features', path: '/features' },
   { label: 'Security', path: '/security' },
   { label: 'Pricing', path: '/pricing' },
-  { label: 'Admin', path: '/admin' },
   { label: 'About', path: '/about' },
 ];
 
@@ -32,17 +32,17 @@ export function Navbar() {
         top: 0,
         left: 0,
         right: 0,
-        height: 'var(--hsn-header-height)',
-        background: scrolled ? 'rgba(255,255,255,0.92)' : 'transparent',
+        height: 'var(--hsn-header-height, 64px)',
+        background: scrolled ? 'var(--hsn-bg-header)' : 'transparent',
         backdropFilter: scrolled ? 'blur(16px)' : 'none',
-        borderBottom: scrolled ? '1px solid var(--hsn-border)' : '1px solid transparent',
+        borderBottom: scrolled ? '1px solid var(--hsn-border-primary)' : '1px solid transparent',
         zIndex: 100,
         transition: 'all 0.25s',
       }}
     >
       <nav
         style={{
-          maxWidth: 'var(--hsn-max-width)',
+          maxWidth: 'var(--hsn-max-width, 1200px)',
           margin: '0 auto',
           height: '100%',
           display: 'flex',
@@ -60,20 +60,16 @@ export function Navbar() {
             gap: 10,
             fontWeight: 700,
             fontSize: 20,
+            color: 'var(--hsn-text-primary)',
+            textDecoration: 'none',
           }}
         >
           <div
             style={{
-              width: 32,
-              height: 32,
-              borderRadius: 8,
-              background: 'var(--hsn-brand)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              color: '#fff',
-              fontWeight: 800,
-              fontSize: 16,
+              width: 32, height: 32, borderRadius: 8,
+              background: 'var(--hsn-cta-primary-default)',
+              display: 'flex', alignItems: 'center', justifyContent: 'center',
+              color: '#fff', fontWeight: 800, fontSize: 16,
             }}
           >
             H
@@ -82,25 +78,15 @@ export function Navbar() {
         </Link>
 
         {/* Desktop links */}
-        <div
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 32,
-          }}
-          className="nav-desktop"
-        >
+        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
           {NAV_LINKS.map((link) => (
             <Link
               key={link.path}
               to={link.path}
               style={{
-                fontSize: 15,
-                fontWeight: 500,
-                color:
-                  location.pathname === link.path
-                    ? 'var(--hsn-brand)'
-                    : 'var(--hsn-text-secondary)',
+                fontSize: 15, fontWeight: 500,
+                color: location.pathname === link.path ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)',
+                textDecoration: 'none',
                 transition: 'color 0.15s',
               }}
             >
@@ -110,50 +96,24 @@ export function Navbar() {
         </div>
 
         {/* CTA */}
-        <div style={{ display: 'flex', alignItems: 'center', gap: 12 }} className="nav-desktop">
-          <a
-            href="/accounts"
-            style={{
-              fontSize: 14,
-              fontWeight: 500,
-              color: 'var(--hsn-text-secondary)',
-              textDecoration: 'none'
-            }}
-          >
+        <div className="nav-desktop" style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+          <Button type={Type.TERTIARY} size={Size.MEDIUM} onClick={() => { window.location.href = '/accounts'; }}>
             Sign in
-          </a>
-          <a
-            href="/accounts/sign-up"
-            style={{
-              fontSize: 14,
-              fontWeight: 600,
-              color: '#fff',
-              background: 'var(--hsn-brand)',
-              padding: '8px 20px',
-              borderRadius: 8,
-              transition: 'background 0.15s',
-              textDecoration: 'none'
-            }}
-          >
+          </Button>
+          <Button type={Type.PRIMARY} size={Size.MEDIUM} onClick={() => { window.location.href = '/accounts/sign-up'; }}>
             Get Started
-          </a>
+          </Button>
         </div>
 
         {/* Mobile hamburger */}
-        <button
+        <IconButton
           className="nav-mobile-btn"
+          icon={mobileOpen ? <X size={24} /> : <Menu size={24} />}
           onClick={() => setMobileOpen(!mobileOpen)}
-          style={{
-            display: 'none',
-            background: 'none',
-            border: 'none',
-            color: 'var(--hsn-text)',
-            padding: 4,
-          }}
-          aria-label="Toggle menu"
-        >
-          {mobileOpen ? <X size={24} /> : <Menu size={24} />}
-        </button>
+          type={Type.TERTIARY}
+          size={Size.MEDIUM}
+          style={{ display: 'none' }}
+        />
       </nav>
 
       {/* Mobile menu */}
@@ -161,15 +121,15 @@ export function Navbar() {
         <div
           style={{
             position: 'absolute',
-            top: 'var(--hsn-header-height)',
+            top: 'var(--hsn-header-height, 64px)',
             left: 0,
             right: 0,
-            background: '#fff',
-            borderBottom: '1px solid var(--hsn-border)',
+            background: 'var(--hsn-bg-header)',
+            borderBottom: '1px solid var(--hsn-border-primary)',
             padding: '16px 24px 24px',
             display: 'flex',
             flexDirection: 'column',
-            gap: 8,
+            gap: 4,
           }}
         >
           {NAV_LINKS.map((link) => (
@@ -177,33 +137,19 @@ export function Navbar() {
               key={link.path}
               to={link.path}
               style={{
-                fontSize: 16,
-                fontWeight: 500,
-                padding: '10px 0',
-                color:
-                  location.pathname === link.path
-                    ? 'var(--hsn-brand)'
-                    : 'var(--hsn-text)',
+                fontSize: 16, fontWeight: 500, padding: '10px 0',
+                color: location.pathname === link.path ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-primary)',
+                textDecoration: 'none',
               }}
             >
               {link.label}
             </Link>
           ))}
-          <Link
-            to="/pricing"
-            style={{
-              fontSize: 15,
-              fontWeight: 600,
-              color: '#fff',
-              background: 'var(--hsn-brand)',
-              padding: '12px 0',
-              borderRadius: 8,
-              textAlign: 'center',
-              marginTop: 8,
-            }}
-          >
-            Get Started
-          </Link>
+          <div style={{ marginTop: 8 }}>
+            <Button type={Type.PRIMARY} size={Size.LARGE} fullWidth onClick={() => { window.location.href = '/accounts/sign-up'; }}>
+              Get Started
+            </Button>
+          </div>
         </div>
       )}
     </header>

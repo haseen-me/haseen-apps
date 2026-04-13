@@ -48,7 +48,7 @@ export function DomainDetail() {
   if (activeDomainLoading || !activeDomain) {
     return (
       <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', height: '100%' }}>
-        <Loader2 size={24} color="var(--mail-brand)" style={{ animation: 'spin 1s linear infinite' }} />
+        <Loader2 size={24} color="var(--hsn-accent-teal)" style={{ animation: 'spin 1s linear infinite' }} />
       </div>
     );
   }
@@ -108,7 +108,7 @@ export function DomainDetail() {
             gap: 6,
             background: 'none',
             border: 'none',
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             fontSize: 13,
             fontWeight: 500,
             cursor: 'pointer',
@@ -134,7 +134,7 @@ export function DomainDetail() {
                 style={{
                   fontSize: 24,
                   fontWeight: 700,
-                  color: 'var(--mail-text)',
+                  color: 'var(--hsn-text-primary)',
                   margin: 0,
                   letterSpacing: '-0.025em',
                 }}
@@ -143,7 +143,7 @@ export function DomainDetail() {
               </h1>
               <StatusBadge status={domain.status} />
             </div>
-            <p style={{ fontSize: 13, color: 'var(--mail-text-muted)', margin: 0 }}>
+            <p style={{ fontSize: 13, color: 'var(--hsn-text-tertiary)', margin: 0 }}>
               {verifiedCount}/4 DNS records verified
             </p>
           </div>
@@ -154,9 +154,9 @@ export function DomainDetail() {
               style={{
                 padding: '9px 16px',
                 borderRadius: 10,
-                border: '1px solid var(--mail-border)',
+                border: '1px solid var(--hsn-border-primary)',
                 background: 'transparent',
-                color: 'var(--mail-text-secondary)',
+                color: 'var(--hsn-text-secondary)',
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -176,9 +176,9 @@ export function DomainDetail() {
               style={{
                 padding: '9px 14px',
                 borderRadius: 10,
-                border: '1px solid var(--mail-border)',
+                border: '1px solid var(--hsn-border-primary)',
                 background: 'transparent',
-                color: 'var(--mail-danger)',
+                color: 'var(--hsn-accent-red)',
                 fontSize: 13,
                 cursor: 'pointer',
                 display: 'flex',
@@ -193,19 +193,19 @@ export function DomainDetail() {
         {/* Progress bar */}
         <div
           style={{
-            background: 'var(--mail-bg-secondary)',
-            border: '1px solid var(--mail-border)',
+            background: 'var(--hsn-bg-l0-solid)',
+            border: '1px solid var(--hsn-border-primary)',
             borderRadius: 12,
             padding: 20,
             marginBottom: 24,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 12, marginBottom: 12 }}>
-            <Shield size={16} color="var(--mail-brand)" />
-            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--mail-text)' }}>
+            <Shield size={16} color="var(--hsn-accent-teal)" />
+            <span style={{ fontSize: 14, fontWeight: 600, color: 'var(--hsn-text-primary)' }}>
               Verification Progress
             </span>
-            <span style={{ fontSize: 12, color: 'var(--mail-text-muted)' }}>
+            <span style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>
               {verifiedCount}/4 complete
             </span>
           </div>
@@ -222,7 +222,7 @@ export function DomainDetail() {
                     flex: 1,
                     height: 6,
                     borderRadius: 3,
-                    background: verified ? 'var(--mail-brand)' : 'var(--mail-border)',
+                    background: verified ? 'var(--hsn-accent-teal)' : 'var(--hsn-border-primary)',
                     transformOrigin: 'left',
                   }}
                 />
@@ -233,7 +233,7 @@ export function DomainDetail() {
             {['MX', 'SPF', 'DKIM', 'DMARC'].map((label) => (
               <div
                 key={label}
-                style={{ flex: 1, textAlign: 'center', fontSize: 10, color: 'var(--mail-text-muted)', fontWeight: 500 }}
+                style={{ flex: 1, textAlign: 'center', fontSize: 10, color: 'var(--hsn-text-tertiary)', fontWeight: 500 }}
               >
                 {label}
               </div>
@@ -246,7 +246,7 @@ export function DomainDetail() {
           style={{
             display: 'flex',
             gap: 0,
-            borderBottom: '1px solid var(--mail-border)',
+            borderBottom: '1px solid var(--hsn-border-primary)',
             marginBottom: 24,
           }}
         >
@@ -265,8 +265,8 @@ export function DomainDetail() {
                 padding: '10px 16px',
                 background: 'none',
                 border: 'none',
-                borderBottom: tab === key ? '2px solid var(--mail-brand)' : '2px solid transparent',
-                color: tab === key ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
+                borderBottom: tab === key ? '2px solid var(--hsn-accent-teal)' : '2px solid transparent',
+                color: tab === key ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-tertiary)',
                 fontSize: 13,
                 fontWeight: tab === key ? 600 : 500,
                 cursor: 'pointer',
@@ -334,7 +334,7 @@ export function DomainDetail() {
                     padding: '8px 16px',
                     borderRadius: 10,
                     border: 'none',
-                    background: 'var(--mail-brand)',
+                    background: 'var(--hsn-accent-teal)',
                     color: '#fff',
                     fontSize: 13,
                     fontWeight: 600,
@@ -354,13 +354,13 @@ export function DomainDetail() {
                   style={{
                     textAlign: 'center',
                     padding: '48px 24px',
-                    background: 'var(--mail-bg-secondary)',
-                    border: '1px dashed var(--mail-border)',
+                    background: 'var(--hsn-bg-l0-solid)',
+                    border: '1px dashed var(--hsn-border-primary)',
                     borderRadius: 12,
                   }}
                 >
-                  <Mail size={28} color="var(--mail-text-muted)" style={{ marginBottom: 12 }} />
-                  <p style={{ fontSize: 14, color: 'var(--mail-text-muted)', margin: 0 }}>
+                  <Mail size={28} color="var(--hsn-text-tertiary)" style={{ marginBottom: 12 }} />
+                  <p style={{ fontSize: 14, color: 'var(--hsn-text-tertiary)', margin: 0 }}>
                     No mailboxes configured yet
                   </p>
                 </div>
@@ -377,8 +377,8 @@ export function DomainDetail() {
                         alignItems: 'center',
                         gap: 12,
                         padding: '14px 16px',
-                        background: 'var(--mail-bg-secondary)',
-                        border: '1px solid var(--mail-border)',
+                        background: 'var(--hsn-bg-l0-solid)',
+                        border: '1px solid var(--hsn-border-primary)',
                         borderRadius: 10,
                       }}
                     >
@@ -387,21 +387,21 @@ export function DomainDetail() {
                           width: 32,
                           height: 32,
                           borderRadius: 8,
-                          background: 'var(--mail-brand-subtle)',
+                          background: 'rgba(45,184,175,0.08)',
                           display: 'flex',
                           alignItems: 'center',
                           justifyContent: 'center',
                           flexShrink: 0,
                         }}
                       >
-                        <Mail size={14} color="var(--mail-brand)" />
+                        <Mail size={14} color="var(--hsn-accent-teal)" />
                       </div>
                       <div style={{ flex: 1 }}>
-                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--mail-text)' }}>
+                        <div style={{ fontSize: 14, fontWeight: 500, color: 'var(--hsn-text-primary)' }}>
                           {mb.localPart}@{domain.domain}
                         </div>
                         {mb.displayName && (
-                          <div style={{ fontSize: 12, color: 'var(--mail-text-muted)' }}>
+                          <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>
                             {mb.displayName}
                           </div>
                         )}
@@ -425,7 +425,7 @@ export function DomainDetail() {
                         style={{
                           background: 'none',
                           border: 'none',
-                          color: 'var(--mail-text-muted)',
+                          color: 'var(--hsn-text-tertiary)',
                           padding: 4,
                           borderRadius: 4,
                           cursor: 'pointer',
@@ -467,8 +467,8 @@ export function DomainDetail() {
                         transform: 'translate(-50%, -50%)',
                         width: '100%',
                         maxWidth: 420,
-                        background: 'var(--mail-bg)',
-                        border: '1px solid var(--mail-border)',
+                        background: 'var(--hsn-bg-l1-solid)',
+                        border: '1px solid var(--hsn-border-primary)',
                         borderRadius: 16,
                         boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2)',
                         zIndex: 1001,
@@ -476,19 +476,19 @@ export function DomainDetail() {
                       }}
                     >
                       <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 20 }}>
-                        <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: 'var(--mail-text)' }}>
+                        <h3 style={{ fontSize: 16, fontWeight: 600, margin: 0, color: 'var(--hsn-text-primary)' }}>
                           Add Mailbox
                         </h3>
                         <button
                           onClick={() => setAddMailboxOpen(false)}
-                          style={{ background: 'none', border: 'none', color: 'var(--mail-text-muted)', cursor: 'pointer', display: 'flex' }}
+                          style={{ background: 'none', border: 'none', color: 'var(--hsn-text-tertiary)', cursor: 'pointer', display: 'flex' }}
                         >
                           <X size={16} />
                         </button>
                       </div>
                       <form onSubmit={handleAddMailbox}>
                         <div style={{ marginBottom: 14 }}>
-                          <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--mail-text-secondary)', display: 'block', marginBottom: 6 }}>
+                          <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--hsn-text-secondary)', display: 'block', marginBottom: 6 }}>
                             Email address
                           </label>
                           <div style={{ display: 'flex', alignItems: 'center', gap: 0 }}>
@@ -502,10 +502,10 @@ export function DomainDetail() {
                                 flex: 1,
                                 padding: '10px 12px',
                                 borderRadius: '10px 0 0 10px',
-                                border: '1px solid var(--mail-border)',
+                                border: '1px solid var(--hsn-border-primary)',
                                 borderRight: 'none',
-                                background: 'var(--mail-bg-secondary)',
-                                color: 'var(--mail-text)',
+                                background: 'var(--hsn-bg-l0-solid)',
+                                color: 'var(--hsn-text-primary)',
                                 fontSize: 14,
                                 outline: 'none',
                               }}
@@ -514,9 +514,9 @@ export function DomainDetail() {
                               style={{
                                 padding: '10px 12px',
                                 borderRadius: '0 10px 10px 0',
-                                border: '1px solid var(--mail-border)',
-                                background: 'var(--mail-bg-hover)',
-                                color: 'var(--mail-text-muted)',
+                                border: '1px solid var(--hsn-border-primary)',
+                                background: 'var(--hsn-bg-cell)',
+                                color: 'var(--hsn-text-tertiary)',
                                 fontSize: 14,
                                 whiteSpace: 'nowrap',
                               }}
@@ -526,7 +526,7 @@ export function DomainDetail() {
                           </div>
                         </div>
                         <div style={{ marginBottom: 14 }}>
-                          <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--mail-text-secondary)', display: 'block', marginBottom: 6 }}>
+                          <label style={{ fontSize: 13, fontWeight: 500, color: 'var(--hsn-text-secondary)', display: 'block', marginBottom: 6 }}>
                             Display name (optional)
                           </label>
                           <input
@@ -538,9 +538,9 @@ export function DomainDetail() {
                               width: '100%',
                               padding: '10px 12px',
                               borderRadius: 10,
-                              border: '1px solid var(--mail-border)',
-                              background: 'var(--mail-bg-secondary)',
-                              color: 'var(--mail-text)',
+                              border: '1px solid var(--hsn-border-primary)',
+                              background: 'var(--hsn-bg-l0-solid)',
+                              color: 'var(--hsn-text-primary)',
                               fontSize: 14,
                               outline: 'none',
                             }}
@@ -551,9 +551,9 @@ export function DomainDetail() {
                             type="checkbox"
                             checked={mailboxCatchAll}
                             onChange={(e) => setMailboxCatchAll(e.target.checked)}
-                            style={{ accentColor: 'var(--mail-brand)' }}
+                            style={{ accentColor: 'var(--hsn-accent-teal)' }}
                           />
-                          <span style={{ fontSize: 13, color: 'var(--mail-text-secondary)' }}>
+                          <span style={{ fontSize: 13, color: 'var(--hsn-text-secondary)' }}>
                             Catch-all (receive all unmatched mail)
                           </span>
                         </label>
@@ -564,9 +564,9 @@ export function DomainDetail() {
                             style={{
                               padding: '9px 16px',
                               borderRadius: 10,
-                              border: '1px solid var(--mail-border)',
+                              border: '1px solid var(--hsn-border-primary)',
                               background: 'transparent',
-                              color: 'var(--mail-text-secondary)',
+                              color: 'var(--hsn-text-secondary)',
                               fontSize: 13,
                               cursor: 'pointer',
                             }}
@@ -580,7 +580,7 @@ export function DomainDetail() {
                               padding: '9px 20px',
                               borderRadius: 10,
                               border: 'none',
-                              background: 'var(--mail-brand)',
+                              background: 'var(--hsn-accent-teal)',
                               color: '#fff',
                               fontSize: 13,
                               fontWeight: 600,
@@ -613,20 +613,20 @@ export function DomainDetail() {
             >
               {dnsLogsLoading ? (
                 <div style={{ textAlign: 'center', padding: 40 }}>
-                  <Loader2 size={20} color="var(--mail-brand)" style={{ animation: 'spin 1s linear infinite' }} />
+                  <Loader2 size={20} color="var(--hsn-accent-teal)" style={{ animation: 'spin 1s linear infinite' }} />
                 </div>
               ) : dnsLogs.length === 0 ? (
                 <div
                   style={{
                     textAlign: 'center',
                     padding: '48px 24px',
-                    background: 'var(--mail-bg-secondary)',
-                    border: '1px dashed var(--mail-border)',
+                    background: 'var(--hsn-bg-l0-solid)',
+                    border: '1px dashed var(--hsn-border-primary)',
                     borderRadius: 12,
                   }}
                 >
-                  <Activity size={28} color="var(--mail-text-muted)" style={{ marginBottom: 12 }} />
-                  <p style={{ fontSize: 14, color: 'var(--mail-text-muted)', margin: 0 }}>
+                  <Activity size={28} color="var(--hsn-text-tertiary)" style={{ marginBottom: 12 }} />
+                  <p style={{ fontSize: 14, color: 'var(--hsn-text-tertiary)', margin: 0 }}>
                     No DNS check logs yet. Click "Verify DNS" to trigger a check.
                   </p>
                 </div>
@@ -643,8 +643,8 @@ export function DomainDetail() {
                         alignItems: 'center',
                         gap: 12,
                         padding: '12px 14px',
-                        background: 'var(--mail-bg-secondary)',
-                        border: '1px solid var(--mail-border)',
+                        background: 'var(--hsn-bg-l0-solid)',
+                        border: '1px solid var(--hsn-border-primary)',
                         borderRadius: 8,
                         fontSize: 13,
                       }}
@@ -661,7 +661,7 @@ export function DomainDetail() {
                       <span
                         style={{
                           fontWeight: 600,
-                          color: 'var(--mail-text)',
+                          color: 'var(--hsn-text-primary)',
                           textTransform: 'uppercase',
                           fontSize: 11,
                           letterSpacing: '0.05em',
@@ -670,10 +670,10 @@ export function DomainDetail() {
                       >
                         {log.checkType}
                       </span>
-                      <span style={{ flex: 1, color: 'var(--mail-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                      <span style={{ flex: 1, color: 'var(--hsn-text-secondary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                         {log.passed ? 'Passed' : `Failed: ${log.actualValue}`}
                       </span>
-                      <span style={{ fontSize: 11, color: 'var(--mail-text-muted)', flexShrink: 0 }}>
+                      <span style={{ fontSize: 11, color: 'var(--hsn-text-tertiary)', flexShrink: 0 }}>
                         {new Date(log.checkedAt).toLocaleTimeString()}
                       </span>
                     </motion.div>
@@ -712,8 +712,8 @@ export function DomainDetail() {
                   transform: 'translate(-50%, -50%)',
                   width: '100%',
                   maxWidth: 380,
-                  background: 'var(--mail-bg)',
-                  border: '1px solid var(--mail-border)',
+                  background: 'var(--hsn-bg-l1-solid)',
+                  border: '1px solid var(--hsn-border-primary)',
                   borderRadius: 16,
                   boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2)',
                   zIndex: 1001,
@@ -735,10 +735,10 @@ export function DomainDetail() {
                 >
                   <Trash2 size={24} color="#e5484d" />
                 </div>
-                <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 8px', color: 'var(--mail-text)' }}>
+                <h3 style={{ fontSize: 16, fontWeight: 600, margin: '0 0 8px', color: 'var(--hsn-text-primary)' }}>
                   Delete {domain.domain}?
                 </h3>
-                <p style={{ fontSize: 13, color: 'var(--mail-text-muted)', margin: '0 0 20px' }}>
+                <p style={{ fontSize: 13, color: 'var(--hsn-text-tertiary)', margin: '0 0 20px' }}>
                   This will permanently remove the domain, all DNS settings, DKIM keys, and associated mailboxes.
                 </p>
                 <div style={{ display: 'flex', gap: 8, justifyContent: 'center' }}>
@@ -747,9 +747,9 @@ export function DomainDetail() {
                     style={{
                       padding: '9px 20px',
                       borderRadius: 10,
-                      border: '1px solid var(--mail-border)',
+                      border: '1px solid var(--hsn-border-primary)',
                       background: 'transparent',
-                      color: 'var(--mail-text-secondary)',
+                      color: 'var(--hsn-text-secondary)',
                       fontSize: 13,
                       cursor: 'pointer',
                     }}

@@ -7,68 +7,36 @@
 }
 
 :root {
-  --drive-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --drive-brand: #2db8af;
-  --drive-brand-hover: #28a79e;
-  --drive-brand-subtle: rgba(45, 184, 175, 0.08);
-  --drive-bg: #ffffff;
-  --drive-bg-secondary: #f8f9fa;
-  --drive-bg-hover: #f3f5f7;
-  --drive-bg-active: #eef0f3;
-  --drive-text: #1a1a2e;
-  --drive-text-secondary: #5a6275;
-  --drive-text-muted: #8b95a8;
-  --drive-border: #e4e8ee;
-  --drive-border-subtle: #eef0f3;
-  --drive-danger: #e5484d;
-  --drive-success: #30a46c;
-  --drive-warning: #f5a623;
-  --drive-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --drive-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
-  --drive-radius: 10px;
-  --drive-radius-sm: 6px;
-  --drive-sidebar-width: 240px;
-  --drive-header-height: 56px;
-}
-
-body.dark {
-  --drive-bg: #0d0f12;
-  --drive-bg-secondary: #161a20;
-  --drive-bg-hover: #1c2028;
-  --drive-bg-active: #242830;
-  --drive-text: #e8eaed;
-  --drive-text-secondary: #9ba3b0;
-  --drive-text-muted: #6b7280;
-  --drive-border: #2a2f38;
-  --drive-border-subtle: #1f242c;
-  --drive-brand-subtle: rgba(45, 184, 175, 0.12);
-  --drive-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --drive-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+  /* Layout dimensions only — colors/surfaces from @haseen-me/ui */
+  --drive-sidebar-width: 220px;
+  --drive-header-height: 52px;
 }
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
 body {
-  font-family: var(--drive-font);
-  color: var(--drive-text);
-  background: var(--drive-bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   overflow: hidden;
   height: 100vh;
 }
 
 #root { height: 100vh; overflow: hidden; }
-a { color: var(--drive-brand); text-decoration: none; }
+
+a { color: var(--hsn-accent-teal); text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--drive-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--drive-text-muted); }
+::-webkit-scrollbar-thumb { background: var(--hsn-border-primary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hsn-icon-secondary); }
 
-*:focus-visible { outline: 2px solid var(--drive-brand); outline-offset: 2px; }
+*:focus-visible { outline: 2px solid var(--hsn-accent-teal); outline-offset: 2px; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Responsive ────────────────────────────────── */
 @media (max-width: 1024px) {
@@ -79,29 +47,17 @@ button { font-family: inherit; cursor: pointer; }
   .drive-product-rail { display: none !important; }
   .drive-sidebar {
     position: fixed !important;
-    left: -280px;
-    top: 0;
-    z-index: 300;
+    left: -280px; top: 0; z-index: 300;
     width: 260px !important;
     transition: left 0.25s ease !important;
-    box-shadow: none;
   }
   .drive-sidebar.mobile-open {
     left: 0;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   }
-  .drive-sidebar-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 299;
-  }
-  .drive-sidebar-backdrop.mobile-open { display: block; }
   .drive-mobile-header { display: flex !important; }
 }
 
 @media (min-width: 769px) {
   .drive-mobile-header { display: none !important; }
-  .drive-sidebar-backdrop { display: none !important; }
 }

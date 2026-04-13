@@ -7,44 +7,10 @@
 }
 
 :root {
-  --mail-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --mail-brand: #2db8af;
-  --mail-brand-hover: #28a79e;
-  --mail-brand-subtle: rgba(45, 184, 175, 0.08);
-  --mail-bg: #ffffff;
-  --mail-bg-secondary: #f8f9fa;
-  --mail-bg-hover: #f3f5f7;
-  --mail-bg-active: #eef0f3;
-  --mail-text: #1a1a2e;
-  --mail-text-secondary: #5a6275;
-  --mail-text-muted: #8b95a8;
-  --mail-border: #e4e8ee;
-  --mail-border-subtle: #eef0f3;
-  --mail-danger: #e5484d;
-  --mail-success: #30a46c;
-  --mail-warning: #f5a623;
-  --mail-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --mail-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
-  --mail-radius: 10px;
-  --mail-radius-sm: 6px;
+  /* Layout dimensions only — colors/surfaces from @haseen-me/ui */
   --mail-sidebar-width: 240px;
   --mail-sidebar-collapsed: 64px;
   --mail-header-height: 52px;
-}
-
-body.dark {
-  --mail-bg: #0d0f12;
-  --mail-bg-secondary: #161a20;
-  --mail-bg-hover: #1c2028;
-  --mail-bg-active: #242830;
-  --mail-text: #e8eaed;
-  --mail-text-secondary: #9ba3b0;
-  --mail-text-muted: #6b7280;
-  --mail-border: #2a2f38;
-  --mail-border-subtle: #1f242c;
-  --mail-brand-subtle: rgba(45, 184, 175, 0.12);
-  --mail-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --mail-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
 }
 
 html {
@@ -53,9 +19,7 @@ html {
 }
 
 body {
-  font-family: var(--mail-font);
-  color: var(--mail-text);
-  background: var(--mail-bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   overflow: hidden;
   height: 100vh;
@@ -67,7 +31,7 @@ body {
 }
 
 a {
-  color: var(--mail-brand);
+  color: var(--hsn-accent-teal);
   text-decoration: none;
 }
 
@@ -77,32 +41,20 @@ button {
 }
 
 ::selection {
-  background: var(--mail-brand);
+  background: var(--hsn-accent-teal);
   color: #fff;
 }
 
 *:focus-visible {
-  outline: 2px solid var(--mail-brand);
+  outline: 2px solid var(--hsn-accent-teal);
   outline-offset: 1px;
 }
 
 /* Scrollbar */
-::-webkit-scrollbar {
-  width: 5px;
-}
-
-::-webkit-scrollbar-track {
-  background: transparent;
-}
-
-::-webkit-scrollbar-thumb {
-  background: var(--mail-border);
-  border-radius: 3px;
-}
-
-::-webkit-scrollbar-thumb:hover {
-  background: var(--mail-text-muted);
-}
+::-webkit-scrollbar { width: 5px; }
+::-webkit-scrollbar-track { background: transparent; }
+::-webkit-scrollbar-thumb { background: var(--hsn-border-primary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hsn-icon-secondary); }
 
 @keyframes spin {
   to { transform: rotate(360deg); }
@@ -118,51 +70,30 @@ button {
 .mail-thread-list { width: 380px; flex-shrink: 0; }
 .mail-thread-detail { flex: 1; }
 
-/* Tablet: auto-collapse sidebar, narrower thread list */
 @media (max-width: 1024px) {
-  :root {
-    --mail-sidebar-width: 200px;
-  }
+  :root { --mail-sidebar-width: 200px; }
   .mail-thread-list { width: 320px; }
 }
 
-/* Mobile: single-pane layout */
 @media (max-width: 768px) {
   :root { --mail-mobile-header: 48px; }
   .mail-product-rail { display: none !important; }
   .mail-sidebar {
     position: fixed !important;
-    left: -280px;
-    top: 0;
-    z-index: 300;
+    left: -280px; top: 0; z-index: 300;
     width: 260px !important;
     transition: left 0.25s ease !important;
-    box-shadow: none;
   }
   .mail-sidebar.mobile-open {
     left: 0;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   }
-  .mail-sidebar-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 299;
-  }
-  .mail-sidebar-backdrop.mobile-open { display: block; }
-  .mail-thread-list {
-    width: 100% !important;
-    flex-shrink: 1 !important;
-  }
+  .mail-thread-list { width: 100% !important; flex-shrink: 1 !important; }
   .mail-thread-list.mobile-hidden { display: none !important; }
   .mail-thread-detail.mobile-hidden { display: none !important; }
-  .mail-mobile-header {
-    display: flex !important;
-  }
+  .mail-mobile-header { display: flex !important; }
 }
 
 @media (min-width: 769px) {
   .mail-mobile-header { display: none !important; }
-  .mail-sidebar-backdrop { display: none !important; }
 }

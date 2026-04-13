@@ -33,7 +33,7 @@ export function MiniCalendar() {
   for (let i = 1; i <= daysInMonth; i++) days.push(i);
 
   return (
-    <div style={{ padding: '4px 16px 12px', borderBottom: '1px solid var(--cal-border)' }}>
+    <div style={{ padding: '4px 16px 12px', borderBottom: '1px solid var(--hsn-border-primary)' }}>
       <div
         style={{
           display: 'flex',
@@ -48,7 +48,7 @@ export function MiniCalendar() {
             background: 'none',
             border: 'none',
             padding: 4,
-            color: 'var(--cal-text-secondary)',
+            color: 'var(--hsn-text-secondary)',
           }}
         >
           <ChevronLeft size={14} />
@@ -62,7 +62,7 @@ export function MiniCalendar() {
             background: 'none',
             border: 'none',
             padding: 4,
-            color: 'var(--cal-text-secondary)',
+            color: 'var(--hsn-text-secondary)',
           }}
         >
           <ChevronRight size={14} />
@@ -78,7 +78,7 @@ export function MiniCalendar() {
         }}
       >
         {['Su', 'Mo', 'Tu', 'We', 'Th', 'Fr', 'Sa'].map((d) => (
-          <div key={d} style={{ color: 'var(--cal-text-muted)', padding: 2, fontWeight: 600 }}>
+          <div key={d} style={{ color: 'var(--hsn-text-tertiary)', padding: 2, fontWeight: 600 }}>
             {d}
           </div>
         ))}
@@ -111,15 +111,15 @@ export function MiniCalendar() {
                 borderRadius: '50%',
                 fontSize: 11,
                 background: isToday
-                  ? 'var(--cal-brand)'
+                  ? 'var(--hsn-accent-teal)'
                   : isSelected
-                    ? 'var(--cal-brand-subtle)'
+                    ? 'rgba(45,184,175,0.1)'
                     : 'transparent',
                 color: isToday
                   ? '#fff'
                   : day === null
                     ? 'transparent'
-                    : 'var(--cal-text)',
+                    : 'var(--hsn-text-primary)',
                 fontWeight: isToday ? 600 : 400,
                 cursor: day !== null ? 'pointer' : 'default',
               }}

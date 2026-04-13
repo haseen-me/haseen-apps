@@ -111,9 +111,9 @@ export function DayView() {
       <div
         style={{
           padding: '12px 20px',
-          borderBottom: '1px solid var(--cal-border)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           fontSize: 13,
-          color: 'var(--cal-text-secondary)',
+          color: 'var(--hsn-text-secondary)',
         }}
       >
         {DAYS[currentDate.getDay()]}, {MONTHS[currentDate.getMonth()]} {currentDate.getDate()}
@@ -124,7 +124,7 @@ export function DayView() {
         <div
           style={{
             padding: '6px 20px 6px 80px',
-            borderBottom: '1px solid var(--cal-border)',
+            borderBottom: '1px solid var(--hsn-border-primary)',
             display: 'flex',
             gap: 6,
             flexWrap: 'wrap',
@@ -167,7 +167,7 @@ export function DayView() {
                     alignItems: 'flex-start',
                     justifyContent: 'flex-end',
                     fontSize: 10,
-                    color: 'var(--cal-text-muted)',
+                    color: 'var(--hsn-text-tertiary)',
                     transform: 'translateY(-6px)',
                   }}
                 >
@@ -206,14 +206,14 @@ export function DayView() {
                   }}
                   style={{
                     height: 60,
-                    borderBottom: '1px solid var(--cal-border-subtle)',
+                    borderBottom: '1px solid var(--hsn-border-primary)',
                     cursor: 'pointer',
                     background:
                       dragStartHour !== null &&
                       dragEndHour !== null &&
                       h >= Math.min(dragStartHour, dragEndHour) &&
                       h <= Math.max(dragStartHour, dragEndHour)
-                        ? 'var(--cal-brand-subtle, rgba(66,133,244,0.15))'
+                        ? 'rgba(45,184,175,0.1)'
                         : undefined,
                     transition: 'background 0.05s',
                   }}
@@ -286,12 +286,12 @@ export function DayView() {
                   >
                     <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
                     {evt.location && (
-                      <div style={{ fontSize: 10, color: 'var(--cal-text-muted)' }}>
+                      <div style={{ fontSize: 10, color: 'var(--hsn-text-tertiary)' }}>
                         {evt.location}
                       </div>
                     )}
                     {(evt.attendeeCount ?? 0) > 0 && (
-                      <div style={{ fontSize: 10, color: 'var(--cal-text-muted)' }}>
+                      <div style={{ fontSize: 10, color: 'var(--hsn-text-tertiary)' }}>
                         {evt.attendeeCount} attendee{evt.attendeeCount !== 1 ? 's' : ''}
                       </div>
                     )}

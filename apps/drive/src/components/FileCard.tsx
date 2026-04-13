@@ -72,9 +72,9 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
       }}
       style={{
         padding: 16,
-        borderRadius: 'var(--drive-radius)',
-        border: `1px solid ${selected ? 'var(--drive-brand)' : 'var(--drive-border)'}`,
-        background: selected ? 'var(--drive-brand-subtle)' : 'var(--drive-bg)',
+        borderRadius: '8px',
+        border: `1px solid ${selected ? 'var(--hsn-cta-primary-default)' : 'var(--hsn-border-primary)'}`,
+        background: selected ? 'rgba(45,184,175,0.08)' : 'var(--hsn-bg-l1-solid)',
         cursor: 'pointer',
         transition: 'border-color 0.12s, background 0.12s, box-shadow 0.12s',
         userSelect: 'none',
@@ -84,13 +84,13 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
       }}
       onMouseEnter={(e) => {
         if (!selected) {
-          e.currentTarget.style.background = 'var(--drive-bg-hover)';
-          e.currentTarget.style.boxShadow = 'var(--drive-shadow)';
+          e.currentTarget.style.background = 'var(--hsn-bg-cell)';
+          e.currentTarget.style.boxShadow = 'var(--hsn-shadow-l1)';
         }
       }}
       onMouseLeave={(e) => {
         if (!selected) {
-          e.currentTarget.style.background = 'var(--drive-bg)';
+          e.currentTarget.style.background = 'var(--hsn-bg-l1-solid)';
           e.currentTarget.style.boxShadow = 'none';
         }
       }}
@@ -99,8 +99,8 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
       <div
         style={{
           height: 100,
-          borderRadius: 'var(--drive-radius-sm)',
-          background: 'var(--drive-bg-secondary)',
+          borderRadius: '6px',
+          background: 'var(--hsn-bg-l0-solid)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -111,8 +111,8 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
         {file.starred && (
           <Star
             size={14}
-            fill="var(--drive-warning, #f59e0b)"
-            color="var(--drive-warning, #f59e0b)"
+            fill="#f59e0b"
+            color="#f59e0b"
             style={{ position: 'absolute', top: 8, right: 8 }}
           />
         )}
@@ -125,7 +125,7 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
             style={{
               fontSize: 13,
               fontWeight: 500,
-              color: 'var(--drive-text)',
+              color: 'var(--hsn-text-primary)',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
               whiteSpace: 'nowrap',
@@ -134,7 +134,7 @@ export function FileCard({ file, isTrash }: { file: DriveFile; isTrash?: boolean
           >
             {file.name}
           </div>
-          <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', marginTop: 2 }}>
             {formatFileSize(file.size)}
           </div>
         </div>
@@ -181,25 +181,25 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
         alignItems: 'center',
         gap: 12,
         padding: '10px 16px',
-        borderRadius: 'var(--drive-radius-sm)',
-        background: selected ? 'var(--drive-brand-subtle)' : 'transparent',
+        borderRadius: '6px',
+        background: selected ? 'rgba(45,184,175,0.08)' : 'transparent',
         cursor: 'pointer',
         transition: 'background 0.12s',
         userSelect: 'none',
       }}
-      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = 'var(--drive-bg-hover)'; }}
-      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = selected ? 'var(--drive-brand-subtle)' : 'transparent'; }}
+      onMouseEnter={(e) => { if (!selected) e.currentTarget.style.background = 'var(--hsn-bg-cell)'; }}
+      onMouseLeave={(e) => { if (!selected) e.currentTarget.style.background = selected ? 'rgba(45,184,175,0.08)' : 'transparent'; }}
     >
       <FileIcon mimeType={file.mimeType} />
       {file.starred && (
-        <Star size={14} fill="var(--drive-warning, #f59e0b)" color="var(--drive-warning, #f59e0b)" style={{ flexShrink: 0 }} />
+        <Star size={14} fill="#f59e0b" color="#f59e0b" style={{ flexShrink: 0 }} />
       )}
       <span
         style={{
           flex: 1,
           fontSize: 14,
           fontWeight: 500,
-          color: 'var(--drive-text)',
+          color: 'var(--hsn-text-primary)',
           overflow: 'hidden',
           textOverflow: 'ellipsis',
           whiteSpace: 'nowrap',
@@ -207,10 +207,10 @@ export function FileRow({ file, isTrash }: { file: DriveFile; isTrash?: boolean 
       >
         {file.name}
       </span>
-      <span style={{ fontSize: 13, color: 'var(--drive-text-muted)', width: 120, textAlign: 'right' }}>
+      <span style={{ fontSize: 13, color: 'var(--hsn-text-tertiary)', width: 120, textAlign: 'right' }}>
         {dateStr}
       </span>
-      <span style={{ fontSize: 13, color: 'var(--drive-text-muted)', width: 80, textAlign: 'right' }}>
+      <span style={{ fontSize: 13, color: 'var(--hsn-text-tertiary)', width: 80, textAlign: 'right' }}>
         {formatFileSize(file.size)}
       </span>
       <FileContextMenu file={file} isTrash={isTrash} />

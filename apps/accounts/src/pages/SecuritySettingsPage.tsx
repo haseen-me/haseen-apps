@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
-import { Shield, Smartphone, Key, AlertTriangle, Check, Trash2, Monitor, X } from 'lucide-react';
+import { Shield, Smartphone, Key, AlertTriangle, Trash2, Monitor, X } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
-import { Button, FormField, Alert } from '@/components/FormUI';
+import { InputField, Input, InputType, Banner, Button, CodeInput, CodeInputType, Chip, ChipSize, Skeleton, Surface, Typography, TypographySize, TypographyWeight, MonoTag, IconButton, Type, Size } from '@haseen-me/ui';
 import { useAuthStore } from '@/store/auth';
 import { authApi } from '@/api/auth';
 
@@ -94,7 +94,7 @@ export function SecuritySettingsPage() {
       const data = await authApi.listSessions();
       setSessions(data);
     } catch {
-      // silently fail — sessions will show empty
+      // silently fail
     } finally {
       setSessionsLoading(false);
     }
@@ -116,180 +116,128 @@ export function SecuritySettingsPage() {
     loadSessions();
   }, []);
 
+  const passwordMismatch = confirmPassword.length > 0 && newPassword !== confirmPassword;
+
   return (
     <SettingsLayout activeTab="/settings/security">
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Security</h1>
-      <p style={{ fontSize: 14, color: 'var(--acc-text-secondary)', marginBottom: 32 }}>
+      <Typography size={TypographySize.H3} weight={TypographyWeight.SEMIBOLD} style={{ marginBottom: 4 }}>
+        Security
+      </Typography>
+      <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 32 }}>
         Manage your password and two-factor authentication.
-      </p>
+      </Typography>
 
-      {/* Password section */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-          marginBottom: 20,
-        }}
-      >
+      {/* Password */}
+      <Surface level="l1" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Key size={18} style={{ color: 'var(--acc-brand)' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Password</h3>
+          <Key size={18} style={{ color: 'var(--hsn-accent-teal)' }} />
+          <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>Password</Typography>
         </div>
-        <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
+        <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 16 }}>
           Your password is used to derive encryption keys locally. It is never sent to our servers.
-        </p>
+        </Typography>
 
-        {pwSuccess && <Alert type="success">Password updated successfully.</Alert>}
-        {pwError && <Alert type="error">{pwError}</Alert>}
+        {pwSuccess && <Banner color="success" style={{ marginBottom: 12, borderRadius: 8 }}>Password updated successfully.</Banner>}
+        {pwError && <Banner color="error" style={{ marginBottom: 12, borderRadius: 8 }}>{pwError}</Banner>}
 
         {!showPasswordChange ? (
-          <Button variant="secondary" onClick={() => setShowPasswordChange(true)}>
+          <Button type={Type.SECONDARY} size={Size.MEDIUM} onClick={() => setShowPasswordChange(true)}>
             Change password
           </Button>
         ) : (
           <div style={{ maxWidth: 360 }}>
-            <FormField
-              label="Current password"
-              type="password"
-              value={currentPassword}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setCurrentPassword(e.target.value)}
-              autoComplete="current-password"
-            />
-            <FormField
-              label="New password"
-              type="password"
-              placeholder="At least 8 characters"
-              value={newPassword}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setNewPassword(e.target.value)}
-              autoComplete="new-password"
-            />
-            <FormField
-              label="Confirm new password"
-              type="password"
-              value={confirmPassword}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setConfirmPassword(e.target.value)}
-              error={confirmPassword && newPassword !== confirmPassword ? 'Passwords do not match' : undefined}
-              autoComplete="new-password"
-            />
+            <InputField label="Current password" style={{ marginBottom: 14 }}>
+              <Input type={InputType.PASSWORD} value={currentPassword} onChange={(e) => setCurrentPassword(e.target.value)} autoComplete="current-password" />
+            </InputField>
+            <InputField label="New password" style={{ marginBottom: 14 }}>
+              <Input type={InputType.PASSWORD} placeholder="At least 10 characters" value={newPassword} onChange={(e) => setNewPassword(e.target.value)} autoComplete="new-password" />
+            </InputField>
+            <InputField label="Confirm new password" error={passwordMismatch} subText={passwordMismatch ? 'Passwords do not match' : undefined} style={{ marginBottom: 16 }}>
+              <Input type={InputType.PASSWORD} value={confirmPassword} onChange={(e) => setConfirmPassword(e.target.value)} autoComplete="new-password" error={passwordMismatch} />
+            </InputField>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button onClick={handlePasswordChange} disabled={newPassword.length < 8 || newPassword !== confirmPassword} loading={pwLoading}>
+              <Button type={Type.PRIMARY} size={Size.MEDIUM} onClick={handlePasswordChange} disabled={newPassword.length < 10 || newPassword !== confirmPassword} loading={pwLoading}>
                 Update password
               </Button>
-              <Button variant="secondary" onClick={() => setShowPasswordChange(false)}>
+              <Button type={Type.SECONDARY} size={Size.MEDIUM} onClick={() => setShowPasswordChange(false)}>
                 Cancel
               </Button>
             </div>
           </div>
         )}
-      </div>
+      </Surface>
 
-      {/* MFA section */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-          marginBottom: 20,
-        }}
-      >
+      {/* MFA */}
+      <Surface level="l1" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-            <Smartphone size={18} style={{ color: 'var(--acc-brand)' }} />
-            <h3 style={{ fontSize: 16, fontWeight: 600 }}>Two-Factor Authentication</h3>
+            <Smartphone size={18} style={{ color: 'var(--hsn-accent-teal)' }} />
+            <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>Two-Factor Authentication</Typography>
           </div>
           {user?.mfaEnabled && (
-            <span
-              style={{
-                fontSize: 12,
-                fontWeight: 600,
-                color: 'var(--acc-success)',
-                background: 'rgba(48,164,108,0.08)',
-                padding: '4px 10px',
-                borderRadius: 12,
-                display: 'flex',
-                alignItems: 'center',
-                gap: 4,
-              }}
-            >
-              <Check size={12} /> Enabled
-            </span>
+            <Chip
+              label="✓ Enabled"
+              size={ChipSize.SMALL}
+              style={{ background: 'var(--hsn-accent-green-secondary)', color: 'var(--hsn-accent-green-primary)' }}
+            />
           )}
         </div>
-        <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
+        <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 16 }}>
           Add an extra layer of security by requiring a code from your authenticator app when signing in.
-        </p>
+        </Typography>
 
-        {mfaError && <Alert type="error">{mfaError}</Alert>}
+        {mfaError && <Banner color="error" style={{ marginBottom: 12, borderRadius: 8 }}>{mfaError}</Banner>}
 
         {mfaStep === 'idle' && !user?.mfaEnabled && (
-          <Button onClick={handleEnableMfa} loading={mfaLoading}>
-            <Shield size={16} /> Enable 2FA
+          <Button type={Type.PRIMARY} size={Size.MEDIUM} onClick={handleEnableMfa} loading={mfaLoading} startIcon={<Shield size={16} />}>
+            Enable 2FA
           </Button>
         )}
 
         {mfaStep === 'setup' && (
           <div>
-            <Alert type="info">
+            <Banner color="info" style={{ marginBottom: 16, borderRadius: 8 }}>
               Scan this QR code with your authenticator app (Google Authenticator, Authy, etc.)
-            </Alert>
+            </Banner>
             {mfaOtpAuthUrl ? (
               <img
                 src={`https://api.qrserver.com/v1/create-qr-code/?size=200x200&data=${encodeURIComponent(mfaOtpAuthUrl)}`}
                 alt="MFA QR Code"
                 width={200}
                 height={200}
-                style={{
-                  border: '1px solid var(--acc-border)',
-                  borderRadius: 'var(--acc-radius-sm)',
-                  margin: '16px 0',
-                }}
+                style={{ border: '1px solid var(--hsn-border-primary)', borderRadius: 8, margin: '16px 0', display: 'block' }}
               />
             ) : (
-              <div
-                style={{
-                  width: 200,
-                  height: 200,
-                  background: 'var(--acc-bg)',
-                  border: '1px solid var(--acc-border)',
-                  borderRadius: 'var(--acc-radius-sm)',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center',
-                  margin: '16px 0',
-                  fontSize: 12,
-                  color: 'var(--acc-text-muted)',
-                }}
-              >
-                Loading QR code...
-              </div>
+              <Skeleton style={{ width: 200, height: 200, borderRadius: 8, margin: '16px 0' }} />
             )}
-            <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', marginBottom: 12 }}>
-              Manual entry key: <code style={{ background: 'var(--acc-bg)', padding: '2px 6px', borderRadius: 4, fontFamily: 'monospace' }}>{mfaSecret || 'Loading...'}</code>
-            </p>
-            <Button onClick={() => setMfaStep('verify')}>
+            <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-tertiary)', marginBottom: 12 }}>
+              Manual entry key: <MonoTag>{mfaSecret || 'Loading…'}</MonoTag>
+            </Typography>
+            <Button type={Type.PRIMARY} size={Size.MEDIUM} onClick={() => setMfaStep('verify')}>
               Next: Verify code
             </Button>
           </div>
         )}
 
         {mfaStep === 'verify' && (
-          <div style={{ maxWidth: 300 }}>
-            <FormField
-              label="Enter 6-digit code"
-              placeholder="000000"
-              value={mfaCode}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              inputMode="numeric"
-              style={{ letterSpacing: '0.3em', fontFamily: 'monospace', fontSize: 18, textAlign: 'center' }}
-            />
+          <div>
+            <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 16 }}>
+              Enter the 6-digit code from your authenticator app:
+            </Typography>
+            <div style={{ display: 'flex', justifyContent: 'flex-start', marginBottom: 20 }}>
+              <CodeInput
+                length={6}
+                type={CodeInputType.NUMERIC}
+                onChange={setMfaCode}
+                onComplete={(code: string) => { if (code.length === 6) handleVerifyMfa(); }}
+                autoFocus
+              />
+            </div>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button onClick={handleVerifyMfa} disabled={mfaCode.length !== 6} loading={mfaLoading}>
+              <Button type={Type.PRIMARY} size={Size.MEDIUM} onClick={handleVerifyMfa} disabled={mfaCode.length !== 6} loading={mfaLoading}>
                 Verify & Enable
               </Button>
-              <Button variant="secondary" onClick={() => { setMfaStep('idle'); setMfaCode(''); }}>
+              <Button type={Type.SECONDARY} size={Size.MEDIUM} onClick={() => { setMfaStep('idle'); setMfaCode(''); }}>
                 Cancel
               </Button>
             </div>
@@ -297,81 +245,58 @@ export function SecuritySettingsPage() {
         )}
 
         {user?.mfaEnabled && mfaStep === 'idle' && (
-          <Button variant="danger" onClick={handleDisableMfa} loading={mfaLoading}>
-            <Trash2 size={14} /> Disable 2FA
+          <Button type={Type.DESTRUCTIVE} size={Size.MEDIUM} onClick={handleDisableMfa} loading={mfaLoading} startIcon={<Trash2 size={14} />}>
+            Disable 2FA
           </Button>
         )}
-      </div>
+      </Surface>
 
       {/* Sessions */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-        }}
-      >
+      <Surface level="l1" style={{ padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <AlertTriangle size={18} style={{ color: 'var(--acc-warning)' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Active Sessions</h3>
+          <AlertTriangle size={18} style={{ color: 'var(--hsn-accent-orange)' }} />
+          <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>Active Sessions</Typography>
         </div>
-        <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
+        <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 16 }}>
           Manage your active sessions across devices.
-        </p>
+        </Typography>
+
         {sessionsLoading ? (
-          <p style={{ fontSize: 13, color: 'var(--acc-text-muted)' }}>Loading sessions...</p>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+            {[1, 2].map((i) => <Skeleton key={i} style={{ height: 60, borderRadius: 8 }} />)}
+          </div>
         ) : sessions.length === 0 ? (
-          <p style={{ fontSize: 13, color: 'var(--acc-text-muted)' }}>No active sessions found.</p>
+          <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-tertiary)' }}>
+            No active sessions found.
+          </Typography>
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
             {sessions.map((session) => (
-              <div
-                key={session.id}
-                style={{
-                  padding: '12px 16px',
-                  borderRadius: 'var(--acc-radius-sm)',
-                  background: 'var(--acc-bg)',
-                  border: '1px solid var(--acc-border)',
-                  display: 'flex',
-                  justifyContent: 'space-between',
-                  alignItems: 'center',
-                  fontSize: 13,
-                }}
-              >
+              <Surface key={session.id} level="l0" style={{ padding: '12px 16px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                  <Monitor size={16} style={{ color: 'var(--acc-text-muted)' }} />
+                  <Monitor size={16} style={{ color: 'var(--hsn-icon-secondary)' }} />
                   <div>
-                    <strong>
-                      {session.userAgent || 'Unknown device'}
-                      {session.current ? ' (This device)' : ''}
-                    </strong>
-                    <p style={{ color: 'var(--acc-text-muted)', fontSize: 12, marginTop: 2 }}>
+                    <Typography size={TypographySize.BODY} weight={TypographyWeight.MEDIUM}>
+                      {session.userAgent || 'Unknown device'}{session.current ? ' (This device)' : ''}
+                    </Typography>
+                    <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-tertiary)', marginTop: 2 }}>
                       {session.ipAddress || 'Unknown IP'} · Created {new Date(session.createdAt).toLocaleDateString()}
-                    </p>
+                    </Typography>
                   </div>
                 </div>
-                <button
+                <IconButton
+                  icon={<X size={16} />}
                   onClick={() => handleRevokeSession(session.id)}
                   disabled={revokingId === session.id}
-                  title="Revoke session"
-                  style={{
-                    background: 'none',
-                    border: 'none',
-                    cursor: 'pointer',
-                    color: 'var(--acc-danger, #dc3545)',
-                    padding: 4,
-                    borderRadius: 4,
-                    opacity: revokingId === session.id ? 0.5 : 1,
-                  }}
-                >
-                  <X size={16} />
-                </button>
-              </div>
+                  type={Type.DESTRUCTIVE}
+                  size={Size.SMALL}
+                  tooltip="Revoke session"
+                />
+              </Surface>
             ))}
           </div>
         )}
-      </div>
+      </Surface>
     </SettingsLayout>
   );
 }

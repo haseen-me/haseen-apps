@@ -1,7 +1,7 @@
 import type { ReactNode } from 'react';
 import { Link } from 'react-router-dom';
 import { MoonStar, SunMedium } from 'lucide-react';
-import { useEffect, useState } from 'react';
+import { Surface, Typography, TypographySize, TypographyWeight, IconButton, Type, Size, useTheme, ThemeMode } from '@haseen-me/ui';
 
 interface AuthLayoutProps {
   children: ReactNode;
@@ -10,16 +10,8 @@ interface AuthLayoutProps {
 }
 
 export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
-  const [isDark, setIsDark] = useState(
-    document.documentElement.getAttribute('data-theme') === 'dark',
-  );
-
-  useEffect(() => {
-    const nextTheme = isDark ? 'dark' : 'light';
-    document.documentElement.setAttribute('data-theme', nextTheme);
-    document.body.classList.toggle('dark', isDark);
-    localStorage.setItem('haseen-theme', nextTheme);
-  }, [isDark]);
+  const { theme, setStoredTheme } = useTheme();
+  const isDark = theme === ThemeMode.DARK;
 
   return (
     <div
@@ -29,10 +21,11 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
         alignItems: 'center',
         justifyContent: 'center',
         padding: '24px 16px',
+        background: 'var(--hsn-bg-app)',
       }}
     >
-      <div className="auth-shell" style={{ maxWidth: 460 }}>
-        <section className="auth-panel" style={{ padding: 18 }}>
+      <div style={{ width: '100%', maxWidth: 460 }}>
+        <Surface level="l1" style={{ padding: 18 }}>
           <div
             style={{
               display: 'flex',
@@ -47,7 +40,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                 display: 'inline-flex',
                 alignItems: 'center',
                 gap: 10,
-                color: 'var(--acc-text)',
+                color: 'var(--hsn-text-primary)',
                 fontWeight: 700,
                 fontSize: 18,
                 textDecoration: 'none',
@@ -58,7 +51,7 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
                   width: 34,
                   height: 34,
                   borderRadius: 10,
-                  background: 'linear-gradient(135deg, var(--acc-brand), var(--acc-brand-2))',
+                  background: 'var(--hsn-cta-primary-default)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -72,38 +65,38 @@ export function AuthLayout({ children, title, subtitle }: AuthLayoutProps) {
               Haseen
             </Link>
 
-            <button className="auth-theme-button" onClick={() => setIsDark((value) => !value)} type="button">
-              {isDark ? <SunMedium size={16} /> : <MoonStar size={16} />}
-            </button>
+            <IconButton
+              icon={isDark ? <SunMedium size={16} /> : <MoonStar size={16} />}
+              onClick={() => setStoredTheme(isDark ? ThemeMode.LIGHT : ThemeMode.DARK)}
+              type={Type.TERTIARY}
+              size={Size.SMALL}
+              tooltip={isDark ? 'Switch to light mode' : 'Switch to dark mode'}
+            />
           </div>
 
-          <div
-            style={{
-              background: 'linear-gradient(180deg, var(--acc-bg-card-strong), var(--acc-bg-card))',
-              borderRadius: 20,
-              border: '1px solid var(--acc-border)',
-              boxShadow: 'var(--acc-shadow-soft)',
-              padding: '28px 22px',
-            }}
-          >
-            <h2 style={{ fontSize: 26, fontWeight: 750, marginBottom: 6, textAlign: 'center', letterSpacing: '-0.03em' }}>
+          <Surface level="l2" style={{ padding: '28px 22px' }}>
+            <Typography
+              size={TypographySize.H2}
+              weight={TypographyWeight.SEMIBOLD}
+              style={{ textAlign: 'center', marginBottom: subtitle ? 6 : 22 }}
+            >
               {title}
-            </h2>
+            </Typography>
             {subtitle && (
-              <p
+              <Typography
+                size={TypographySize.BODY}
                 style={{
-                  fontSize: 14,
-                  color: 'var(--acc-text-secondary)',
+                  color: 'var(--hsn-text-secondary)',
                   textAlign: 'center',
                   marginBottom: 22,
                 }}
               >
                 {subtitle}
-              </p>
+              </Typography>
             )}
             {children}
-          </div>
-        </section>
+          </Surface>
+        </Surface>
       </div>
     </div>
   );

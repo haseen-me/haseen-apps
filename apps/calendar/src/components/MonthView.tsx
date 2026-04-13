@@ -78,8 +78,8 @@ export function MonthView() {
       }}
     >
       {/* Day headers */}
-      <div style={{ display: 'grid', gridTemplateColumns: '32px repeat(7, 1fr)', borderBottom: '1px solid var(--cal-border)' }}>
-        <div style={{ padding: '8px 0', fontSize: 9, fontWeight: 600, color: 'var(--cal-text-muted)', textAlign: 'center' }}>Wk</div>
+      <div style={{ display: 'grid', gridTemplateColumns: '32px repeat(7, 1fr)', borderBottom: '1px solid var(--hsn-border-primary)' }}>
+        <div style={{ padding: '8px 0', fontSize: 9, fontWeight: 600, color: 'var(--hsn-text-tertiary)', textAlign: 'center' }}>Wk</div>
         {DAYS.map((d) => (
           <div
             key={d}
@@ -89,7 +89,7 @@ export function MonthView() {
               fontWeight: 600,
               textTransform: 'uppercase',
               letterSpacing: '0.05em',
-              color: 'var(--cal-text-muted)',
+              color: 'var(--hsn-text-tertiary)',
               textAlign: 'center',
             }}
           >
@@ -118,9 +118,9 @@ export function MonthView() {
                 paddingTop: 6,
                 fontSize: 10,
                 fontWeight: 500,
-                color: 'var(--cal-text-muted)',
-                borderRight: '1px solid var(--cal-border-subtle)',
-                borderBottom: '1px solid var(--cal-border-subtle)',
+                color: 'var(--hsn-text-tertiary)',
+                borderRight: '1px solid var(--hsn-border-primary)',
+                borderBottom: '1px solid var(--hsn-border-primary)',
               }}
             >
               {getISOWeekNumber(week[0]!)}
@@ -135,11 +135,11 @@ export function MonthView() {
                   key={di}
                   onClick={() => openNewEvent(date)}
                   style={{
-                    borderRight: di < 6 ? '1px solid var(--cal-border-subtle)' : undefined,
-                    borderBottom: '1px solid var(--cal-border-subtle)',
+                    borderRight: di < 6 ? '1px solid var(--hsn-border-primary)' : undefined,
+                    borderBottom: '1px solid var(--hsn-border-primary)',
                     padding: 4,
                     cursor: 'pointer',
-                    background: isToday ? 'var(--cal-brand-subtle)' : 'transparent',
+                    background: isToday ? 'rgba(45,184,175,0.1)' : 'transparent',
                     opacity: isCurrentMonth ? 1 : 0.4,
                     overflow: 'hidden',
                   }}
@@ -161,8 +161,8 @@ export function MonthView() {
                         borderRadius: '50%',
                         fontSize: 12,
                         fontWeight: isToday ? 600 : 400,
-                        background: isToday ? 'var(--cal-brand)' : 'transparent',
-                        color: isToday ? '#fff' : 'var(--cal-text)',
+                        background: isToday ? 'var(--hsn-accent-teal)' : 'transparent',
+                        color: isToday ? '#fff' : 'var(--hsn-text-primary)',
                       }}
                     >
                       {date.getDate()}
@@ -199,7 +199,7 @@ export function MonthView() {
                     </div>
                   ))}
                   {dayEvents.length > 3 && (
-                    <div style={{ fontSize: 10, color: 'var(--cal-text-muted)', textAlign: 'center' }}>
+                    <div style={{ fontSize: 10, color: 'var(--hsn-text-tertiary)', textAlign: 'center' }}>
                       +{dayEvents.length - 3} more
                     </div>
                   )}

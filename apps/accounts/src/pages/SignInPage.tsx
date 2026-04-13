@@ -3,7 +3,7 @@ import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { Mail, Lock, Fingerprint } from 'lucide-react';
 import { startAuthentication } from '@simplewebauthn/browser';
 import { AuthLayout } from '@/layout/AuthLayout';
-import { FormField, Button, Alert } from '@/components/FormUI';
+import { InputField, Input, InputType, Banner, Button, Divider, CodeInput, CodeInputType, Typography, TypographySize, Type, Size } from '@haseen-me/ui';
 import { useAuthStore } from '@/store/auth';
 import { decryptPrivateKeys } from '@haseen-me/crypto';
 import { authApi } from '@/api/auth';
@@ -69,8 +69,8 @@ export function SignInPage() {
     }
   };
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
     if (!email.trim() || !password) return;
 
     const normalizedEmail = email.trim().toLowerCase();
@@ -169,69 +169,103 @@ export function SignInPage() {
   if (!hydrated) {
     return (
       <AuthLayout title="Sign in" subtitle="Welcome back to Haseen.">
-        <p style={{ textAlign: 'center', color: 'var(--acc-text-muted)' }}>Loading…</p>
+        <Typography size={TypographySize.BODY} style={{ textAlign: 'center', color: 'var(--hsn-text-secondary)' }}>
+          Loading…
+        </Typography>
       </AuthLayout>
     );
   }
 
   return (
     <AuthLayout title="Sign in" subtitle="Welcome back to Haseen.">
-      {error && <Alert type="error">{error}</Alert>}
+      {error && (
+        <Banner color="error" style={{ marginBottom: 16, borderRadius: 8 }}>
+          {error}
+        </Banner>
+      )}
 
       <form onSubmit={handleSubmit}>
         {!mfaToken ? (
           <>
-            <FormField
-              label="Email address"
-              type="email"
-              placeholder="john@example.com"
-              value={email}
-              onChange={(e) => setEmail(e.target.value)}
-              icon={<Mail size={16} />}
-              autoComplete="email"
-            />
-            <FormField
-              label="Password"
-              type="password"
-              placeholder="Your password"
-              value={password}
-              onChange={(e) => setPassword(e.target.value)}
-              icon={<Lock size={16} />}
-              autoComplete="current-password"
-            />
-            <div style={{ textAlign: 'right', marginBottom: 12 }}>
-              <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--acc-brand)' }}>
+            <InputField label="Email address" style={{ marginBottom: 14 }}>
+              <Input
+                type={InputType.EMAIL}
+                placeholder="john@example.com"
+                value={email}
+                onChange={(e) => setEmail(e.target.value)}
+                startIcon={<Mail size={16} />}
+                autoComplete="email"
+              />
+            </InputField>
+
+            <InputField label="Password" style={{ marginBottom: 8 }}>
+              <Input
+                type={InputType.PASSWORD}
+                placeholder="Your password"
+                value={password}
+                onChange={(e) => setPassword(e.target.value)}
+                startIcon={<Lock size={16} />}
+                autoComplete="current-password"
+              />
+            </InputField>
+
+            <div style={{ textAlign: 'right', marginBottom: 16 }}>
+              <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--hsn-accent-teal)' }}>
                 Forgot password?
               </Link>
             </div>
-            <Button type="button" variant="secondary" fullWidth onClick={handlePasskey} disabled={loading} style={{ marginBottom: 10 }}>
-              <Fingerprint size={16} style={{ marginRight: 8 }} />
+
+            <Button
+              type={Type.SECONDARY}
+              size={Size.MEDIUM}
+              fullWidth
+              onClick={handlePasskey}
+              disabled={loading}
+              startIcon={<Fingerprint size={16} />}
+              style={{ marginBottom: 10 }}
+            >
               Continue with passkey
             </Button>
           </>
         ) : (
           <>
-            <Alert type="info">Enter your 6-digit authentication code.</Alert>
-            <FormField
-              label="Authenticator code"
-              placeholder="000000"
-              value={mfaCode}
-              onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              inputMode="numeric"
-            />
+            <Banner color="info" style={{ marginBottom: 16, borderRadius: 8 }}>
+              Enter your 6-digit authentication code.
+            </Banner>
+            <div style={{ display: 'flex', justifyContent: 'center', marginBottom: 16 }}>
+              <CodeInput
+                length={6}
+                type={CodeInputType.NUMERIC}
+                onChange={setMfaCode}
+                autoFocus
+              />
+            </div>
           </>
         )}
 
-        {status && <p style={{ marginBottom: 10, fontSize: 12, color: 'var(--acc-text-muted)' }}>{status}</p>}
+        {status && (
+          <Typography size={TypographySize.CAPTION} style={{ marginBottom: 10, color: 'var(--hsn-text-tertiary)', textAlign: 'center' }}>
+            {status}
+          </Typography>
+        )}
 
-        <Button type="submit" fullWidth loading={loading} disabled={loading}>
+        <Divider />
+
+        <Button
+          type={Type.PRIMARY}
+          size={Size.LARGE}
+          fullWidth
+          onClick={handleSubmit}
+          loading={loading}
+          disabled={loading}
+        >
           {mfaToken ? 'Verify & continue' : 'Sign in'}
         </Button>
       </form>
 
-      <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--acc-text-secondary)', marginTop: 16 }}>
-        New here? <Link to="/sign-up">Create an account</Link>
-      </p>
+      <Typography size={TypographySize.BODY} style={{ textAlign: 'center', color: 'var(--hsn-text-secondary)', marginTop: 16 }}>
+        New here? <Link to="/sign-up" style={{ color: 'var(--hsn-accent-teal)' }}>Create an account</Link>
+      </Typography>
     </AuthLayout>
   );
 }

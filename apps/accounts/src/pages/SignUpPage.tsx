@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { Mail, Lock, User } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
-import { FormField, Button, Alert } from '@/components/FormUI';
+import { InputField, Input, InputType, Banner, Button, Typography, TypographySize, Type, Size } from '@haseen-me/ui';
 import { useAuthStore } from '@/store/auth';
 import {
   generateKeyPair,
@@ -41,24 +41,13 @@ export function SignUpPage() {
     return Object.keys(errs).length === 0;
   };
 
-  const handleSubmit = async (e: FormEvent<HTMLFormElement>) => {
-    e.preventDefault();
+  const handleSubmit = async (e?: FormEvent<HTMLFormElement> | React.MouseEvent) => {
+    e?.preventDefault();
 
-    const formData = new FormData(e.currentTarget);
-    const submittedName = String(formData.get('name') ?? name);
-    const submittedEmail = String(formData.get('email') ?? email);
-    const submittedPassword = String(formData.get('password') ?? password);
-    const submittedConfirmPassword = String(formData.get('confirmPassword') ?? confirmPassword);
+    if (!validate({ name, email, password, confirmPassword })) return;
 
-    if (!validate({
-      name: submittedName,
-      email: submittedEmail,
-      password: submittedPassword,
-      confirmPassword: submittedConfirmPassword,
-    })) return;
-
-    const normalizedEmail = submittedEmail.trim().toLowerCase();
-    const normalizedName = submittedName.trim();
+    const normalizedEmail = email.trim().toLowerCase();
+    const normalizedName = name.trim();
 
     setLoading(true);
     setError(null);
@@ -77,7 +66,7 @@ export function SignUpPage() {
       setStatus('Creating account...');
       const response = await authApi.register({
         email: normalizedEmail,
-        password: submittedPassword,
+        password,
         displayName: normalizedName,
         publicKey: toBase64(encKP.publicKey),
         signingKey: toBase64(sigKP.publicKey),
@@ -130,70 +119,87 @@ export function SignUpPage() {
 
   return (
     <AuthLayout title="Create account" subtitle="Set up your Haseen account.">
-      {error && <Alert type="error">{error}</Alert>}
+      {error && (
+        <Banner color="error" style={{ marginBottom: 16, borderRadius: 8 }}>
+          {error}
+        </Banner>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <FormField
-          label="Full name"
-          name="name"
-          placeholder="John Doe"
-          value={name}
-          onChange={(e) => setName(e.target.value)}
-          icon={<User size={16} />}
-          error={fieldErrors['name']}
-          autoComplete="name"
-        />
-        <FormField
-          label="Email address"
-          name="email"
-          type="email"
-          placeholder="john@haseen.me"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          icon={<Mail size={16} />}
-          error={fieldErrors['email']}
-          autoComplete="email"
-        />
-        <FormField
-          label="Password"
-          name="password"
-          type="password"
-          placeholder="At least 10 characters"
-          value={password}
-          onChange={(e) => setPassword(e.target.value)}
-          icon={<Lock size={16} />}
-          error={fieldErrors['password']}
-          autoComplete="new-password"
-        />
-        <FormField
-          label="Confirm password"
-          name="confirmPassword"
-          type="password"
-          placeholder="Repeat your password"
-          value={confirmPassword}
-          onChange={(e) => setConfirmPassword(e.target.value)}
-          icon={<Lock size={16} />}
-          error={fieldErrors['confirm']}
-          autoComplete="new-password"
-        />
+        <InputField label="Full name" error={!!fieldErrors['name']} subText={fieldErrors['name']} style={{ marginBottom: 14 }}>
+          <Input
+            type={InputType.TEXT}
+            placeholder="John Doe"
+            value={name}
+            onChange={(e) => setName(e.target.value)}
+            startIcon={<User size={16} />}
+            autoComplete="name"
+            error={!!fieldErrors['name']}
+          />
+        </InputField>
 
-        <div style={{ marginTop: 2, marginBottom: 12 }}>
-          <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', lineHeight: 1.5 }}>
-            Your vault keys stay on this device. The server stores only Argon2-hashed credentials and your public keys.
-          </p>
-        </div>
+        <InputField label="Email address" error={!!fieldErrors['email']} subText={fieldErrors['email']} style={{ marginBottom: 14 }}>
+          <Input
+            type={InputType.EMAIL}
+            placeholder="john@haseen.me"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            startIcon={<Mail size={16} />}
+            autoComplete="email"
+            error={!!fieldErrors['email']}
+          />
+        </InputField>
 
-        {status && <p style={{ marginBottom: 10, fontSize: 12, color: 'var(--acc-text-muted)' }}>{status}</p>}
+        <InputField label="Password" error={!!fieldErrors['password']} subText={fieldErrors['password']} style={{ marginBottom: 14 }}>
+          <Input
+            type={InputType.PASSWORD}
+            placeholder="At least 10 characters"
+            value={password}
+            onChange={(e) => setPassword(e.target.value)}
+            startIcon={<Lock size={16} />}
+            autoComplete="new-password"
+            error={!!fieldErrors['password']}
+          />
+        </InputField>
 
-        <Button type="submit" fullWidth loading={loading} disabled={loading}>
-          {loading ? status || 'Creating Account...' : 'Create Account'}
+        <InputField label="Confirm password" error={!!fieldErrors['confirm']} subText={fieldErrors['confirm']} style={{ marginBottom: 14 }}>
+          <Input
+            type={InputType.PASSWORD}
+            placeholder="Repeat your password"
+            value={confirmPassword}
+            onChange={(e) => setConfirmPassword(e.target.value)}
+            startIcon={<Lock size={16} />}
+            autoComplete="new-password"
+            error={!!fieldErrors['confirm']}
+          />
+        </InputField>
+
+        <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-tertiary)', lineHeight: 1.5, marginBottom: 16 }}>
+          Your vault keys stay on this device. The server stores only Argon2-hashed credentials and your public keys.
+        </Typography>
+
+        {status && (
+          <Typography size={TypographySize.CAPTION} style={{ marginBottom: 10, color: 'var(--hsn-text-tertiary)', textAlign: 'center' }}>
+            {status}
+          </Typography>
+        )}
+
+        <Button
+          type={Type.PRIMARY}
+          size={Size.LARGE}
+          fullWidth
+          onClick={handleSubmit}
+          loading={loading}
+          disabled={loading}
+        >
+          {loading ? status || 'Creating Account…' : 'Create Account'}
         </Button>
       </form>
 
-      <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--acc-text-secondary)' }}>
+      <Typography size={TypographySize.BODY} style={{ textAlign: 'center', color: 'var(--hsn-text-secondary)', marginTop: 16 }}>
         Already have an account?{' '}
-        <Link to="/sign-in">Sign in</Link>
-      </p>
+        <Link to="/sign-in" style={{ color: 'var(--hsn-accent-teal)' }}>Sign in</Link>
+      </Typography>
     </AuthLayout>
   );
 }

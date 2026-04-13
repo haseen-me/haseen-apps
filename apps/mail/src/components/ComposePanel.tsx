@@ -160,7 +160,7 @@ export function ComposePanel() {
     if (composeOpen && !replyToThreadId && !forwardFromThreadId) {
       const sig = localStorage.getItem('haseen-mail-signature');
       if (sig) {
-        const sigHtml = `<br><div class="haseen-signature" style="color:var(--mail-text-muted);border-top:1px solid var(--mail-border);padding-top:8px;margin-top:16px;font-size:13px">${sig}</div>`;
+        const sigHtml = `<br><div class="haseen-signature" style="color:var(--hsn-text-tertiary);border-top:1px solid var(--hsn-border-primary);padding-top:8px;margin-top:16px;font-size:13px">${sig}</div>`;
         setBody(sigHtml);
         if (bodyRef.current) bodyRef.current.innerHTML = sigHtml;
       }
@@ -349,7 +349,7 @@ export function ComposePanel() {
           width: 320,
           height: 40,
           borderRadius: '8px 8px 0 0',
-          background: 'var(--mail-text)',
+          background: 'var(--hsn-text-primary)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -357,7 +357,7 @@ export function ComposePanel() {
           gap: 8,
           cursor: 'pointer',
           zIndex: 100,
-          boxShadow: 'var(--mail-shadow-lg)',
+          boxShadow: 'var(--hsn-shadow-l3)',
         }}
         onClick={() => setMinimized(false)}
       >
@@ -387,9 +387,9 @@ export function ComposePanel() {
         width: 520,
         maxHeight: 'calc(100vh - 60px)',
         borderRadius: '12px 12px 0 0',
-        background: 'var(--mail-bg)',
-        boxShadow: 'var(--mail-shadow-lg)',
-        border: '1px solid var(--mail-border)',
+        background: 'var(--hsn-bg-l1-solid)',
+        boxShadow: 'var(--hsn-shadow-l3)',
+        border: '1px solid var(--hsn-border-primary)',
         borderBottom: 'none',
         display: 'flex',
         flexDirection: 'column',
@@ -401,7 +401,7 @@ export function ComposePanel() {
       <div
         style={{
           padding: '10px 16px',
-          background: 'var(--mail-text)',
+          background: 'var(--hsn-text-primary)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -441,7 +441,7 @@ export function ComposePanel() {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--mail-text-muted)',
+                  color: 'var(--hsn-text-tertiary)',
                   fontSize: 12,
                   cursor: 'pointer',
                   padding: '0 4px',
@@ -468,7 +468,7 @@ export function ComposePanel() {
           alignItems: 'center',
           gap: 1,
           padding: '4px 16px',
-          borderBottom: '1px solid var(--mail-border)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           flexShrink: 0,
         }}
       >
@@ -476,10 +476,10 @@ export function ComposePanel() {
         <ToolbarBtn icon={<Italic size={14} />} label="Italic" cmd="italic" />
         <ToolbarBtn icon={<Underline size={14} />} label="Underline" cmd="underline" />
         <ToolbarBtn icon={<Strikethrough size={14} />} label="Strikethrough" cmd="strikeThrough" />
-        <div style={{ width: 1, height: 18, background: 'var(--mail-border)', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 18, background: 'var(--hsn-border-primary)', margin: '0 4px' }} />
         <ToolbarBtn icon={<List size={14} />} label="Bullet list" cmd="insertUnorderedList" />
         <ToolbarBtn icon={<ListOrdered size={14} />} label="Numbered list" cmd="insertOrderedList" />
-        <div style={{ width: 1, height: 18, background: 'var(--mail-border)', margin: '0 4px' }} />
+        <div style={{ width: 1, height: 18, background: 'var(--hsn-border-primary)', margin: '0 4px' }} />
         <ToolbarBtn
           icon={<Link size={14} />}
           label="Insert link"
@@ -512,7 +512,7 @@ export function ComposePanel() {
           lineHeight: 1.7,
           outline: 'none',
           overflow: 'auto',
-          color: 'var(--mail-text)',
+          color: 'var(--hsn-text-primary)',
         }}
       />
 
@@ -528,16 +528,16 @@ export function ComposePanel() {
                 gap: 4,
                 padding: '3px 8px',
                 borderRadius: 12,
-                background: 'var(--mail-bg-active)',
+                background: 'var(--hsn-bg-cell)',
                 fontSize: 12,
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
               }}
             >
               <Paperclip size={11} />
               {f.name}
               <button
                 onClick={() => setAttachments((prev) => prev.filter((_, j) => j !== i))}
-                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--mail-text-muted)', display: 'flex' }}
+                style={{ background: 'none', border: 'none', padding: 0, cursor: 'pointer', color: 'var(--hsn-text-tertiary)', display: 'flex' }}
               >
                 <X size={11} />
               </button>
@@ -550,7 +550,7 @@ export function ComposePanel() {
       <div
         style={{
           padding: '10px 16px',
-          borderTop: '1px solid var(--mail-border)',
+          borderTop: '1px solid var(--hsn-border-primary)',
           display: 'flex',
           alignItems: 'center',
           gap: 8,
@@ -565,8 +565,8 @@ export function ComposePanel() {
             alignItems: 'center',
             gap: 6,
             padding: '8px 20px',
-            borderRadius: 'var(--mail-radius)',
-            background: sending || to.length === 0 ? 'var(--mail-text-muted)' : 'var(--mail-brand)',
+            borderRadius: '8px',
+            background: sending || to.length === 0 ? 'var(--hsn-text-tertiary)' : 'var(--hsn-accent-teal)',
             color: '#fff',
             border: 'none',
             fontWeight: 600,
@@ -581,7 +581,7 @@ export function ComposePanel() {
 
         <label
           style={{
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             padding: 4,
             borderRadius: 4,
             display: 'flex',
@@ -612,7 +612,7 @@ export function ComposePanel() {
             alignItems: 'center',
             gap: 4,
             fontSize: 12,
-            color: localStorage.getItem('haseen-mail-signature') ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
+            color: localStorage.getItem('haseen-mail-signature') ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-tertiary)',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -632,7 +632,7 @@ export function ComposePanel() {
             alignItems: 'center',
             gap: 4,
             fontSize: 12,
-            color: encrypted ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
+            color: encrypted ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-tertiary)',
             background: 'none',
             border: 'none',
             cursor: 'pointer',
@@ -651,7 +651,7 @@ export function ComposePanel() {
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             fontSize: 13,
             cursor: 'pointer',
             padding: '4px 8px',
@@ -687,13 +687,13 @@ function ComposeField({
         alignItems: 'center',
         gap: 8,
         padding: '8px 0',
-        borderBottom: '1px solid var(--mail-border-subtle)',
+        borderBottom: '1px solid var(--hsn-border-primary)',
       }}
     >
       <label
         style={{
           fontSize: 13,
-          color: 'var(--mail-text-muted)',
+          color: 'var(--hsn-text-tertiary)',
           width: 56,
           flexShrink: 0,
           fontWeight: 500,
@@ -711,7 +711,7 @@ function ComposeField({
           outline: 'none',
           fontSize: 14,
           background: 'transparent',
-          color: 'var(--mail-text)',
+          color: 'var(--hsn-text-primary)',
           fontFamily: 'inherit',
         }}
       />
@@ -747,14 +747,14 @@ function ToolbarBtn({
       style={{
         background: 'none',
         border: 'none',
-        color: 'var(--mail-text-muted)',
+        color: 'var(--hsn-text-tertiary)',
         padding: '4px 6px',
         borderRadius: 4,
         display: 'flex',
         alignItems: 'center',
         cursor: 'pointer',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-bg-cell)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
     >
       {icon}
@@ -790,7 +790,7 @@ function SignatureEditor({ onClose }: { onClose: () => void }) {
     >
       <div
         style={{
-          background: 'var(--mail-bg)',
+          background: 'var(--hsn-bg-l1-solid)',
           borderRadius: 12,
           padding: 20,
           width: 400,
@@ -798,14 +798,14 @@ function SignatureEditor({ onClose }: { onClose: () => void }) {
           display: 'flex',
           flexDirection: 'column',
           gap: 12,
-          boxShadow: 'var(--mail-shadow-lg)',
+          boxShadow: 'var(--hsn-shadow-l3)',
         }}
       >
         <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between' }}>
-          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--mail-text)' }}>Email Signature</span>
+          <span style={{ fontWeight: 600, fontSize: 14, color: 'var(--hsn-text-primary)' }}>Email Signature</span>
           <button
             onClick={onClose}
-            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--mail-text-muted)', display: 'flex' }}
+            style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hsn-text-tertiary)', display: 'flex' }}
           >
             <X size={16} />
           </button>
@@ -818,17 +818,17 @@ function SignatureEditor({ onClose }: { onClose: () => void }) {
             flex: 1,
             minHeight: 120,
             padding: 10,
-            border: '1px solid var(--mail-border)',
+            border: '1px solid var(--hsn-border-primary)',
             borderRadius: 8,
             fontSize: 13,
             fontFamily: 'inherit',
             resize: 'vertical',
             outline: 'none',
-            background: 'var(--mail-bg)',
-            color: 'var(--mail-text)',
+            background: 'var(--hsn-bg-l1-solid)',
+            color: 'var(--hsn-text-primary)',
           }}
         />
-        <div style={{ fontSize: 11, color: 'var(--mail-text-muted)' }}>
+        <div style={{ fontSize: 11, color: 'var(--hsn-text-tertiary)' }}>
           Supports HTML. Signature is auto-appended to new messages.
         </div>
         <div style={{ display: 'flex', gap: 8, justifyContent: 'flex-end' }}>
@@ -838,9 +838,9 @@ function SignatureEditor({ onClose }: { onClose: () => void }) {
               style={{
                 padding: '6px 14px',
                 borderRadius: 6,
-                border: '1px solid var(--mail-border)',
+                border: '1px solid var(--hsn-border-primary)',
                 background: 'none',
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 fontSize: 13,
                 cursor: 'pointer',
               }}
@@ -854,7 +854,7 @@ function SignatureEditor({ onClose }: { onClose: () => void }) {
               padding: '6px 14px',
               borderRadius: 6,
               border: 'none',
-              background: 'var(--mail-brand)',
+              background: 'var(--hsn-accent-teal)',
               color: '#fff',
               fontSize: 13,
               fontWeight: 600,

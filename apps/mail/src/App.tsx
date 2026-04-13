@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { requireAuth } from '@haseen-me/shared';
+import { HaseenThemeProvider } from '@haseen-me/ui';
 import { MailLayout } from '@/layout/MailLayout';
 import { MailboxList } from '@/components/MailboxList';
 import { ThreadView } from '@/components/ThreadView';
@@ -158,6 +159,7 @@ export function App() {
   if (!authed) return null;
 
   return (
+    <HaseenThemeProvider>
     <ErrorBoundary>
     <MailLayout>
       {settingsView === 'domains' ? (
@@ -185,5 +187,6 @@ export function App() {
       />
     </MailLayout>
     </ErrorBoundary>
+    </HaseenThemeProvider>
   );
 }

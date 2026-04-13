@@ -52,12 +52,12 @@ export function ThreadView() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--mail-text-muted)',
+          color: 'var(--hsn-text-tertiary)',
           gap: 12,
         }}
       >
         <Mail size={48} style={{ opacity: 0.3 }} />
-        <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--mail-text-secondary)' }}>
+        <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--hsn-text-secondary)' }}>
           Select a conversation
         </div>
         <div style={{ fontSize: 13 }}>Choose a thread from the left to read</div>
@@ -204,7 +204,7 @@ export function ThreadView() {
       <div
         style={{
           padding: '12px 20px',
-          borderBottom: '1px solid var(--mail-border)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           display: 'flex',
           alignItems: 'center',
           gap: 12,
@@ -216,7 +216,7 @@ export function ThreadView() {
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             padding: 4,
             borderRadius: 4,
             display: 'flex',
@@ -240,10 +240,10 @@ export function ThreadView() {
           >
             {decryptedSubject}
           </h2>
-          <div style={{ fontSize: 12, color: 'var(--mail-text-muted)', marginTop: 2 }}>
+          <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', marginTop: 2 }}>
             {thread.messages.length} message{thread.messages.length > 1 ? 's' : ''} ·{' '}
             {thread.messages.some((m) => m.encrypted) && (
-              <span style={{ color: 'var(--mail-brand)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
+              <span style={{ color: 'var(--hsn-accent-teal)', display: 'inline-flex', alignItems: 'center', gap: 3 }}>
                 <Lock size={11} /> Encrypted
               </span>
             )}
@@ -265,9 +265,9 @@ export function ThreadView() {
                 top: '100%',
                 right: 0,
                 marginTop: 4,
-                background: 'var(--mail-bg)',
-                border: '1px solid var(--mail-border)',
-                borderRadius: 'var(--mail-radius)',
+                background: 'var(--hsn-bg-l1-solid)',
+                border: '1px solid var(--hsn-border-primary)',
+                borderRadius: '8px',
                 boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
                 zIndex: 100,
                 minWidth: 160,
@@ -290,7 +290,7 @@ export function ThreadView() {
                   handleToggleStar();
                 }}
               />
-              <div style={{ height: 1, background: 'var(--mail-border)', margin: '4px 0' }} />
+              <div style={{ height: 1, background: 'var(--hsn-border-primary)', margin: '4px 0' }} />
               <MenuButton
                 icon={<Archive size={15} />}
                 label="Move to archive"
@@ -304,8 +304,8 @@ export function ThreadView() {
               />
               {userLabels.length > 0 && (
                 <>
-                  <div style={{ height: 1, background: 'var(--mail-border)', margin: '4px 0' }} />
-                  <div style={{ padding: '4px 12px', fontSize: 11, color: 'var(--mail-text-muted)', fontWeight: 600, textTransform: 'uppercase' }}>
+                  <div style={{ height: 1, background: 'var(--hsn-border-primary)', margin: '4px 0' }} />
+                  <div style={{ padding: '4px 12px', fontSize: 11, color: 'var(--hsn-text-tertiary)', fontWeight: 600, textTransform: 'uppercase' }}>
                     Move to label
                   </div>
                   {userLabels.map((label) => (
@@ -328,7 +328,7 @@ export function ThreadView() {
         style={{
           flex: 1,
           overflow: 'auto',
-          background: 'var(--mail-bg-secondary)',
+          background: 'var(--hsn-bg-l0-solid)',
         }}
       >
         <div style={{ maxWidth: 800, margin: '0 auto' }}>
@@ -346,11 +346,11 @@ export function ThreadView() {
         <div
           style={{
             padding: '12px 20px',
-            borderTop: '1px solid var(--mail-border)',
+            borderTop: '1px solid var(--hsn-border-primary)',
             display: 'flex',
             gap: 8,
             flexShrink: 0,
-            background: 'var(--mail-bg)',
+            background: 'var(--hsn-bg-l1-solid)',
           }}
         >
           <button
@@ -360,8 +360,8 @@ export function ThreadView() {
               alignItems: 'center',
               gap: 6,
               padding: '8px 16px',
-              borderRadius: 'var(--mail-radius)',
-              background: 'var(--mail-brand)',
+              borderRadius: '8px',
+              background: 'var(--hsn-accent-teal)',
               color: '#fff',
               border: 'none',
               fontWeight: 500,
@@ -381,10 +381,10 @@ export function ThreadView() {
               alignItems: 'center',
               gap: 6,
               padding: '8px 16px',
-              borderRadius: 'var(--mail-radius)',
-              background: 'var(--mail-bg-secondary)',
-              color: 'var(--mail-text-secondary)',
-              border: '1px solid var(--mail-border)',
+              borderRadius: '8px',
+              background: 'var(--hsn-bg-l0-solid)',
+              color: 'var(--hsn-text-secondary)',
+              border: '1px solid var(--hsn-border-primary)',
               fontWeight: 500,
               fontSize: 14,
               cursor: 'pointer',
@@ -406,9 +406,9 @@ function ActionButton({ icon, label, onClick }: { icon: React.ReactNode; label: 
       style={{
         background: 'none',
         border: 'none',
-        color: 'var(--mail-text-muted)',
+        color: 'var(--hsn-text-tertiary)',
         padding: '5px 8px',
-        borderRadius: 'var(--mail-radius-sm)',
+        borderRadius: '6px',
         display: 'flex',
         cursor: 'pointer',
       }}
@@ -430,12 +430,12 @@ function MenuButton({ icon, label, onClick, danger }: { icon: React.ReactNode; l
         padding: '8px 12px',
         background: 'none',
         border: 'none',
-        color: danger ? 'var(--mail-danger, #e5484d)' : 'var(--mail-text)',
+        color: danger ? 'var(--hsn-accent-red)' : 'var(--hsn-text-primary)',
         fontSize: 13,
         cursor: 'pointer',
         textAlign: 'left',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--mail-bg-hover)')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-bg-cell)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
     >
       {icon}

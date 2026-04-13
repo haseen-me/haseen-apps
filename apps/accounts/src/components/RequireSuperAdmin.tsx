@@ -8,7 +8,7 @@ export function RequireSuperAdmin({ children }: { children: ReactNode }) {
 
   if (!hydrated) {
     return (
-      <div style={{ padding: 48, textAlign: 'center', color: 'var(--acc-text-muted)' }}>
+      <div style={{ padding: 48, textAlign: 'center', color: 'var(--hsn-text-tertiary)' }}>
         Loading…
       </div>
     );

@@ -58,13 +58,13 @@ export function EmptyState({ label }: { label: string }) {
         justifyContent: 'center',
         height: '100%',
         padding: 40,
-        color: 'var(--mail-text-muted)',
+        color: 'var(--hsn-text-tertiary)',
         textAlign: 'center',
         gap: 12,
       }}
     >
       <div style={{ opacity: 0.4 }}>{config.icon}</div>
-      <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--mail-text-secondary)' }}>
+      <div style={{ fontSize: 16, fontWeight: 500, color: 'var(--hsn-text-secondary)' }}>
         {config.title}
       </div>
       <div style={{ fontSize: 13 }}>{config.subtitle}</div>

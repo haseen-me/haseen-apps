@@ -59,10 +59,10 @@ function isPdfType(contentType: string): boolean {
 }
 
 function attachmentIcon(contentType: string) {
-  if (isImageType(contentType)) return <ImageIcon size={14} style={{ color: 'var(--mail-text-muted)' }} />;
+  if (isImageType(contentType)) return <ImageIcon size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />;
   if (isPdfType(contentType)) return <FileText size={14} style={{ color: '#e5484d' }} />;
-  if (contentType.startsWith('text/')) return <FileText size={14} style={{ color: 'var(--mail-text-muted)' }} />;
-  return <File size={14} style={{ color: 'var(--mail-text-muted)' }} />;
+  if (contentType.startsWith('text/')) return <FileText size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />;
+  return <File size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />;
 }
 
 export function MessageItem({ message, isLast }: { message: Message; isLast: boolean }) {
@@ -99,8 +99,8 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
   return (
     <div
       style={{
-        borderBottom: '1px solid var(--mail-border-subtle)',
-        background: 'var(--mail-bg)',
+        borderBottom: '1px solid var(--hsn-border-primary)',
+        background: 'var(--hsn-bg-l1-solid)',
       }}
     >
       {/* Header */}
@@ -136,7 +136,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
         <div style={{ flex: 1, minWidth: 0 }}>
           <div style={{ display: 'flex', alignItems: 'baseline', gap: 8 }}>
             <span style={{ fontWeight: 600, fontSize: 14 }}>{from.name || from.address}</span>
-            <span style={{ fontSize: 12, color: 'var(--mail-text-muted)' }}>
+            <span style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>
               &lt;{from.address}&gt;
             </span>
           </div>
@@ -144,7 +144,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
             <div
               style={{
                 fontSize: 13,
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 whiteSpace: 'nowrap',
                 overflow: 'hidden',
                 textOverflow: 'ellipsis',
@@ -158,12 +158,12 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
 
         <div style={{ display: 'flex', alignItems: 'center', gap: 8, flexShrink: 0 }}>
           {message.encrypted && (
-            <Lock size={14} style={{ color: 'var(--mail-brand)' }} />
+            <Lock size={14} style={{ color: 'var(--hsn-accent-teal)' }} />
           )}
-          <span style={{ fontSize: 12, color: 'var(--mail-text-muted)', whiteSpace: 'nowrap' }}>
+          <span style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', whiteSpace: 'nowrap' }}>
             {formatShortDate(message.date)}
           </span>
-          {collapsed ? <ChevronDown size={16} style={{ color: 'var(--mail-text-muted)' }} /> : <ChevronUp size={16} style={{ color: 'var(--mail-text-muted)' }} />}
+          {collapsed ? <ChevronDown size={16} style={{ color: 'var(--hsn-text-tertiary)' }} /> : <ChevronUp size={16} style={{ color: 'var(--hsn-text-tertiary)' }} />}
         </div>
       </div>
 
@@ -171,7 +171,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
       {!collapsed && (
         <div style={{ padding: '0 20px 16px 68px' }}>
           {/* Recipients */}
-          <div style={{ fontSize: 12, color: 'var(--mail-text-muted)', marginBottom: 8 }}>
+          <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', marginBottom: 8 }}>
             <span>To: {message.to.map((r) => r.name || r.address).join(', ')}</span>
             {message.cc.length > 0 && (
               <span style={{ marginLeft: 12 }}>Cc: {message.cc.map((r) => r.name || r.address).join(', ')}</span>
@@ -179,7 +179,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
           </div>
 
           {/* Date */}
-          <div style={{ fontSize: 12, color: 'var(--mail-text-muted)', marginBottom: 12 }}>
+          <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', marginBottom: 12 }}>
             {formatFullDate(message.date)}
           </div>
 
@@ -193,8 +193,8 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                 fontSize: 12,
                 padding: '4px 10px',
                 borderRadius: 20,
-                background: 'var(--mail-brand-subtle)',
-                color: 'var(--mail-brand)',
+                background: 'rgba(45,184,175,0.08)',
+                color: 'var(--hsn-accent-teal)',
                 marginBottom: 12,
                 fontWeight: 500,
               }}
@@ -219,7 +219,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
               style={{
                 fontSize: 14,
                 lineHeight: 1.7,
-                color: 'var(--mail-text)',
+                color: 'var(--hsn-text-primary)',
                 overflowWrap: 'break-word',
                 whiteSpace: 'pre-wrap',
               }}
@@ -232,7 +232,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
               style={{
                 fontSize: 14,
                 lineHeight: 1.7,
-                color: 'var(--mail-text)',
+                color: 'var(--hsn-text-primary)',
                 overflowWrap: 'break-word',
               }}
             />
@@ -245,7 +245,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                 style={{
                   fontSize: 12,
                   fontWeight: 600,
-                  color: 'var(--mail-text-secondary)',
+                  color: 'var(--hsn-text-secondary)',
                   display: 'flex',
                   alignItems: 'center',
                   gap: 6,
@@ -268,7 +268,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                           position: 'relative',
                           borderRadius: 8,
                           overflow: 'hidden',
-                          border: '1px solid var(--mail-border)',
+                          border: '1px solid var(--hsn-border-primary)',
                           cursor: 'pointer',
                           maxWidth: 200,
                         }}
@@ -339,16 +339,16 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                       alignItems: 'center',
                       gap: 8,
                       padding: '8px 12px',
-                      borderRadius: 'var(--mail-radius-sm)',
-                      border: '1px solid var(--mail-border)',
+                      borderRadius: '6px',
+                      border: '1px solid var(--hsn-border-primary)',
                       fontSize: 13,
-                      background: 'var(--mail-bg-secondary)',
+                      background: 'var(--hsn-bg-l0-solid)',
                     }}
                   >
                     {attachmentIcon(att.contentType)}
                     <div>
                       <div style={{ fontWeight: 500 }}>{att.filename}</div>
-                      <div style={{ fontSize: 11, color: 'var(--mail-text-muted)' }}>{formatSize(att.size)}</div>
+                      <div style={{ fontSize: 11, color: 'var(--hsn-text-tertiary)' }}>{formatSize(att.size)}</div>
                     </div>
                     {(isImageType(att.contentType) || isPdfType(att.contentType)) && (
                       <button
@@ -365,7 +365,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                           border: 'none',
                           padding: 2,
                           cursor: 'pointer',
-                          color: 'var(--mail-text-muted)',
+                          color: 'var(--hsn-text-tertiary)',
                           display: 'flex',
                         }}
                         title="Preview"
@@ -387,7 +387,7 @@ export function MessageItem({ message, isLast }: { message: Message; isLast: boo
                         border: 'none',
                         padding: 2,
                         cursor: 'pointer',
-                        color: 'var(--mail-text-muted)',
+                        color: 'var(--hsn-text-tertiary)',
                         display: 'flex',
                       }}
                       title="Download"

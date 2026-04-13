@@ -111,14 +111,14 @@ export function RecipientInput({ label, recipients, onChange, rightAction }: Rec
           alignItems: 'center',
           gap: 8,
           padding: '6px 0',
-          borderBottom: '1px solid var(--mail-border-subtle)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           flexWrap: 'wrap',
         }}
       >
         <label
           style={{
             fontSize: 13,
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             width: 56,
             flexShrink: 0,
             fontWeight: 500,
@@ -135,9 +135,9 @@ export function RecipientInput({ label, recipients, onChange, rightAction }: Rec
               gap: 3,
               padding: '2px 6px',
               borderRadius: 12,
-              background: 'var(--mail-bg-active)',
+              background: 'var(--hsn-bg-cell)',
               fontSize: 12,
-              color: 'var(--mail-text)',
+              color: 'var(--hsn-text-primary)',
               maxWidth: 200,
               overflow: 'hidden',
             }}
@@ -152,7 +152,7 @@ export function RecipientInput({ label, recipients, onChange, rightAction }: Rec
                 border: 'none',
                 padding: 0,
                 cursor: 'pointer',
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 display: 'flex',
                 flexShrink: 0,
               }}
@@ -176,7 +176,7 @@ export function RecipientInput({ label, recipients, onChange, rightAction }: Rec
             outline: 'none',
             fontSize: 14,
             background: 'transparent',
-            color: 'var(--mail-text)',
+            color: 'var(--hsn-text-primary)',
             fontFamily: 'inherit',
             padding: '2px 0',
           }}
@@ -192,10 +192,10 @@ export function RecipientInput({ label, recipients, onChange, rightAction }: Rec
             top: '100%',
             left: 56,
             right: 0,
-            background: 'var(--mail-bg)',
-            border: '1px solid var(--mail-border)',
-            borderRadius: 'var(--mail-radius)',
-            boxShadow: 'var(--mail-shadow-lg)',
+            background: 'var(--hsn-bg-l1-solid)',
+            border: '1px solid var(--hsn-border-primary)',
+            borderRadius: '8px',
+            boxShadow: 'var(--hsn-shadow-l3)',
             zIndex: 200,
             overflow: 'hidden',
           }}
@@ -208,12 +208,12 @@ export function RecipientInput({ label, recipients, onChange, rightAction }: Rec
               style={{
                 padding: '8px 12px',
                 cursor: 'pointer',
-                background: i === activeIndex ? 'var(--mail-bg-hover)' : 'transparent',
+                background: i === activeIndex ? 'var(--hsn-bg-cell)' : 'transparent',
                 fontSize: 13,
               }}
             >
-              <div style={{ fontWeight: 500, color: 'var(--mail-text)' }}>{s.name}</div>
-              <div style={{ fontSize: 12, color: 'var(--mail-text-muted)' }}>{s.email}</div>
+              <div style={{ fontWeight: 500, color: 'var(--hsn-text-primary)' }}>{s.name}</div>
+              <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>{s.email}</div>
             </div>
           ))}
         </div>

@@ -1,7 +1,7 @@
 import { useState } from 'react';
 import { Copy, Check, RefreshCw, Key, AlertTriangle } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
-import { Button, Alert } from '@/components/FormUI';
+import { Banner, Button, Surface, Typography, TypographySize, TypographyWeight, Type, Size } from '@haseen-me/ui';
 import { useAuthStore } from '@/store/auth';
 import { authApi } from '@/api/auth';
 
@@ -37,89 +37,80 @@ export function RecoverySettingsPage() {
 
   return (
     <SettingsLayout activeTab="/settings/recovery">
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Recovery Key</h1>
-      <p style={{ fontSize: 14, color: 'var(--acc-text-secondary)', marginBottom: 32 }}>
+      <Typography size={TypographySize.H3} weight={TypographyWeight.SEMIBOLD} style={{ marginBottom: 4 }}>
+        Recovery Key
+      </Typography>
+      <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 32 }}>
         Your recovery key is the only way to access your account if you forget your password.
-      </p>
+      </Typography>
 
-      {error && <Alert type="error">{error}</Alert>}
+      {error && <Banner color="error" style={{ marginBottom: 16, borderRadius: 8 }}>{error}</Banner>}
 
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-          marginBottom: 20,
-        }}
-      >
+      <Surface level="l1" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <Key size={18} style={{ color: 'var(--acc-brand)' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Your Recovery Key</h3>
+          <Key size={18} style={{ color: 'var(--hsn-accent-teal)' }} />
+          <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>Your Recovery Key</Typography>
         </div>
 
-        <Alert type="warning">
+        <Banner color="warning" icon={<AlertTriangle size={16} />} style={{ marginBottom: 16, borderRadius: 8 }}>
           Keep this key in a safe place. Without it, account recovery from a forgotten password is impossible.
-        </Alert>
+        </Banner>
 
         {!showKey ? (
-          <Button variant="secondary" onClick={() => setShowKey(true)}>
+          <Button type={Type.SECONDARY} size={Size.MEDIUM} onClick={() => setShowKey(true)}>
             Reveal recovery key
           </Button>
         ) : (
           <>
-            <div
-              style={{
-                background: 'var(--acc-bg)',
-                border: '1px solid var(--acc-border)',
-                borderRadius: 'var(--acc-radius-sm)',
-                padding: '20px 16px',
-                fontFamily: "'JetBrains Mono', monospace",
-                fontSize: 15,
-                letterSpacing: '0.05em',
-                textAlign: 'center',
-                color: 'var(--acc-text)',
-                wordBreak: 'break-all',
-                lineHeight: 1.8,
-                marginBottom: 12,
-                userSelect: 'all',
-              }}
-            >
-              {recoveryKey}
-            </div>
+            <Surface level="l0" style={{ padding: '20px 16px', marginBottom: 12, userSelect: 'all' }}>
+              <Typography
+                size={TypographySize.BODY}
+                style={{
+                  fontFamily: "'JetBrains Mono', monospace",
+                  letterSpacing: '0.05em',
+                  textAlign: 'center',
+                  wordBreak: 'break-all',
+                  lineHeight: 1.8,
+                }}
+              >
+                {recoveryKey}
+              </Typography>
+            </Surface>
             <div style={{ display: 'flex', gap: 8 }}>
-              <Button variant="secondary" onClick={handleCopy}>
-                {copied ? <Check size={14} /> : <Copy size={14} />}
+              <Button
+                type={Type.SECONDARY}
+                size={Size.MEDIUM}
+                onClick={handleCopy}
+                startIcon={copied ? <Check size={14} /> : <Copy size={14} />}
+              >
                 {copied ? 'Copied!' : 'Copy'}
               </Button>
-              <Button variant="secondary" onClick={() => setShowKey(false)}>
+              <Button type={Type.SECONDARY} size={Size.MEDIUM} onClick={() => setShowKey(false)}>
                 Hide
               </Button>
             </div>
           </>
         )}
-      </div>
+      </Surface>
 
-      {/* Regenerate */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-        }}
-      >
+      <Surface level="l1" style={{ padding: 24 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 10, marginBottom: 12 }}>
-          <AlertTriangle size={18} style={{ color: 'var(--acc-warning)' }} />
-          <h3 style={{ fontSize: 16, fontWeight: 600 }}>Regenerate Recovery Key</h3>
+          <AlertTriangle size={18} style={{ color: 'var(--hsn-accent-orange)' }} />
+          <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>Regenerate Recovery Key</Typography>
         </div>
-        <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
+        <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 16 }}>
           This will invalidate your previous recovery key. Make sure to save the new one.
-        </p>
-        <Button variant="secondary" onClick={handleRegenerate} loading={regenerating}>
-          <RefreshCw size={14} /> Generate new key
+        </Typography>
+        <Button
+          type={Type.SECONDARY}
+          size={Size.MEDIUM}
+          onClick={handleRegenerate}
+          loading={regenerating}
+          startIcon={<RefreshCw size={14} />}
+        >
+          Generate new key
         </Button>
-      </div>
+      </Surface>
     </SettingsLayout>
   );
 }

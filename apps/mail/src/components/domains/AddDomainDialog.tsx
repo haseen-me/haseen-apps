@@ -61,8 +61,8 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
               transform: 'translate(-50%, -50%)',
               width: '100%',
               maxWidth: 440,
-              background: 'var(--mail-bg)',
-              border: '1px solid var(--mail-border)',
+              background: 'var(--hsn-bg-l1-solid)',
+              border: '1px solid var(--hsn-border-primary)',
               borderRadius: 16,
               boxShadow: '0 24px 48px rgba(0, 0, 0, 0.2)',
               zIndex: 1001,
@@ -75,7 +75,7 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                 alignItems: 'center',
                 justifyContent: 'space-between',
                 padding: '20px 24px 16px',
-                borderBottom: '1px solid var(--mail-border-subtle)',
+                borderBottom: '1px solid var(--hsn-border-primary)',
               }}
             >
               <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
@@ -84,19 +84,19 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                     width: 36,
                     height: 36,
                     borderRadius: 10,
-                    background: 'var(--mail-brand-subtle)',
+                    background: 'rgba(45,184,175,0.08)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                   }}
                 >
-                  <Globe size={18} color="var(--mail-brand)" />
+                  <Globe size={18} color="var(--hsn-accent-teal)" />
                 </div>
                 <div>
-                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--mail-text)' }}>
+                  <div style={{ fontSize: 15, fontWeight: 600, color: 'var(--hsn-text-primary)' }}>
                     Add Custom Domain
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--mail-text-muted)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>
                     Configure email for your domain
                   </div>
                 </div>
@@ -106,7 +106,7 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                 style={{
                   background: 'none',
                   border: 'none',
-                  color: 'var(--mail-text-muted)',
+                  color: 'var(--hsn-text-tertiary)',
                   padding: 4,
                   borderRadius: 6,
                   display: 'flex',
@@ -123,7 +123,7 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                   display: 'block',
                   fontSize: 13,
                   fontWeight: 500,
-                  color: 'var(--mail-text-secondary)',
+                  color: 'var(--hsn-text-secondary)',
                   marginBottom: 8,
                 }}
               >
@@ -139,9 +139,9 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                   width: '100%',
                   padding: '10px 14px',
                   borderRadius: 10,
-                  border: '1px solid var(--mail-border)',
-                  background: 'var(--mail-bg-secondary)',
-                  color: 'var(--mail-text)',
+                  border: '1px solid var(--hsn-border-primary)',
+                  background: 'var(--hsn-bg-l0-solid)',
+                  color: 'var(--hsn-text-primary)',
                   fontSize: 14,
                   outline: 'none',
                   transition: 'border-color 0.15s',
@@ -154,7 +154,7 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                   animate={{ opacity: 1, y: 0 }}
                   style={{
                     fontSize: 13,
-                    color: 'var(--mail-danger)',
+                    color: 'var(--hsn-accent-red)',
                     marginTop: 10,
                   }}
                 >
@@ -176,9 +176,9 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                   style={{
                     padding: '9px 18px',
                     borderRadius: 10,
-                    border: '1px solid var(--mail-border)',
+                    border: '1px solid var(--hsn-border-primary)',
                     background: 'transparent',
-                    color: 'var(--mail-text-secondary)',
+                    color: 'var(--hsn-text-secondary)',
                     fontSize: 13,
                     fontWeight: 500,
                     cursor: 'pointer',
@@ -193,7 +193,7 @@ export function AddDomainDialog({ open, onClose }: AddDomainDialogProps) {
                     padding: '9px 22px',
                     borderRadius: 10,
                     border: 'none',
-                    background: 'var(--mail-brand)',
+                    background: 'var(--hsn-accent-teal)',
                     color: '#fff',
                     fontSize: 13,
                     fontWeight: 600,

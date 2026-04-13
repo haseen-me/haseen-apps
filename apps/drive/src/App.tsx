@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { requireAuth } from '@haseen-me/shared';
+import { HaseenThemeProvider } from '@haseen-me/ui';
 import { DriveLayout } from '@/layout/DriveLayout';
 import { DriveHeader } from '@/components/DriveHeader';
 import { DriveContent } from '@/components/DriveContent';
@@ -262,6 +263,7 @@ export default function App() {
   if (!authed) return null;
 
   return (
+    <HaseenThemeProvider>
     <ErrorBoundary>
     <DriveLayout>
       <DriveHeader />
@@ -280,5 +282,6 @@ export default function App() {
       />
     </DriveLayout>
     </ErrorBoundary>
+    </HaseenThemeProvider>
   );
 }

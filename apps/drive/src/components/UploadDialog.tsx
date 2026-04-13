@@ -99,9 +99,9 @@ export function UploadDialog() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--drive-bg)',
-          borderRadius: 'var(--drive-radius)',
-          boxShadow: 'var(--drive-shadow-lg)',
+          background: 'var(--hsn-bg-l1-solid)',
+          borderRadius: '8px',
+          boxShadow: 'var(--hsn-shadow-l3)',
           width: 480,
           maxWidth: '90vw',
           padding: 24,
@@ -116,7 +116,7 @@ export function UploadDialog() {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--drive-text-muted)',
+              color: 'var(--hsn-text-tertiary)',
               padding: 4,
               borderRadius: 4,
               display: 'flex',
@@ -133,20 +133,20 @@ export function UploadDialog() {
           onDrop={handleDrop}
           onClick={() => inputRef.current?.click()}
           style={{
-            border: `2px dashed ${dragOver ? 'var(--drive-brand)' : 'var(--drive-border)'}`,
-            borderRadius: 'var(--drive-radius)',
+            border: `2px dashed ${dragOver ? 'var(--hsn-accent-teal)' : 'var(--hsn-border-primary)'}`,
+            borderRadius: '8px',
             padding: '40px 20px',
             textAlign: 'center',
             cursor: 'pointer',
-            background: dragOver ? 'var(--drive-brand-subtle)' : 'var(--drive-bg-secondary)',
+            background: dragOver ? 'rgba(45,184,175,0.08)' : 'var(--hsn-bg-l0-solid)',
             transition: 'border-color 0.15s, background 0.15s',
           }}
         >
-          <FileUp size={32} style={{ color: 'var(--drive-brand)', marginBottom: 12 }} />
+          <FileUp size={32} style={{ color: 'var(--hsn-accent-teal)', marginBottom: 12 }} />
           <div style={{ fontSize: 14, fontWeight: 500 }}>
             Drag and drop files here
           </div>
-          <div style={{ fontSize: 13, color: 'var(--drive-text-muted)', marginTop: 4 }}>
+          <div style={{ fontSize: 13, color: 'var(--hsn-text-tertiary)', marginTop: 4 }}>
             or click to browse
           </div>
           <input
@@ -169,8 +169,8 @@ export function UploadDialog() {
                   alignItems: 'center',
                   justifyContent: 'space-between',
                   padding: '8px 12px',
-                  borderRadius: 'var(--drive-radius-sm)',
-                  background: 'var(--drive-bg-secondary)',
+                  borderRadius: '8px',
+                  background: 'var(--hsn-bg-l0-solid)',
                   marginBottom: 4,
                   fontSize: 13,
                 }}
@@ -183,7 +183,7 @@ export function UploadDialog() {
                   style={{
                     background: 'none',
                     border: 'none',
-                    color: 'var(--drive-text-muted)',
+                    color: 'var(--hsn-text-tertiary)',
                     padding: 2,
                     display: 'flex',
                     flexShrink: 0,
@@ -202,12 +202,12 @@ export function UploadDialog() {
             onClick={handleClose}
             style={{
               padding: '8px 16px',
-              borderRadius: 'var(--drive-radius-sm)',
-              border: '1px solid var(--drive-border)',
-              background: 'var(--drive-bg)',
+              borderRadius: '8px',
+              border: '1px solid var(--hsn-border-primary)',
+              background: 'var(--hsn-bg-l1-solid)',
               fontSize: 13,
               fontWeight: 500,
-              color: 'var(--drive-text)',
+              color: 'var(--hsn-text-primary)',
             }}
           >
             Cancel
@@ -217,10 +217,10 @@ export function UploadDialog() {
             disabled={selectedFiles.length === 0 || uploading}
             style={{
               padding: '8px 16px',
-              borderRadius: 'var(--drive-radius-sm)',
+              borderRadius: '8px',
               border: 'none',
-              background: selectedFiles.length > 0 && !uploading ? 'var(--drive-brand)' : 'var(--drive-border)',
-              color: selectedFiles.length > 0 && !uploading ? '#fff' : 'var(--drive-text-muted)',
+              background: selectedFiles.length > 0 && !uploading ? 'var(--hsn-accent-teal)' : 'var(--hsn-border-primary)',
+              color: selectedFiles.length > 0 && !uploading ? '#fff' : 'var(--hsn-text-tertiary)',
               fontSize: 13,
               fontWeight: 600,
               display: 'flex',
@@ -237,11 +237,11 @@ export function UploadDialog() {
         {/* Upload progress bar */}
         {uploading && selectedFiles.length > 0 && (
           <div style={{ marginTop: 12 }}>
-            <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginBottom: 4 }}>
+            <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', marginBottom: 4 }}>
               Encrypting and uploading file {uploadIndex} of {selectedFiles.length}...
             </div>
-            <div style={{ height: 4, borderRadius: 2, background: 'var(--drive-border)', overflow: 'hidden' }}>
-              <div style={{ height: '100%', borderRadius: 2, background: 'var(--drive-brand)', transition: 'width 0.3s', width: `${(uploadIndex / selectedFiles.length) * 100}%` }} />
+            <div style={{ height: 4, borderRadius: 2, background: 'var(--hsn-border-primary)', overflow: 'hidden' }}>
+              <div style={{ height: '100%', borderRadius: 2, background: 'var(--hsn-accent-teal)', transition: 'width 0.3s', width: `${(uploadIndex / selectedFiles.length) * 100}%` }} />
             </div>
           </div>
         )}

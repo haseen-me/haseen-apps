@@ -38,19 +38,19 @@ export function DriveContent() {
       <div style={{ flex: 1, overflow: 'auto', padding: 20 }}>
         {/* Folder skeletons */}
         <div style={{ marginBottom: 24 }}>
-          <div style={{ width: 60, height: 12, borderRadius: 4, background: 'var(--drive-bg-hover, #f0f0f0)', marginBottom: 12, animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+          <div style={{ width: 60, height: 12, borderRadius: 4, background: 'var(--hsn-bg-cell)', marginBottom: 12, animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
           <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(220px, 1fr))', gap: 10 }}>
             {Array.from({ length: 3 }).map((_, i) => (
-              <div key={`f${i}`} style={{ height: 56, borderRadius: 'var(--drive-radius-sm, 8px)', background: 'var(--drive-bg-hover, #f0f0f0)', animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+              <div key={`f${i}`} style={{ height: 56, borderRadius: '8px', background: 'var(--hsn-bg-cell)', animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
             ))}
           </div>
         </div>
         {/* File skeletons */}
         <div>
-          <div style={{ width: 40, height: 12, borderRadius: 4, background: 'var(--drive-bg-hover, #f0f0f0)', marginBottom: 12, animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+          <div style={{ width: 40, height: 12, borderRadius: 4, background: 'var(--hsn-bg-cell)', marginBottom: 12, animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
           <div style={{ display: 'grid', gridTemplateColumns: viewMode === 'grid' ? 'repeat(auto-fill, minmax(180px, 1fr))' : '1fr', gap: 10 }}>
             {Array.from({ length: 6 }).map((_, i) => (
-              <div key={`fi${i}`} style={{ height: viewMode === 'grid' ? 140 : 44, borderRadius: 'var(--drive-radius-sm, 8px)', background: 'var(--drive-bg-hover, #f0f0f0)', animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
+              <div key={`fi${i}`} style={{ height: viewMode === 'grid' ? 140 : 44, borderRadius: '8px', background: 'var(--hsn-bg-cell)', animation: 'driveSkelPulse 1.5s ease-in-out infinite' }} />
             ))}
           </div>
         </div>
@@ -72,7 +72,7 @@ export function DriveContent() {
           <div style={{
             fontSize: 12,
             fontWeight: 600,
-            color: 'var(--drive-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
             marginBottom: 10,
@@ -99,7 +99,7 @@ export function DriveContent() {
           <div style={{
             fontSize: 12,
             fontWeight: 600,
-            color: 'var(--drive-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             textTransform: 'uppercase',
             letterSpacing: '0.04em',
             marginBottom: 10,
@@ -121,8 +121,8 @@ export function DriveContent() {
           ) : (
             <div
               style={{
-                borderRadius: 'var(--drive-radius)',
-                border: '1px solid var(--drive-border)',
+                borderRadius: '8px',
+                border: '1px solid var(--hsn-border-primary)',
                 overflow: 'hidden',
               }}
             >
@@ -133,11 +133,11 @@ export function DriveContent() {
                   alignItems: 'center',
                   gap: 12,
                   padding: '8px 16px',
-                  background: 'var(--drive-bg-secondary)',
-                  borderBottom: '1px solid var(--drive-border)',
+                  background: 'var(--hsn-bg-l0-solid)',
+                  borderBottom: '1px solid var(--hsn-border-primary)',
                   fontSize: 12,
                   fontWeight: 600,
-                  color: 'var(--drive-text-muted)',
+                  color: 'var(--hsn-text-tertiary)',
                 }}
               >
                 <span style={{ width: 40 }} />
@@ -177,18 +177,18 @@ function EmptyState() {
           width: 64,
           height: 64,
           borderRadius: 16,
-          background: 'var(--drive-brand-subtle)',
+          background: 'rgba(45,184,175,0.08)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: 'var(--drive-brand)',
+          color: 'var(--hsn-cta-primary-default)',
         }}
       >
         <FolderIcon size={32} />
       </div>
       <div style={{ textAlign: 'center' }}>
         <div style={{ fontSize: 16, fontWeight: 600, marginBottom: 4 }}>No files yet</div>
-        <div style={{ fontSize: 14, color: 'var(--drive-text-muted)' }}>
+        <div style={{ fontSize: 14, color: 'var(--hsn-text-tertiary)' }}>
           Upload files or create a folder to get started
         </div>
       </div>
@@ -196,8 +196,8 @@ function EmptyState() {
         onClick={() => setUploadOpen(true)}
         style={{
           padding: '10px 24px',
-          borderRadius: 'var(--drive-radius)',
-          background: 'var(--drive-brand)',
+          borderRadius: '8px',
+          background: 'var(--hsn-cta-primary-default)',
           color: '#fff',
           border: 'none',
           fontWeight: 600,
@@ -205,8 +205,8 @@ function EmptyState() {
           marginTop: 8,
           transition: 'background 0.15s',
         }}
-        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-brand-hover)')}
-        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--drive-brand)')}
+        onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-cta-primary-hover)')}
+        onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--hsn-cta-primary-default)')}
       >
         Upload files
       </button>

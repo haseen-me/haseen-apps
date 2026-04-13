@@ -17,18 +17,23 @@
     "./toast": {
       "types": "./dist/toast.d.ts",
       "import": "./dist/toast.js"
+    },
+    "./ProductRail": {
+      "types": "./dist/ProductRail.d.ts",
+      "import": "./dist/ProductRail.js"
     }
   },
   "scripts": {
-    "build": "tsup src/index.ts src/ErrorBoundary.tsx src/toast.ts --format esm --dts",
-    "dev": "tsup src/index.ts src/ErrorBoundary.tsx src/toast.ts --format esm --dts --watch",
+    "build": "tsup src/index.ts src/ErrorBoundary.tsx src/toast.ts src/ProductRail.tsx --format esm --dts",
+    "dev": "tsup src/index.ts src/ErrorBoundary.tsx src/toast.ts src/ProductRail.tsx --format esm --dts --watch",
     "lint": "eslint src",
     "typecheck": "tsc --noEmit",
     "clean": "rm -rf dist"
   },
   "peerDependencies": {
     "react": ">=18",
-    "zustand": ">=4"
+    "zustand": ">=4",
+    "@haseen-me/ui": "*"
   },
   "devDependencies": {
     "@types/react": "^19.2.14",

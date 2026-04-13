@@ -1,5 +1,6 @@
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { ArrowRight, Shield, Lock, Eye, Mail, HardDrive, Calendar } from 'lucide-react';
+import { Button, Surface, Typography, TypographySize, TypographyWeight, Type, Size } from '@haseen-me/ui';
 
 /* ————— Hero ————— */
 function Hero() {
@@ -28,7 +29,7 @@ function Hero() {
         }}
       >
         Your productivity,{' '}
-        <span style={{ color: 'var(--hsn-brand)' }}>truly private</span>
+        <span style={{ color: 'var(--hsn-cta-primary-default)' }}>truly private</span>
       </h1>
       <p
         style={{
@@ -44,38 +45,18 @@ function Hero() {
         even us — can read your data.
       </p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
-        <Link
-          to="/pricing"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '14px 28px',
-            borderRadius: 10,
-            background: 'var(--hsn-brand)',
-            color: '#fff',
-            fontWeight: 600,
-            fontSize: 16,
-            transition: 'background 0.15s',
-          }}
+        <Button
+          type={Type.PRIMARY}
+          size={Size.LARGE}
+          onClick={() => { window.location.href = '/accounts/sign-up'; }}
+          endIcon={<ArrowRight size={18} />}
         >
-          Get Started Free <ArrowRight size={18} />
-        </Link>
-        <Link
-          to="/security"
-          style={{
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 8,
-            padding: '14px 28px',
-            borderRadius: 10,
-            border: '1px solid var(--hsn-border)',
-            color: 'var(--hsn-text)',
-            fontWeight: 500,
-            fontSize: 16,
-          }}
-        >
-          How we protect you
+          Get Started Free
+        </Button>
+        <Link to="/security" style={{ textDecoration: 'none' }}>
+          <Button type={Type.SECONDARY} size={Size.LARGE}>
+            How we protect you
+          </Button>
         </Link>
       </div>
 
@@ -101,10 +82,10 @@ function Hero() {
               alignItems: 'center',
               gap: 8,
               fontSize: 14,
-              color: 'var(--hsn-text-muted)',
+              color: 'var(--hsn-text-tertiary)',
             }}
           >
-            <span style={{ color: 'var(--hsn-brand)' }}>{badge.icon}</span>
+            <span style={{ color: 'var(--hsn-cta-primary-default)' }}>{badge.icon}</span>
             {badge.label}
           </div>
         ))}
@@ -157,9 +138,9 @@ function ProductsSection() {
               key={product.name}
               style={{
                 padding: 32,
-                borderRadius: 'var(--hsn-radius)',
-                background: 'var(--hsn-bg)',
-                border: '1px solid var(--hsn-border)',
+                borderRadius: '8px',
+                background: 'var(--hsn-bg-app)',
+                border: '1px solid var(--hsn-border-primary)',
                 transition: 'box-shadow 0.2s, border-color 0.2s',
               }}
             >
@@ -169,7 +150,7 @@ function ProductsSection() {
                   height: 52,
                   borderRadius: 12,
                   background: 'var(--hsn-brand-subtle)',
-                  color: 'var(--hsn-brand)',
+                  color: 'var(--hsn-cta-primary-default)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -199,7 +180,7 @@ function ProductsSection() {
                         width: 6,
                         height: 6,
                         borderRadius: '50%',
-                        background: 'var(--hsn-brand)',
+                        background: 'var(--hsn-cta-primary-default)',
                         flexShrink: 0,
                       }}
                     />
@@ -254,8 +235,8 @@ function WhySection() {
                 key={reason.title}
                 style={{
                   padding: '20px 24px',
-                  borderRadius: 'var(--hsn-radius-sm)',
-                  border: '1px solid var(--hsn-border)',
+                  borderRadius: '6px',
+                  border: '1px solid var(--hsn-border-primary)',
                   transition: 'border-color 0.15s',
                 }}
               >
@@ -301,7 +282,7 @@ function CTABanner() {
             gap: 8,
             padding: '16px 32px',
             borderRadius: 10,
-            background: 'var(--hsn-brand)',
+            background: 'var(--hsn-cta-primary-default)',
             color: '#fff',
             fontWeight: 600,
             fontSize: 16,

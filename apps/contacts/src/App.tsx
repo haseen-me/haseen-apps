@@ -1,7 +1,8 @@
 import { useEffect, useRef, useState } from 'react';
 import { Search, Plus, Users, Upload, Download, FolderPlus, Tag, X } from 'lucide-react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
-import { ProductRail } from '@/components/ProductRail';
+import { HaseenThemeProvider } from '@haseen-me/ui';
+import { ProductRail } from '@haseen-me/shared/ProductRail';
 import { ContactList } from '@/components/ContactList';
 import { ContactDetail } from '@/components/ContactDetail';
 import { ContactDialog } from '@/components/ContactDialog';
@@ -172,24 +173,24 @@ function ContactsApp() {
       {/* Sidebar */}
       <div
         style={{
-          width: 320, borderRight: '1px solid var(--ct-border)',
+          width: 320, borderRight: '1px solid var(--hsn-border-primary)',
           display: 'flex', flexDirection: 'column', flexShrink: 0, height: '100%', overflow: 'hidden',
-          background: 'var(--ct-bg)',
+          background: 'var(--hsn-bg-app)',
         }}
       >
         {/* Header */}
-        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--ct-border)' }}>
+        <div style={{ padding: '12px 16px', borderBottom: '1px solid var(--hsn-border-primary)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 12 }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-              <Users size={18} style={{ color: 'var(--ct-brand)' }} />
+              <Users size={18} style={{ color: 'var(--hsn-accent-teal)' }} />
               <h1 style={{ fontSize: 16, fontWeight: 700, margin: 0 }}>Contacts</h1>
             </div>
             <button
               onClick={handleNew}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
-                padding: '6px 12px', borderRadius: 'var(--ct-radius-sm)',
-                border: 'none', background: 'var(--ct-brand)', color: '#fff',
+                padding: '6px 12px', borderRadius: '6px',
+                border: 'none', background: 'var(--hsn-accent-teal)', color: '#fff',
                 fontSize: 12, fontWeight: 600, cursor: 'pointer',
               }}
             >
@@ -202,9 +203,9 @@ function ContactsApp() {
             <label
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
-                padding: '5px 10px', borderRadius: 'var(--ct-radius-sm)',
-                border: '1px solid var(--ct-border)', background: 'none',
-                color: 'var(--ct-text-muted)', fontSize: 11, cursor: 'pointer',
+                padding: '5px 10px', borderRadius: '6px',
+                border: '1px solid var(--hsn-border-primary)', background: 'none',
+                color: 'var(--hsn-text-tertiary)', fontSize: 11, cursor: 'pointer',
               }}
             >
               <Upload size={12} /> Import CSV
@@ -214,39 +215,39 @@ function ContactsApp() {
               onClick={handleExport}
               style={{
                 display: 'flex', alignItems: 'center', gap: 4,
-                padding: '5px 10px', borderRadius: 'var(--ct-radius-sm)',
-                border: '1px solid var(--ct-border)', background: 'none',
-                color: 'var(--ct-text-muted)', fontSize: 11, cursor: 'pointer',
+                padding: '5px 10px', borderRadius: '6px',
+                border: '1px solid var(--hsn-border-primary)', background: 'none',
+                color: 'var(--hsn-text-tertiary)', fontSize: 11, cursor: 'pointer',
               }}
             >
               <Download size={12} /> Export CSV
             </button>
           </div>
           <div style={{ position: 'relative' }}>
-            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--ct-text-muted)' }} />
+            <Search size={14} style={{ position: 'absolute', left: 10, top: '50%', transform: 'translateY(-50%)', color: 'var(--hsn-text-tertiary)' }} />
             <input
               value={searchQuery}
               onChange={(e) => setSearchQuery(e.target.value)}
               placeholder="Search contacts..."
               style={{
                 width: '100%', padding: '7px 10px 7px 30px',
-                border: '1px solid var(--ct-border)', borderRadius: 'var(--ct-radius-sm)',
+                border: '1px solid var(--hsn-border-primary)', borderRadius: '6px',
                 fontSize: 13, fontFamily: 'inherit', outline: 'none',
-                background: 'var(--ct-bg-secondary)', color: 'var(--ct-text)',
+                background: 'var(--hsn-bg-l0-solid)', color: 'var(--hsn-text-primary)',
               }}
             />
           </div>
         </div>
 
         {/* Groups */}
-        <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--ct-border)' }}>
+        <div style={{ padding: '8px 16px', borderBottom: '1px solid var(--hsn-border-primary)' }}>
           <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 6 }}>
-            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--ct-text-muted)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
+            <span style={{ fontSize: 11, fontWeight: 600, color: 'var(--hsn-text-tertiary)', textTransform: 'uppercase', letterSpacing: '0.06em' }}>
               Groups
             </span>
             <button
               onClick={() => setShowGroupInput(!showGroupInput)}
-              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ct-text-muted)', padding: 2, display: 'flex' }}
+              style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hsn-text-tertiary)', padding: 2, display: 'flex' }}
             >
               {showGroupInput ? <X size={12} /> : <FolderPlus size={12} />}
             </button>
@@ -259,12 +260,12 @@ function ContactsApp() {
                 placeholder="Group name..."
                 autoFocus
                 style={{
-                  flex: 1, padding: '4px 8px', fontSize: 12, border: '1px solid var(--ct-border)',
-                  borderRadius: 'var(--ct-radius-sm)', background: 'var(--ct-bg-secondary)', color: 'var(--ct-text)',
+                  flex: 1, padding: '4px 8px', fontSize: 12, border: '1px solid var(--hsn-border-primary)',
+                  borderRadius: '6px', background: 'var(--hsn-bg-l0-solid)', color: 'var(--hsn-text-primary)',
                   outline: 'none', fontFamily: 'inherit',
                 }}
               />
-              <button type="submit" style={{ padding: '4px 8px', fontSize: 11, border: 'none', borderRadius: 'var(--ct-radius-sm)', background: 'var(--ct-brand)', color: '#fff', cursor: 'pointer' }}>
+              <button type="submit" style={{ padding: '4px 8px', fontSize: 11, border: 'none', borderRadius: '6px', background: 'var(--hsn-accent-teal)', color: '#fff', cursor: 'pointer' }}>
                 Add
               </button>
             </form>
@@ -273,8 +274,8 @@ function ContactsApp() {
             onClick={() => setActiveGroupId(null)}
             style={{
               display: 'flex', alignItems: 'center', gap: 6, width: '100%', padding: '5px 8px',
-              borderRadius: 'var(--ct-radius-sm)', border: 'none', background: !activeGroupId ? 'var(--ct-brand-subtle, rgba(99,102,241,0.1))' : 'transparent',
-              color: !activeGroupId ? 'var(--ct-brand)' : 'var(--ct-text-secondary)', fontSize: 12, fontWeight: 500,
+              borderRadius: '6px', border: 'none', background: !activeGroupId ? 'rgba(45,184,175,0.08)' : 'transparent',
+              color: !activeGroupId ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)', fontSize: 12, fontWeight: 500,
               cursor: 'pointer', textAlign: 'left',
             }}
           >
@@ -289,9 +290,9 @@ function ContactsApp() {
                 onClick={() => setActiveGroupId(g.id)}
                 style={{
                   display: 'flex', alignItems: 'center', gap: 6, flex: 1, padding: '5px 8px',
-                  borderRadius: 'var(--ct-radius-sm)', border: 'none',
-                  background: activeGroupId === g.id ? 'var(--ct-brand-subtle, rgba(99,102,241,0.1))' : 'transparent',
-                  color: activeGroupId === g.id ? 'var(--ct-brand)' : 'var(--ct-text-secondary)', fontSize: 12, fontWeight: 500,
+                  borderRadius: '6px', border: 'none',
+                  background: activeGroupId === g.id ? 'rgba(45,184,175,0.08)' : 'transparent',
+                  color: activeGroupId === g.id ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)', fontSize: 12, fontWeight: 500,
                   cursor: 'pointer', textAlign: 'left',
                 }}
               >
@@ -300,7 +301,7 @@ function ContactsApp() {
               </button>
               <button
                 onClick={() => handleDeleteGroup(g.id)}
-                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--ct-text-muted)', padding: 2, display: 'flex', opacity: 0.5 }}
+                style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--hsn-text-tertiary)', padding: 2, display: 'flex', opacity: 0.5 }}
                 title="Delete group"
               >
                 <X size={10} />
@@ -323,9 +324,9 @@ function ContactsApp() {
         <div
           style={{
             position: 'fixed', bottom: 24, left: '50%', transform: 'translateX(-50%)',
-            background: 'var(--ct-text)', color: 'var(--ct-bg)', padding: '10px 20px',
-            borderRadius: 'var(--ct-radius)', fontSize: 13, fontWeight: 500,
-            boxShadow: 'var(--ct-shadow-lg)', zIndex: 200, animation: 'fadeIn 0.15s ease',
+            background: 'var(--hsn-text-primary)', color: 'var(--hsn-bg-app)', padding: '10px 20px',
+            borderRadius: '8px', fontSize: 13, fontWeight: 500,
+            boxShadow: 'var(--hsn-shadow-l3)', zIndex: 200, animation: 'fadeIn 0.15s ease',
           }}
         >
           {toast.message}
@@ -337,8 +338,10 @@ function ContactsApp() {
 
 export function App() {
   return (
-    <ErrorBoundary>
-      <ContactsApp />
-    </ErrorBoundary>
+    <HaseenThemeProvider>
+      <ErrorBoundary>
+        <ContactsApp />
+      </ErrorBoundary>
+    </HaseenThemeProvider>
   );
 }

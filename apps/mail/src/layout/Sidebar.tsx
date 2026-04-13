@@ -14,6 +14,7 @@ import {
   Globe,
 } from 'lucide-react';
 import { useState } from 'react';
+import { Button, IconButton, Type, Size, Typography, TypographySize } from '@haseen-me/ui';
 import { useMailStore } from '@/store/mail';
 import type { SystemLabel } from '@/types/mail';
 import { SYSTEM_LABELS } from '@/types/mail';
@@ -54,12 +55,12 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
     <aside
       className={`mail-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}
       style={{
-        width: sidebarCollapsed ? 'var(--mail-sidebar-collapsed)' : 'var(--mail-sidebar-width)',
-        height: '100vh',
-        borderRight: '1px solid var(--mail-border)',
+        width: sidebarCollapsed ? 'var(--mail-sidebar-collapsed, 64px)' : 'var(--mail-sidebar-width, 240px)',
+        height: '100%',
+        borderRight: '1px solid var(--hsn-border-primary)',
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--mail-bg-secondary)',
+        background: 'var(--hsn-bg-sidepanel)',
         transition: 'width 0.2s ease',
         flexShrink: 0,
         overflow: 'hidden',
@@ -68,57 +69,48 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
       {/* Header */}
       <div
         style={{
-          height: 'var(--mail-header-height)',
+          height: 'var(--mail-header-height, 48px)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: sidebarCollapsed ? 'center' : 'space-between',
-          padding: sidebarCollapsed ? '0' : '0 12px 0 16px',
-          borderBottom: '1px solid var(--mail-border)',
+          padding: sidebarCollapsed ? '0' : '0 8px 0 16px',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           flexShrink: 0,
         }}
       >
         {!sidebarCollapsed && (
-          <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--mail-text)' }}>Mail</span>
+          <Typography size={TypographySize.LARGE} style={{ fontWeight: 600 }}>Mail</Typography>
         )}
-        <button
+        <IconButton
+          icon={sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
           onClick={toggleSidebar}
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--mail-text-muted)',
-            padding: 4,
-            borderRadius: 4,
-            display: 'flex',
-          }}
-          title={sidebarCollapsed ? 'Expand' : 'Collapse'}
-        >
-          {sidebarCollapsed ? <PanelLeftOpen size={18} /> : <PanelLeftClose size={18} />}
-        </button>
+          type={Type.TERTIARY}
+          size={Size.SMALL}
+          tooltip={sidebarCollapsed ? 'Expand' : 'Collapse'}
+        />
       </div>
 
       {/* Compose button */}
       <div style={{ padding: sidebarCollapsed ? '12px 8px' : '12px', flexShrink: 0 }}>
-        <button
-          onClick={() => setComposeOpen(true)}
-          style={{
-            width: '100%',
-            padding: sidebarCollapsed ? '10px 0' : '10px 0',
-            borderRadius: 'var(--mail-radius)',
-            background: 'var(--mail-brand)',
-            color: '#fff',
-            border: 'none',
-            fontWeight: 600,
-            fontSize: 14,
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 8,
-            transition: 'background 0.15s',
-          }}
-        >
-          <Plus size={16} />
-          {!sidebarCollapsed && 'Compose'}
-        </button>
+        {sidebarCollapsed ? (
+          <IconButton
+            icon={<Plus size={18} />}
+            onClick={() => setComposeOpen(true)}
+            type={Type.PRIMARY}
+            size={Size.MEDIUM}
+            tooltip="Compose"
+          />
+        ) : (
+          <Button
+            type={Type.PRIMARY}
+            size={Size.MEDIUM}
+            fullWidth
+            onClick={() => setComposeOpen(true)}
+            startIcon={<Plus size={16} />}
+          >
+            Compose
+          </Button>
+        )}
       </div>
 
       {/* Search */}
@@ -129,10 +121,10 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
             style={{
               width: '100%',
               padding: '7px 10px',
-              borderRadius: 'var(--mail-radius-sm)',
-              border: '1px solid var(--mail-border)',
-              background: 'var(--mail-bg)',
-              color: 'var(--mail-text-muted)',
+              borderRadius: 6,
+              border: '1px solid var(--hsn-border-primary)',
+              background: 'var(--hsn-bg-field-default)',
+              color: 'var(--hsn-text-tertiary)',
               fontSize: 13,
               display: 'flex',
               alignItems: 'center',
@@ -141,7 +133,7 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
             }}
           >
             <Search size={14} />
-            Search mail...
+            Search mail…
           </button>
         </div>
       )}
@@ -159,9 +151,9 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
               style={{
                 width: '100%',
                 padding: sidebarCollapsed ? '8px 0' : '6px 10px',
-                borderRadius: 'var(--mail-radius-sm)',
-                background: isActive ? 'var(--mail-brand-subtle)' : 'transparent',
-                color: isActive ? 'var(--mail-brand)' : 'var(--mail-text-secondary)',
+                borderRadius: 6,
+                background: isActive ? 'rgba(45, 184, 175, 0.1)' : 'transparent',
+                color: isActive ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)',
                 border: 'none',
                 fontSize: 14,
                 fontWeight: isActive ? 500 : 400,
@@ -183,8 +175,8 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                       style={{
                         fontSize: 11,
                         fontWeight: 600,
-                        color: 'var(--mail-brand)',
-                        background: 'var(--mail-brand-subtle)',
+                        color: 'var(--hsn-accent-teal)',
+                        background: 'rgba(45, 184, 175, 0.1)',
                         padding: '1px 7px',
                         borderRadius: 10,
                       }}
@@ -207,7 +199,7 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                 fontWeight: 600,
                 textTransform: 'uppercase',
                 letterSpacing: '0.08em',
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 padding: '4px 10px',
                 marginBottom: 4,
                 display: 'flex',
@@ -217,20 +209,13 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
             >
               <Tag size={11} /> Labels
               <div style={{ flex: 1 }} />
-              <button
+              <IconButton
+                icon={<Plus size={12} />}
                 onClick={() => setLabelDialogOpen(true)}
-                style={{
-                  background: 'none',
-                  border: 'none',
-                  color: 'var(--mail-text-muted)',
-                  padding: 0,
-                  cursor: 'pointer',
-                  display: 'flex',
-                }}
-                title="Manage labels"
-              >
-                <Plus size={12} />
-              </button>
+                type={Type.TERTIARY}
+                size={Size.SMALL}
+                tooltip="Manage labels"
+              />
             </div>
             {userLabels.map((label) => (
               <button
@@ -239,9 +224,9 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                 style={{
                   width: '100%',
                   padding: '6px 10px',
-                  borderRadius: 'var(--mail-radius-sm)',
-                  background: activeLabel === label.id ? 'var(--mail-brand-subtle)' : 'transparent',
-                  color: activeLabel === label.id ? 'var(--mail-brand)' : 'var(--mail-text-secondary)',
+                  borderRadius: 6,
+                  background: activeLabel === label.id ? 'rgba(45, 184, 175, 0.1)' : 'transparent',
+                  color: activeLabel === label.id ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)',
                   border: 'none',
                   fontSize: 13,
                   fontWeight: activeLabel === label.id ? 500 : 400,
@@ -269,7 +254,7 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
 
       {/* Custom Domains */}
       {!sidebarCollapsed && (
-        <div style={{ padding: '4px 8px', borderTop: '1px solid var(--mail-border-subtle)' }}>
+        <div style={{ padding: '4px 8px', borderTop: '1px solid var(--hsn-border-primary)' }}>
           <button
             onClick={() => {
               const { settingsView, setSettingsView } = useMailStore.getState();
@@ -278,9 +263,9 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
             style={{
               width: '100%',
               padding: '8px 10px',
-              borderRadius: 'var(--mail-radius-sm)',
-              background: useMailStore.getState().settingsView === 'domains' ? 'var(--mail-brand-subtle)' : 'transparent',
-              color: useMailStore.getState().settingsView === 'domains' ? 'var(--mail-brand)' : 'var(--mail-text-secondary)',
+              borderRadius: 6,
+              background: useMailStore.getState().settingsView === 'domains' ? 'rgba(45, 184, 175, 0.1)' : 'transparent',
+              color: useMailStore.getState().settingsView === 'domains' ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-secondary)',
               border: 'none',
               fontSize: 13,
               fontWeight: 500,
@@ -302,9 +287,9 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
         <div
           style={{
             padding: '12px 16px',
-            borderTop: '1px solid var(--mail-border)',
+            borderTop: '1px solid var(--hsn-border-primary)',
             fontSize: 11,
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             flexShrink: 0,
           }}
         >

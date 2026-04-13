@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Heart, Shield, Globe, Users, ArrowRight } from 'lucide-react';
+import { Button, Surface, Typography, TypographySize, TypographyWeight, Type, Size } from '@haseen-me/ui';
 
 const VALUES = [
   {
@@ -71,9 +72,9 @@ export function AboutPage() {
             <div
               style={{
                 background: 'linear-gradient(135deg, var(--hsn-brand-subtle), rgba(45,184,175,0.02))',
-                borderRadius: 'var(--hsn-radius-lg)',
+                borderRadius: '12px',
                 padding: 48,
-                border: '1px solid var(--hsn-border)',
+                border: '1px solid var(--hsn-border-primary)',
                 textAlign: 'center',
               }}
             >
@@ -82,7 +83,7 @@ export function AboutPage() {
                   width: 80,
                   height: 80,
                   borderRadius: 20,
-                  background: 'var(--hsn-brand)',
+                  background: 'var(--hsn-cta-primary-default)',
                   display: 'flex',
                   alignItems: 'center',
                   justifyContent: 'center',
@@ -95,10 +96,10 @@ export function AboutPage() {
                 H
               </div>
               <p style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Haseen</p>
-              <p style={{ fontSize: 14, color: 'var(--hsn-text-muted)' }}>
+              <p style={{ fontSize: 14, color: 'var(--hsn-text-tertiary)' }}>
                 হাসীন — meaning "beautiful" in Arabic & Bengali
               </p>
-              <p style={{ fontSize: 14, color: 'var(--hsn-text-muted)', marginTop: 8 }}>
+              <p style={{ fontSize: 14, color: 'var(--hsn-text-tertiary)', marginTop: 8 }}>
                 Beautiful privacy for everyone.
               </p>
             </div>
@@ -119,8 +120,8 @@ export function AboutPage() {
                 key={v.title}
                 style={{
                   padding: 28,
-                  borderRadius: 'var(--hsn-radius)',
-                  border: '1px solid var(--hsn-border)',
+                  borderRadius: '8px',
+                  border: '1px solid var(--hsn-border-primary)',
                   textAlign: 'center',
                 }}
               >
@@ -130,7 +131,7 @@ export function AboutPage() {
                     height: 48,
                     borderRadius: 12,
                     background: 'var(--hsn-brand-subtle)',
-                    color: 'var(--hsn-brand)',
+                    color: 'var(--hsn-cta-primary-default)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -176,7 +177,7 @@ export function AboutPage() {
                       top: 40,
                       bottom: 0,
                       width: 2,
-                      background: 'var(--hsn-border)',
+                      background: 'var(--hsn-border-primary)',
                     }}
                   />
                 )}
@@ -185,7 +186,7 @@ export function AboutPage() {
                     width: 40,
                     height: 40,
                     borderRadius: '50%',
-                    background: 'var(--hsn-brand)',
+                    background: 'var(--hsn-cta-primary-default)',
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
@@ -227,7 +228,7 @@ export function AboutPage() {
               gap: 8,
               padding: '14px 28px',
               borderRadius: 10,
-              background: 'var(--hsn-brand)',
+              background: 'var(--hsn-cta-primary-default)',
               color: '#fff',
               fontWeight: 600,
               fontSize: 16,
