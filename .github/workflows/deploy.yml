@@ -38,7 +38,6 @@ jobs:
     outputs:
       should_build: ${{ steps.detect.outputs.should_build }}
       image_tag: ${{ steps.detect.outputs.image_tag }}
-      deploy_platforms: ${{ steps.config.outputs.deploy_platforms }}
       ui_ref: ${{ steps.config.outputs.ui_ref }}
     steps:
       - name: Checkout Code
@@ -49,15 +48,12 @@ jobs:
       - name: Resolve deploy configuration
         id: config
         env:
-          RAW_DEPLOY_PLATFORMS: ${{ vars.DEPLOY_PLATFORMS }}
           RAW_UI_REF: ${{ vars.UI_REF }}
         run: |
           set -euo pipefail
 
-          deploy_platforms="${RAW_DEPLOY_PLATFORMS:-linux/amd64}"
           ui_ref="${RAW_UI_REF:-main}"
 
-          echo "deploy_platforms=$deploy_platforms" >> "$GITHUB_OUTPUT"
           echo "ui_ref=$ui_ref" >> "$GITHUB_OUTPUT"
 
       - name: Detect build-impacting changes
@@ -250,12 +246,6 @@ jobs:
       - name: Set up Docker Buildx
         uses: docker/setup-buildx-action@v3
 
-      - name: Set up QEMU
-        if: contains(needs.changes.outputs.deploy_platforms, 'arm64')
-        uses: docker/setup-qemu-action@v3
-        with:
-          platforms: arm64,amd64
-
       - name: Log in to GHCR
         uses: docker/login-action@v3
         with:
@@ -268,7 +258,7 @@ jobs:
         with:
           context: ${{ matrix.context }}
           file: ${{ matrix.dockerfile }}
-          platforms: ${{ needs.changes.outputs.deploy_platforms }}
+          platforms: linux/amd64
           pull: true
           push: true
           provenance: false
@@ -301,12 +291,12 @@ jobs:
       - name: Setup SSH
         uses: webfactory/ssh-agent@v0.9.0
         with:
-          ssh-private-key: ${{ secrets.SSH_PRIVATE_KEY }}
+          ssh-private-key: ${{ secrets.SERVER_SSH_KEY }}
 
       - name: Add Server to Known Hosts
         run: |
           mkdir -p ~/.ssh
-          ssh-keyscan -H "${{ secrets.SERVER_IP }}" 2>/dev/null >> ~/.ssh/known_hosts
+          ssh-keyscan -H "${{ secrets.SSH_HOST }}" 2>/dev/null >> ~/.ssh/known_hosts
           chmod 600 ~/.ssh/known_hosts
 
       - name: Sync Files to Server
@@ -320,12 +310,13 @@ jobs:
             --exclude='.env*' \
             --exclude='**/.turbo/' \
             --exclude='*.log' \
-            ./haseen-apps/ root@${{ secrets.SERVER_IP }}:/opt/haseen-apps/
+            ./haseen-apps/ ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }}:/opt/haseen-apps/
 
       - name: Validate and Deploy
         env:
           IMAGE_TAG: ${{ needs.changes.outputs.image_tag }}
-          SERVER_IP: ${{ secrets.SERVER_IP }}
+          SSH_HOST: ${{ secrets.SSH_HOST }}
+          SSH_USER: ${{ secrets.SSH_USER }}
           GITHUB_TOKEN: ${{ github.token }}
           GITHUB_ACTOR: ${{ github.actor }}
           ENV_PRODUCTION: ${{ secrets.ENV_PRODUCTION }}
@@ -335,7 +326,7 @@ jobs:
             ENV_PRODUCTION_B64="$(printf '%s' "${ENV_PRODUCTION}" | base64 -w 0)"
           fi
 
-          ssh root@"$SERVER_IP" \
+          ssh "$SSH_USER"@"$SSH_HOST" \
             "REGISTRY='${REGISTRY}' IMAGE_TAG='${IMAGE_TAG}' GITHUB_TOKEN='${GITHUB_TOKEN}' GITHUB_ACTOR='${GITHUB_ACTOR}' ENV_PRODUCTION_B64='${ENV_PRODUCTION_B64}' COMPOSE_PROJECT_NAME='haseen-apps' bash -se" << 'DEPLOY_SCRIPT'
           set -euo pipefail
           
@@ -380,33 +371,18 @@ jobs:
           log_info "Authenticating with container registry..."
           echo "${GITHUB_TOKEN}" | docker login "${REGISTRY}" -u "${GITHUB_ACTOR}" --password-stdin >/dev/null 2>&1
           
-          # Step 2: Validate Caddyfile
-          log_info "Validating Caddyfile..."
-          install -m 644 Caddyfile /etc/caddy/Caddyfile
-          if ! caddy validate --config /etc/caddy/Caddyfile; then
-            log_error "Caddyfile validation failed"
-            exit 1
-          fi
-          
-          # Step 3: Reload Caddy
-          log_info "Reloading Caddy..."
-          if ! systemctl reload caddy; then
-            log_error "Failed to reload Caddy"
-            exit 1
-          fi
-          
-          # Step 4: Pull latest images with retries
+          # Step 2: Pull latest images with retries
           log_info "Pulling container images (IMAGE_TAG=${IMAGE_TAG})..."
           if ! compose pull --quiet; then
             log_error "Failed to pull images"
             exit 1
           fi
           
-          # Step 5: Stop existing containers (graceful shutdown)
+          # Step 3: Stop existing containers (graceful shutdown)
           log_info "Stopping existing containers..."
           compose down --remove-orphans --timeout 30 || true
 
-          # Step 5.5: Hard-clean any containers/networks that compose down couldn't handle.
+          # Step 3.5: Hard-clean any containers/networks that compose down couldn't handle.
           # Scenario A: network exists with wrong Compose labels (created outside of Compose).
           # Scenario B: containers are stuck/disconnected and block `compose up` with name conflicts.
           NETWORK_NAME="${COMPOSE_PROJECT_NAME}_default"
@@ -429,14 +405,14 @@ jobs:
             fi
           fi
 
-          # Step 6: Start containers with health checks
+          # Step 4: Start containers with health checks
           log_info "Starting containers with IMAGE_TAG=${IMAGE_TAG}..."
           if ! compose up -d --remove-orphans --no-build; then
             log_error "Failed to start containers"
             exit 1
           fi
           
-          # Step 7: Wait for services to be healthy
+          # Step 5: Wait for services to be healthy
           log_info "Waiting for services to be healthy..."
           max_wait=120
           elapsed=0
@@ -464,7 +440,7 @@ jobs:
             exit 1
           fi
           
-          # Step 8: Cleanup
+          # Step 6: Cleanup
           log_info "Cleaning up..."
           docker logout "${REGISTRY}" 2>/dev/null || true
           docker system prune -f --filter "until=72h" 2>/dev/null || true
@@ -478,7 +454,7 @@ jobs:
         if: always()
         continue-on-error: true
         run: |
-          ssh root@${{ secrets.SERVER_IP }} << 'VERIFY_SCRIPT'
+          ssh ${{ secrets.SSH_USER }}@${{ secrets.SSH_HOST }} << 'VERIFY_SCRIPT'
           set -euo pipefail
           
           export IMAGE_TAG="${IMAGE_TAG:-latest}"
