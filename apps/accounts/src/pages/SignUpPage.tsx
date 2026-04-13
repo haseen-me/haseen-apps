@@ -34,6 +34,7 @@ export function SignUpPage() {
     if (!values.name.trim()) errs['name'] = 'Name is required';
     if (!values.email.trim()) errs['email'] = 'Email is required';
     else if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(values.email)) errs['email'] = 'Invalid email';
+    else if (!values.email.trim().toLowerCase().endsWith('@haseen.me')) errs['email'] = 'Use your @haseen.me address';
     if (values.password.length < 10) errs['password'] = 'At least 10 characters (server policy)';
     if (values.password !== values.confirmPassword) errs['confirm'] = 'Passwords do not match';
     setFieldErrors(errs);
@@ -88,6 +89,7 @@ export function SignUpPage() {
         email: response.user.email,
         displayName: response.user.displayName || normalizedName,
         mfaEnabled: false,
+        isSuperAdmin: response.user.isSuperAdmin,
         createdAt: response.user.createdAt,
       });
 
@@ -145,7 +147,7 @@ export function SignUpPage() {
           label="Email address"
           name="email"
           type="email"
-          placeholder="john@example.com"
+          placeholder="john@haseen.me"
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           icon={<Mail size={16} />}

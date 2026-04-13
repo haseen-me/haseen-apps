@@ -187,6 +187,12 @@ export const authApi = {
       body: JSON.stringify({ enforced }),
     }),
 
+  adminSetQuotas: (id: string, quotas: { mailQuotaBytes: number; driveQuotaBytes: number }) =>
+    request<{ ok: boolean }>(`/admin/users/${id}/quotas`, {
+      method: 'POST',
+      body: JSON.stringify(quotas),
+    }),
+
   adminDomains: () => request<{ domains: unknown[] }>('/admin/domains'),
 
   adminDomainOverride: (id: string) =>
@@ -199,6 +205,8 @@ export const authApi = {
   adminPool: () => request<Record<string, unknown>>('/admin/metrics/pool'),
 
   adminLatency: () => request<Record<string, unknown>>('/admin/metrics/latency'),
+
+  adminOverview: () => request<Record<string, unknown>>('/admin/metrics/overview'),
 
   adminAudit: () => request<{ events: unknown[] }>('/admin/audit'),
 };

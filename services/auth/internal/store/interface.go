@@ -22,6 +22,10 @@ type DataStore interface {
 	SetMFAEnforced(ctx context.Context, id string, enforced bool) error
 	DeleteUser(ctx context.Context, id string) error
 
+	// ProvisionUserResources creates the per-user resources required by other services.
+	// It should be safe to call multiple times (idempotent).
+	ProvisionUserResources(ctx context.Context, userID string) error
+
 	CreateSession(ctx context.Context, userID, userAgent, ipAddress string) (string, error)
 	ValidateSession(ctx context.Context, token string) (*model.Session, error)
 	DeleteSession(ctx context.Context, token string) error
@@ -65,8 +69,13 @@ type DataStore interface {
 	// Admin
 	AdminListUsers(ctx context.Context, q string, limit, offset int) ([]model.AdminUserRow, int, error)
 	AdminGetUser(ctx context.Context, id string) (*model.AdminUserRow, error)
+	AdminUpsertStorageQuotas(ctx context.Context, userID string, mailQuotaBytes, driveQuotaBytes int64) error
 	AdminQueueStats(ctx context.Context) (queued, sending, sent, deferred, failed int64, err error)
 	AdminAttachmentStats(ctx context.Context) (count int64, totalBytes int64, err error)
+	AdminMailMessageStats(ctx context.Context) (sent int64, received int64, err error)
+	AdminDriveUsageStats(ctx context.Context) (fileCount int64, totalBytes int64, err error)
+	AdminR2AttachmentRefStats(ctx context.Context) (refCount int64, totalBytes int64, err error)
+	AdminOverviewMetrics(ctx context.Context) (map[string]any, error)
 	AdminListDomains(ctx context.Context, limit int) ([]AdminDomainRow, error)
 	AdminOverrideDomainVerify(ctx context.Context, domainID string) error
 	AdminPoolStats(ctx context.Context) (acquired, idle, max int32, err error)

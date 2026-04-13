@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"strings"
 	"time"
 
@@ -29,7 +31,97 @@ const (
 	sessionDataKey = "webauthn_session"
 	localUserID    = "userID"
 	localSuper     = "isSuperAdmin"
+	allowedDomain  = "haseen.me"
 )
+
+type tokenBucket struct {
+	mu       sync.Mutex
+	capacity float64
+	tokens   float64
+	refillPS float64
+	last     time.Time
+}
+
+func newTokenBucket(capacity int, refillPerSecond float64) *tokenBucket {
+	now := time.Now()
+	return &tokenBucket{
+		capacity: float64(capacity),
+		tokens:   float64(capacity),
+		refillPS: refillPerSecond,
+		last:     now,
+	}
+}
+
+func (b *tokenBucket) allow(cost float64) bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	now := time.Now()
+	elapsed := now.Sub(b.last).Seconds()
+	b.last = now
+	b.tokens = minf(b.capacity, b.tokens+elapsed*b.refillPS)
+	if b.tokens < cost {
+		return false
+	}
+	b.tokens -= cost
+	return true
+}
+
+func minf(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+type rateLimiter struct {
+	mu      sync.Mutex
+	buckets map[string]*tokenBucket
+}
+
+func newRateLimiter() *rateLimiter {
+	return &rateLimiter{buckets: map[string]*tokenBucket{}}
+}
+
+func (rl *rateLimiter) get(key string, capacity int, refillPerSecond float64) *tokenBucket {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	if b, ok := rl.buckets[key]; ok {
+		return b
+	}
+	b := newTokenBucket(capacity, refillPerSecond)
+	rl.buckets[key] = b
+	return b
+}
+
+func (rl *rateLimiter) middleware(capacity int, refillPerSecond float64, cost float64, keyFn func(*fiber.Ctx) string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		key := keyFn(c)
+		if key == "" {
+			key = "unknown"
+		}
+		if !rl.get(key, capacity, refillPerSecond).allow(cost) {
+			return fiber.NewError(fiber.StatusTooManyRequests, "too many requests")
+		}
+		return c.Next()
+	}
+}
+
+func clientIPKey(c *fiber.Ctx) string {
+	return c.IP()
+}
+
+func clientIPAndEmailKey(c *fiber.Ctx) string {
+	type body struct {
+		Email string `json:"email"`
+	}
+	var b body
+	_ = c.BodyParser(&b)
+	b.Email = strings.ToLower(strings.TrimSpace(b.Email))
+	if b.Email == "" {
+		return c.IP()
+	}
+	return fmt.Sprintf("%s|%s", c.IP(), b.Email)
+}
 
 // Server wires HTTP routes to the identity store.
 type Server struct {
@@ -37,6 +129,7 @@ type Server struct {
 	Log     zerolog.Logger
 	Cfg     config.Auth
 	WebAuth *webauthn.WebAuthn
+	Limiter *rateLimiter
 }
 
 func NewFiberApp(s *Server) *fiber.App {
@@ -70,20 +163,34 @@ func NewFiberApp(s *Server) *fiber.App {
 	v1 := app.Group("/v1")
 
 	// Public
-	v1.Post("/register", s.handleRegister)
-	v1.Post("/login", s.handleLogin)
-	v1.Post("/login/mfa", s.handleLoginMFA)
+	rl := s.Limiter
+	if rl == nil {
+		rl = newRateLimiter()
+	}
+
+	// Rate limiting (token bucket):
+	// - register/login: tighter limits to mitigate brute force and spam.
+	// - reset endpoints: moderate limits.
+	// - MFA: tighter (codes are short).
+	// Costs allow future tuning (e.g. heavier cost for failure responses).
+	ipLimiterTight := rl.middleware(12, 0.2, 1, clientIPKey)          // burst 12, refill 0.2/s (~12/min)
+	ipLimiterModerate := rl.middleware(30, 0.5, 1, clientIPKey)       // burst 30, refill 0.5/s (~30/min)
+	ipEmailLimiter := rl.middleware(10, 0.1667, 1, clientIPAndEmailKey) // burst 10, refill ~0.166/s (~10/min)
+
+	v1.Post("/register", ipLimiterTight, s.handleRegister)
+	v1.Post("/login", ipEmailLimiter, s.handleLogin)
+	v1.Post("/login/mfa", ipLimiterTight, s.handleLoginMFA)
 	v1.Post("/logout", s.handleLogout)
 	v1.Post("/session/refresh", s.handleSessionRefresh)
 	v1.Get("/verify-email", s.handleVerifyEmail)
-	v1.Post("/password/forgot", s.handleForgotPassword)
-	v1.Post("/password/reset", s.handleResetPassword)
+	v1.Post("/password/forgot", ipLimiterModerate, s.handleForgotPassword)
+	v1.Post("/password/reset", ipLimiterModerate, s.handleResetPassword)
 
 	// WebAuthn
-	v1.Post("/webauthn/register/begin", s.handleWABeginRegister)
-	v1.Post("/webauthn/register/finish", s.handleWAFinishRegister)
-	v1.Post("/webauthn/login/begin", s.handleWABeginLogin)
-	v1.Post("/webauthn/login/finish", s.handleWAFinishLogin)
+	v1.Post("/webauthn/register/begin", ipLimiterModerate, s.handleWABeginRegister)
+	v1.Post("/webauthn/register/finish", ipLimiterModerate, s.handleWAFinishRegister)
+	v1.Post("/webauthn/login/begin", ipLimiterModerate, s.handleWABeginLogin)
+	v1.Post("/webauthn/login/finish", ipLimiterModerate, s.handleWAFinishLogin)
 
 	auth := v1.Group("", s.authMiddleware)
 
@@ -111,8 +218,10 @@ func NewFiberApp(s *Server) *fiber.App {
 	admin.Post("/users/:id/reactivate", s.handleAdminReactivate)
 	admin.Post("/users/:id/verify-email", s.handleAdminVerifyEmail)
 	admin.Post("/users/:id/mfa-enforce", s.handleAdminMFAEnforce)
+	admin.Post("/users/:id/quotas", s.handleAdminSetUserQuotas)
 	admin.Get("/domains", s.handleAdminDomains)
 	admin.Post("/domains/:id/verify-override", s.handleAdminDomainOverride)
+	admin.Get("/metrics/overview", s.handleAdminOverviewMetrics)
 	admin.Get("/metrics/smtp-queue", s.handleAdminSMTPQueue)
 	admin.Get("/metrics/attachments", s.handleAdminAttachments)
 	admin.Get("/metrics/pool", s.handleAdminPool)
@@ -234,6 +343,9 @@ func (s *Server) handleRegister(c *fiber.Ctx) error {
 	if req.Email == "" || req.Password == "" {
 		return fiber.NewError(fiber.StatusBadRequest, "email and password are required")
 	}
+	if !strings.HasSuffix(req.Email, "@"+allowedDomain) {
+		return fiber.NewError(fiber.StatusBadRequest, "email must be an @haseen.me address")
+	}
 	if len(req.PublicKey) == 0 || len(req.SigningKey) == 0 {
 		return fiber.NewError(fiber.StatusBadRequest, "publicKey and signingKey are required")
 	}
@@ -251,6 +363,10 @@ func (s *Server) handleRegister(c *fiber.Ctx) error {
 	if err != nil {
 		s.Log.Error().Err(err).Msg("create user")
 		return fiber.NewError(fiber.StatusInternalServerError, "failed to create account")
+	}
+	if err := s.Store.ProvisionUserResources(c.Context(), user.ID); err != nil {
+		s.Log.Error().Err(err).Msg("provision user resources")
+		return fiber.NewError(fiber.StatusInternalServerError, "failed to provision account")
 	}
 	sig := req.Signature
 	if sig == nil {
@@ -500,6 +616,9 @@ func (s *Server) handleUpdateAccount(c *fiber.Ctx) error {
 	uid := s.userID(c)
 	if req.Email != "" {
 		email := strings.ToLower(strings.TrimSpace(req.Email))
+		if !strings.HasSuffix(email, "@"+allowedDomain) {
+			return fiber.NewError(fiber.StatusBadRequest, "email must be an @haseen.me address")
+		}
 		existing, err := s.Store.GetUserByEmail(c.Context(), email)
 		if err == nil && existing.ID != uid {
 			return fiber.NewError(fiber.StatusConflict, "email already in use")
@@ -1011,6 +1130,29 @@ func (s *Server) handleAdminMFAEnforce(c *fiber.Ctx) error {
 	return c.JSON(model.OkResponse{OK: true})
 }
 
+func (s *Server) handleAdminSetUserQuotas(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var body struct {
+		MailQuotaBytes  int64 `json:"mailQuotaBytes"`
+		DriveQuotaBytes int64 `json:"driveQuotaBytes"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if body.MailQuotaBytes < 0 || body.DriveQuotaBytes < 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "quota bytes must be >= 0")
+	}
+	if err := s.Store.AdminUpsertStorageQuotas(c.Context(), id, body.MailQuotaBytes, body.DriveQuotaBytes); err != nil {
+		s.Log.Error().Err(err).Msg("admin set quotas")
+		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+	}
+	s.writeAudit(c, "admin.user_quotas_set", "user", id, map[string]any{
+		"mailQuotaBytes":  body.MailQuotaBytes,
+		"driveQuotaBytes": body.DriveQuotaBytes,
+	})
+	return c.JSON(model.OkResponse{OK: true})
+}
+
 func (s *Server) handleAdminDomains(c *fiber.Ctx) error {
 	d, err := s.Store.AdminListDomains(c.Context(), c.QueryInt("limit", 100))
 	if err != nil {
@@ -1047,6 +1189,14 @@ func (s *Server) handleAdminAttachments(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
 	}
 	return c.JSON(fiber.Map{"attachmentCount": n, "totalBytes": bytes})
+}
+
+func (s *Server) handleAdminOverviewMetrics(c *fiber.Ctx) error {
+	m, err := s.Store.AdminOverviewMetrics(c.Context())
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+	}
+	return c.JSON(m)
 }
 
 func (s *Server) handleAdminPool(c *fiber.Ctx) error {

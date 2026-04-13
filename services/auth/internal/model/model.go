@@ -153,4 +153,6 @@ type AdminUserRow struct {
 	MFAEnabled     bool `json:"mfaEnabled"`
 	EmailVerified  bool `json:"emailVerified"`
 	SessionCount   int  `json:"sessionCount"`
+	MailQuotaBytes  int64 `json:"mailQuotaBytes"`
+	DriveQuotaBytes int64 `json:"driveQuotaBytes"`
 }

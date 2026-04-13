@@ -6,6 +6,8 @@ export interface User {
   email: string;
   displayName: string;
   mfaEnabled: boolean;
+  isAdmin?: boolean;
+  isSuperAdmin?: boolean;
   createdAt: string;
 }
 
@@ -24,12 +26,17 @@ interface AuthState {
   logout: () => Promise<void>;
 }
 
-function mapUser(u: { id: string; email: string; displayName?: string; createdAt: string }, mfa?: boolean): User {
+function mapUser(
+  u: { id: string; email: string; displayName?: string; isAdmin?: boolean; isSuperAdmin?: boolean; createdAt: string },
+  mfa?: boolean,
+): User {
   return {
     id: u.id,
     email: u.email,
     displayName: u.displayName ?? u.email.split('@')[0] ?? '',
     mfaEnabled: mfa ?? false,
+    isAdmin: u.isAdmin,
+    isSuperAdmin: u.isSuperAdmin,
     createdAt: u.createdAt,
   };
 }

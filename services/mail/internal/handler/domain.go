@@ -4,7 +4,9 @@ import (
 	"crypto/rand"
 	"encoding/hex"
 	"fmt"
+	"net"
 	"net/http"
+	"net/url"
 	"strings"
 
 	"github.com/go-chi/chi/v5"
@@ -39,9 +41,34 @@ func (h *Handler) AddDomain(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	if strings.Contains(domainName, " ") || !strings.Contains(domainName, ".") {
+	// Basic domain normalization + validation.
+	// Reject schemes/paths and only allow a plain hostname like "example.com".
+	if strings.Contains(domainName, "://") {
+		h.Error(w, http.StatusBadRequest, "domain must be a hostname (no scheme)")
+		return
+	}
+	if strings.ContainsAny(domainName, " /\\\t\r\n") {
 		h.Error(w, http.StatusBadRequest, "invalid domain format")
 		return
+	}
+	if u, err := url.Parse("https://" + domainName); err != nil || u.Hostname() != domainName || strings.Contains(u.Hostname(), "..") {
+		h.Error(w, http.StatusBadRequest, "invalid domain format")
+		return
+	}
+	// Ensure the hostname is valid per net rules.
+	if strings.TrimSuffix(domainName, ".") != domainName {
+		h.Error(w, http.StatusBadRequest, "domain must not be a FQDN with trailing dot")
+		return
+	}
+	if _, err := net.LookupHost(domainName); err != nil {
+		// Don't hard-fail if DNS is temporarily unavailable; just validate syntax.
+		// But if the error is a parse error, reject.
+		if dnsErr, ok := err.(*net.DNSError); ok && dnsErr.IsNotFound {
+			// ok (domain may not exist yet or may not resolve)
+		} else if strings.Contains(strings.ToLower(err.Error()), "invalid") {
+			h.Error(w, http.StatusBadRequest, "invalid domain format")
+			return
+		}
 	}
 
 	tokenBytes := make([]byte, 16)
@@ -53,12 +80,17 @@ func (h *Handler) AddDomain(w http.ResponseWriter, r *http.Request) {
 
 	domain, err := h.Store.CreateDomain(r.Context(), userID, domainName, token)
 	if err != nil {
-		if strings.Contains(err.Error(), "duplicate") || strings.Contains(err.Error(), "unique") {
+		errLower := strings.ToLower(err.Error())
+		if strings.Contains(errLower, "duplicate") || strings.Contains(errLower, "unique") {
 			h.Error(w, http.StatusConflict, "domain already registered")
 			return
 		}
+		if strings.Contains(errLower, "violates foreign key constraint") {
+			h.Error(w, http.StatusBadRequest, "invalid user")
+			return
+		}
 		h.Log.Error().Err(err).Str("domain", domainName).Msg("create domain failed")
-		h.Error(w, http.StatusInternalServerError, "failed to add domain")
+		h.Error(w, http.StatusInternalServerError, "failed to add domain (db)")
 		return
 	}
 
@@ -74,7 +106,7 @@ func (h *Handler) AddDomain(w http.ResponseWriter, r *http.Request) {
 	if err != nil {
 		h.Log.Error().Err(err).Msg("store DKIM key failed")
 		h.Store.DeleteDomain(r.Context(), domain.ID, userID)
-		h.Error(w, http.StatusInternalServerError, "failed to store DKIM keys")
+		h.Error(w, http.StatusInternalServerError, "failed to store DKIM keys (db)")
 		return
 	}
 

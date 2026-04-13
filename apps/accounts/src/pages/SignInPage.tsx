@@ -91,6 +91,7 @@ export function SignInPage() {
           email: mfaResult.user.email,
           displayName: mfaResult.user.displayName || normalizedEmail.split('@')[0] || '',
           mfaEnabled: true,
+          isSuperAdmin: Boolean(mfaResult.user.isSuperAdmin),
           createdAt: mfaResult.user.createdAt || new Date().toISOString(),
         });
         await tryDecryptKeys(password);
@@ -116,6 +117,7 @@ export function SignInPage() {
         email: result.user.email,
         displayName: result.user.displayName || normalizedEmail.split('@')[0] || '',
         mfaEnabled: false,
+        isSuperAdmin: Boolean(result.user.isSuperAdmin),
         createdAt: result.user.createdAt || new Date().toISOString(),
       });
       await tryDecryptKeys(password);
@@ -152,6 +154,7 @@ export function SignInPage() {
         email: result.user.email,
         displayName: result.user.displayName || normalizedEmail.split('@')[0] || '',
         mfaEnabled: false,
+        isSuperAdmin: Boolean(result.user.isSuperAdmin),
         createdAt: result.user.createdAt || new Date().toISOString(),
       });
       toast.show('Signed in with passkey');
