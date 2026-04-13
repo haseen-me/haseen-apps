@@ -6,8 +6,10 @@ import (
 	"encoding/base64"
 	"encoding/hex"
 	"encoding/json"
+	"fmt"
 	"io"
 	"net/http"
+	"sync"
 	"strings"
 	"time"
 
@@ -32,12 +34,102 @@ const (
 	allowedDomain  = "haseen.me"
 )
 
+type tokenBucket struct {
+	mu       sync.Mutex
+	capacity float64
+	tokens   float64
+	refillPS float64
+	last     time.Time
+}
+
+func newTokenBucket(capacity int, refillPerSecond float64) *tokenBucket {
+	now := time.Now()
+	return &tokenBucket{
+		capacity: float64(capacity),
+		tokens:   float64(capacity),
+		refillPS: refillPerSecond,
+		last:     now,
+	}
+}
+
+func (b *tokenBucket) allow(cost float64) bool {
+	b.mu.Lock()
+	defer b.mu.Unlock()
+	now := time.Now()
+	elapsed := now.Sub(b.last).Seconds()
+	b.last = now
+	b.tokens = minf(b.capacity, b.tokens+elapsed*b.refillPS)
+	if b.tokens < cost {
+		return false
+	}
+	b.tokens -= cost
+	return true
+}
+
+func minf(a, b float64) float64 {
+	if a < b {
+		return a
+	}
+	return b
+}
+
+type rateLimiter struct {
+	mu      sync.Mutex
+	buckets map[string]*tokenBucket
+}
+
+func newRateLimiter() *rateLimiter {
+	return &rateLimiter{buckets: map[string]*tokenBucket{}}
+}
+
+func (rl *rateLimiter) get(key string, capacity int, refillPerSecond float64) *tokenBucket {
+	rl.mu.Lock()
+	defer rl.mu.Unlock()
+	if b, ok := rl.buckets[key]; ok {
+		return b
+	}
+	b := newTokenBucket(capacity, refillPerSecond)
+	rl.buckets[key] = b
+	return b
+}
+
+func (rl *rateLimiter) middleware(capacity int, refillPerSecond float64, cost float64, keyFn func(*fiber.Ctx) string) fiber.Handler {
+	return func(c *fiber.Ctx) error {
+		key := keyFn(c)
+		if key == "" {
+			key = "unknown"
+		}
+		if !rl.get(key, capacity, refillPerSecond).allow(cost) {
+			return fiber.NewError(fiber.StatusTooManyRequests, "too many requests")
+		}
+		return c.Next()
+	}
+}
+
+func clientIPKey(c *fiber.Ctx) string {
+	return c.IP()
+}
+
+func clientIPAndEmailKey(c *fiber.Ctx) string {
+	type body struct {
+		Email string `json:"email"`
+	}
+	var b body
+	_ = c.BodyParser(&b)
+	b.Email = strings.ToLower(strings.TrimSpace(b.Email))
+	if b.Email == "" {
+		return c.IP()
+	}
+	return fmt.Sprintf("%s|%s", c.IP(), b.Email)
+}
+
 // Server wires HTTP routes to the identity store.
 type Server struct {
 	Store   store.DataStore
 	Log     zerolog.Logger
 	Cfg     config.Auth
 	WebAuth *webauthn.WebAuthn
+	Limiter *rateLimiter
 }
 
 func NewFiberApp(s *Server) *fiber.App {
@@ -71,20 +163,34 @@ func NewFiberApp(s *Server) *fiber.App {
 	v1 := app.Group("/v1")
 
 	// Public
-	v1.Post("/register", s.handleRegister)
-	v1.Post("/login", s.handleLogin)
-	v1.Post("/login/mfa", s.handleLoginMFA)
+	rl := s.Limiter
+	if rl == nil {
+		rl = newRateLimiter()
+	}
+
+	// Rate limiting (token bucket):
+	// - register/login: tighter limits to mitigate brute force and spam.
+	// - reset endpoints: moderate limits.
+	// - MFA: tighter (codes are short).
+	// Costs allow future tuning (e.g. heavier cost for failure responses).
+	ipLimiterTight := rl.middleware(12, 0.2, 1, clientIPKey)          // burst 12, refill 0.2/s (~12/min)
+	ipLimiterModerate := rl.middleware(30, 0.5, 1, clientIPKey)       // burst 30, refill 0.5/s (~30/min)
+	ipEmailLimiter := rl.middleware(10, 0.1667, 1, clientIPAndEmailKey) // burst 10, refill ~0.166/s (~10/min)
+
+	v1.Post("/register", ipLimiterTight, s.handleRegister)
+	v1.Post("/login", ipEmailLimiter, s.handleLogin)
+	v1.Post("/login/mfa", ipLimiterTight, s.handleLoginMFA)
 	v1.Post("/logout", s.handleLogout)
 	v1.Post("/session/refresh", s.handleSessionRefresh)
 	v1.Get("/verify-email", s.handleVerifyEmail)
-	v1.Post("/password/forgot", s.handleForgotPassword)
-	v1.Post("/password/reset", s.handleResetPassword)
+	v1.Post("/password/forgot", ipLimiterModerate, s.handleForgotPassword)
+	v1.Post("/password/reset", ipLimiterModerate, s.handleResetPassword)
 
 	// WebAuthn
-	v1.Post("/webauthn/register/begin", s.handleWABeginRegister)
-	v1.Post("/webauthn/register/finish", s.handleWAFinishRegister)
-	v1.Post("/webauthn/login/begin", s.handleWABeginLogin)
-	v1.Post("/webauthn/login/finish", s.handleWAFinishLogin)
+	v1.Post("/webauthn/register/begin", ipLimiterModerate, s.handleWABeginRegister)
+	v1.Post("/webauthn/register/finish", ipLimiterModerate, s.handleWAFinishRegister)
+	v1.Post("/webauthn/login/begin", ipLimiterModerate, s.handleWABeginLogin)
+	v1.Post("/webauthn/login/finish", ipLimiterModerate, s.handleWAFinishLogin)
 
 	auth := v1.Group("", s.authMiddleware)
 
