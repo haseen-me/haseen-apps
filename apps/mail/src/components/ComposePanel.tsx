@@ -46,6 +46,8 @@ export function ComposePanel() {
     draftId: string | null;
     replyToMessageId: string | null;
   } | null>(null);
+  const sendTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
+  const countdownRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   const hasContent = to.length > 0 || subject.trim() !== '' || body.trim() !== '';
 
@@ -167,6 +169,7 @@ export function ComposePanel() {
     }
   }, [composeOpen, replyToThreadId, forwardFromThreadId]);
 
+
   if (!composeOpen) return null;
 
   const handleClose = (discard?: boolean) => {
@@ -185,9 +188,6 @@ export function ComposePanel() {
     setShowCcBcc(false);
     setDraftId(null);
   };
-
-  const sendTimerRef = useRef<ReturnType<typeof setTimeout>>(undefined);
-  const countdownRef = useRef<ReturnType<typeof setInterval>>(undefined);
 
   const doSend = async () => {
     try {
