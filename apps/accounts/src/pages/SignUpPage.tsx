@@ -89,6 +89,7 @@ export function SignUpPage() {
         email: response.user.email,
         displayName: response.user.displayName || normalizedName,
         mfaEnabled: false,
+        isSuperAdmin: response.user.isSuperAdmin,
         createdAt: response.user.createdAt,
       });
 
