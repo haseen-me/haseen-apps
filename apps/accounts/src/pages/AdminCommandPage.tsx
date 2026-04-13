@@ -35,13 +35,13 @@ export function AdminCommandPage() {
     try {
       if (tab === 'users') {
         const res = await authApi.adminUsers({ q: q.trim() || undefined });
-        setUsers(res.users as any[]);
+        setUsers(res.users || []);
       } else if (tab === 'domains') {
         const res = await authApi.adminDomains();
-        setDomains(res.domains as any[]);
+        setDomains(res.domains || []);
       } else if (tab === 'audit') {
         const res = await authApi.adminAudit();
-        setAudit(res.events as any[]);
+        setAudit(res.events || []);
       } else {
         const [smtp, attach, pool, lat] = await Promise.all([
           authApi.adminSmtpQueue(),

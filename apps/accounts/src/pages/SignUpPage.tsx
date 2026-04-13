@@ -112,7 +112,8 @@ export function SignUpPage() {
       }
 
       if (response.verifyUrl) {
-        toast.show('Verify your email using the link shown on the next screen.', { countdown: 6 });
+        console.info('[Dev] Verification URL:', response.verifyUrl);
+        toast.show('Please verify your email using the link sent to your inbox.', { countdown: 6 });
       }
 
       setStatus('');
