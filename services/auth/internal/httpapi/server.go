@@ -221,6 +221,7 @@ func NewFiberApp(s *Server) *fiber.App {
 	admin.Post("/users/:id/quotas", s.handleAdminSetUserQuotas)
 	admin.Get("/domains", s.handleAdminDomains)
 	admin.Post("/domains/:id/verify-override", s.handleAdminDomainOverride)
+	admin.Get("/metrics/overview", s.handleAdminOverviewMetrics)
 	admin.Get("/metrics/smtp-queue", s.handleAdminSMTPQueue)
 	admin.Get("/metrics/attachments", s.handleAdminAttachments)
 	admin.Get("/metrics/pool", s.handleAdminPool)
@@ -1188,6 +1189,14 @@ func (s *Server) handleAdminAttachments(c *fiber.Ctx) error {
 		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
 	}
 	return c.JSON(fiber.Map{"attachmentCount": n, "totalBytes": bytes})
+}
+
+func (s *Server) handleAdminOverviewMetrics(c *fiber.Ctx) error {
+	m, err := s.Store.AdminOverviewMetrics(c.Context())
+	if err != nil {
+		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+	}
+	return c.JSON(m)
 }
 
 func (s *Server) handleAdminPool(c *fiber.Ctx) error {

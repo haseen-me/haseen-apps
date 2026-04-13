@@ -44,13 +44,14 @@ export function AdminCommandPage() {
         const res = await authApi.adminAudit();
         setAudit(res.events as any[]);
       } else {
-        const [smtp, attach, pool, lat] = await Promise.all([
+        const [overview, smtp, attach, pool, lat] = await Promise.all([
+          authApi.adminOverview(),
           authApi.adminSmtpQueue(),
           authApi.adminAttachments(),
           authApi.adminPool(),
           authApi.adminLatency(),
         ]);
-        setHealth({ smtp, attachments: attach, pool, latency: lat });
+        setHealth({ overview, smtp, attachments: attach, pool, latency: lat });
       }
     } catch (e) {
       setErr(e instanceof Error ? e.message : 'Failed to load admin data');

@@ -206,5 +206,7 @@ export const authApi = {
 
   adminLatency: () => request<Record<string, unknown>>('/admin/metrics/latency'),
 
+  adminOverview: () => request<Record<string, unknown>>('/admin/metrics/overview'),
+
   adminAudit: () => request<{ events: unknown[] }>('/admin/audit'),
 };

@@ -72,6 +72,10 @@ type DataStore interface {
 	AdminUpsertStorageQuotas(ctx context.Context, userID string, mailQuotaBytes, driveQuotaBytes int64) error
 	AdminQueueStats(ctx context.Context) (queued, sending, sent, deferred, failed int64, err error)
 	AdminAttachmentStats(ctx context.Context) (count int64, totalBytes int64, err error)
+	AdminMailMessageStats(ctx context.Context) (sent int64, received int64, err error)
+	AdminDriveUsageStats(ctx context.Context) (fileCount int64, totalBytes int64, err error)
+	AdminR2AttachmentRefStats(ctx context.Context) (refCount int64, totalBytes int64, err error)
+	AdminOverviewMetrics(ctx context.Context) (map[string]any, error)
 	AdminListDomains(ctx context.Context, limit int) ([]AdminDomainRow, error)
 	AdminOverrideDomainVerify(ctx context.Context, domainID string) error
 	AdminPoolStats(ctx context.Context) (acquired, idle, max int32, err error)
