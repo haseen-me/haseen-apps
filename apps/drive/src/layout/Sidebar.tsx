@@ -60,10 +60,10 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
       style={{
         width: collapsed ? 64 : 'var(--drive-sidebar-width)',
         height: '100vh',
-        borderRight: '1px solid var(--drive-border)',
+        borderRight: '1px solid var(--hsn-border-primary)',
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--drive-bg-secondary)',
+        background: 'var(--hsn-bg-l0-solid)',
         transition: 'width 0.2s ease',
         flexShrink: 0,
         overflow: 'hidden',
@@ -77,19 +77,19 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
           alignItems: 'center',
           justifyContent: collapsed ? 'center' : 'space-between',
           padding: collapsed ? '0' : '0 12px 0 16px',
-          borderBottom: '1px solid var(--drive-border)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           flexShrink: 0,
         }}
       >
         {!collapsed && (
-          <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--drive-text)' }}>Drive</span>
+          <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--hsn-text-primary)' }}>Drive</span>
         )}
         <button
           onClick={() => setCollapsed(!collapsed)}
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--drive-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             padding: 4,
             borderRadius: 4,
             display: 'flex',
@@ -107,8 +107,8 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
           style={{
             width: '100%',
             padding: '10px 0',
-            borderRadius: 'var(--drive-radius)',
-            background: 'var(--drive-brand)',
+            borderRadius: '8px',
+            background: 'var(--hsn-cta-primary-default)',
             color: '#fff',
             border: 'none',
             fontWeight: 600,
@@ -119,8 +119,8 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
             gap: 8,
             transition: 'background 0.15s',
           }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-brand-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--drive-brand)')}
+          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-cta-primary-hover)')}
+          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--hsn-cta-primary-default)')}
         >
           <Plus size={16} />
           {!collapsed && 'Upload'}
@@ -132,10 +132,10 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
             style={{
               width: '100%',
               padding: '8px 12px',
-              borderRadius: 'var(--drive-radius-sm)',
-              background: 'var(--drive-bg)',
-              border: '1px solid var(--drive-border)',
-              color: 'var(--drive-text-muted)',
+              borderRadius: '6px',
+              background: 'var(--hsn-bg-l1-solid)',
+              border: '1px solid var(--hsn-border-primary)',
+              color: 'var(--hsn-text-tertiary)',
               fontSize: 13,
               display: 'flex',
               alignItems: 'center',
@@ -164,16 +164,16 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                 gap: 10,
                 padding: collapsed ? '10px 0' : '8px 12px',
                 justifyContent: collapsed ? 'center' : 'flex-start',
-                borderRadius: 'var(--drive-radius-sm)',
+                borderRadius: '6px',
                 border: 'none',
-                background: active ? 'var(--drive-brand-subtle)' : 'transparent',
-                color: active ? 'var(--drive-brand)' : 'var(--drive-text)',
+                background: active ? 'rgba(45,184,175,0.08)' : 'transparent',
+                color: active ? 'var(--hsn-cta-primary-default)' : 'var(--hsn-text-primary)',
                 fontWeight: active ? 600 : 400,
                 fontSize: 14,
                 transition: 'background 0.12s',
                 marginBottom: 2,
               }}
-              onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--drive-bg-hover)'; }}
+              onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--hsn-bg-cell)'; }}
               onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
             >
               {item.icon}
@@ -195,7 +195,7 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                 padding: '6px 12px',
                 border: 'none',
                 background: 'transparent',
-                color: 'var(--drive-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 fontSize: 11,
                 fontWeight: 600,
                 textTransform: 'uppercase',
@@ -211,7 +211,7 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                   background: 'none',
                   border: 'none',
                   padding: 2,
-                  color: 'var(--drive-text-muted)',
+                  color: 'var(--hsn-text-tertiary)',
                   display: 'flex',
                   borderRadius: 4,
                 }}
@@ -234,15 +234,15 @@ export function Sidebar({ mobileSidebarOpen }: { mobileSidebarOpen?: boolean }) 
                     gap: 8,
                     padding: '7px 12px 7px 24px',
                     border: 'none',
-                    borderRadius: 'var(--drive-radius-sm)',
-                    background: active ? 'var(--drive-brand-subtle)' : 'transparent',
-                    color: active ? 'var(--drive-brand)' : 'var(--drive-text)',
+                    borderRadius: '6px',
+                    background: active ? 'rgba(45,184,175,0.08)' : 'transparent',
+                    color: active ? 'var(--hsn-cta-primary-default)' : 'var(--hsn-text-primary)',
                     fontWeight: active ? 600 : 400,
                     fontSize: 13,
                     transition: 'background 0.12s',
                     marginBottom: 1,
                   }}
-                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--drive-bg-hover)'; }}
+                  onMouseEnter={(e) => { if (!active) e.currentTarget.style.background = 'var(--hsn-bg-cell)'; }}
                   onMouseLeave={(e) => { if (!active) e.currentTarget.style.background = 'transparent'; }}
                 >
                   <FolderIcon size={16} />
@@ -290,18 +290,18 @@ function StorageIndicator() {
     <div
       style={{
         padding: '12px 16px',
-        borderTop: '1px solid var(--drive-border)',
+        borderTop: '1px solid var(--hsn-border-primary)',
         flexShrink: 0,
       }}
     >
-      <div style={{ fontSize: 12, color: 'var(--drive-text-muted)', marginBottom: 6 }}>
+      <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', marginBottom: 6 }}>
         {formatBytes(used)} of {formatBytes(total)} used
       </div>
       <div
         style={{
           height: 4,
           borderRadius: 2,
-          background: 'var(--drive-border)',
+          background: 'var(--hsn-border-primary)',
           overflow: 'hidden',
         }}
       >
@@ -310,7 +310,7 @@ function StorageIndicator() {
             width: `${Math.max(pct, 0.5)}%`,
             height: '100%',
             borderRadius: 2,
-            background: pct > 90 ? '#dc3545' : 'var(--drive-brand)',
+            background: pct > 90 ? '#dc3545' : 'var(--hsn-cta-primary-default)',
             transition: 'width 0.3s ease',
           }}
         />

@@ -225,20 +225,20 @@ export function EventDialog() {
     alignItems: 'center',
     gap: 8,
     fontSize: 13,
-    color: 'var(--cal-text-secondary)',
+    color: 'var(--hsn-text-secondary)',
     marginBottom: 4,
   };
 
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '8px 10px',
-    border: '1px solid var(--cal-border)',
-    borderRadius: 'var(--cal-radius-sm)',
+    border: '1px solid var(--hsn-border-primary)',
+    borderRadius: '6px',
     fontSize: 13,
     fontFamily: 'inherit',
     outline: 'none',
-    background: 'var(--cal-bg)',
-    color: 'var(--cal-text)',
+    background: 'var(--hsn-bg-app)',
+    color: 'var(--hsn-text-primary)',
   };
 
   return (
@@ -257,9 +257,9 @@ export function EventDialog() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--cal-bg)',
-          borderRadius: 'var(--cal-radius)',
-          boxShadow: 'var(--cal-shadow-lg)',
+          background: 'var(--hsn-bg-app)',
+          borderRadius: '10px',
+          boxShadow: 'var(--hsn-shadow-l3)',
           width: 420,
           maxHeight: '80vh',
           overflow: 'auto',
@@ -273,7 +273,7 @@ export function EventDialog() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '14px 16px',
-            borderBottom: '1px solid var(--cal-border)',
+            borderBottom: '1px solid var(--hsn-border-primary)',
           }}
         >
           <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>
@@ -285,7 +285,7 @@ export function EventDialog() {
               background: 'none',
               border: 'none',
               padding: 4,
-              color: 'var(--cal-text-muted)',
+              color: 'var(--hsn-text-tertiary)',
             }}
           >
             <X size={18} />
@@ -330,7 +330,7 @@ export function EventDialog() {
                 onChange={(e) => setStart(e.target.value)}
                 style={{ ...inputStyle, flex: 1 }}
               />
-              <span style={{ color: 'var(--cal-text-muted)', fontSize: 13 }}>to</span>
+              <span style={{ color: 'var(--hsn-text-tertiary)', fontSize: 13 }}>to</span>
               <input
                 type="datetime-local"
                 value={end}
@@ -345,7 +345,7 @@ export function EventDialog() {
                 gap: 6,
                 marginTop: 8,
                 fontSize: 12,
-                color: 'var(--cal-text-secondary)',
+                color: 'var(--hsn-text-secondary)',
                 cursor: 'pointer',
               }}
             >
@@ -418,10 +418,10 @@ export function EventDialog() {
                     height: 26,
                     borderRadius: '50%',
                     background: c,
-                    border: color === c ? '2px solid var(--cal-text)' : '2px solid transparent',
+                    border: color === c ? '2px solid var(--hsn-text-primary)' : '2px solid transparent',
                     cursor: 'pointer',
                     padding: 0,
-                    outline: color === c ? '2px solid var(--cal-bg)' : 'none',
+                    outline: color === c ? '2px solid var(--hsn-bg-app)' : 'none',
                     outlineOffset: -3,
                   }}
                 />
@@ -454,7 +454,7 @@ export function EventDialog() {
               <div style={{ display: 'flex', gap: 4, flexWrap: 'wrap', marginTop: 6 }}>
                 {attendees.map((email) => {
                   const status = attendeeStatuses.get(email) || 'pending';
-                  const statusColor = status === 'accepted' ? '#30a46c' : status === 'declined' ? '#e5484d' : status === 'tentative' ? '#f5a623' : 'var(--cal-text-muted)';
+                  const statusColor = status === 'accepted' ? '#30a46c' : status === 'declined' ? '#e5484d' : status === 'tentative' ? '#f5a623' : 'var(--hsn-text-tertiary)';
                   const statusLabel = status === 'accepted' ? '✓' : status === 'declined' ? '✗' : status === 'tentative' ? '?' : '·';
                   const attendeeId = existingAttendeeIds.get(email);
                   return (
@@ -466,9 +466,9 @@ export function EventDialog() {
                         gap: 4,
                         padding: '2px 8px',
                         borderRadius: 12,
-                        background: 'var(--cal-bg-muted, #f1f3f4)',
+                        background: 'var(--hsn-bg-l0-solid)',
                         fontSize: 12,
-                        color: 'var(--cal-text-secondary)',
+                        color: 'var(--hsn-text-secondary)',
                       }}
                     >
                       <span style={{ color: statusColor, fontWeight: 700, fontSize: 11, width: 12, textAlign: 'center' }} title={status}>
@@ -539,7 +539,7 @@ export function EventDialog() {
             display: 'flex',
             justifyContent: editingEvent ? 'space-between' : 'flex-end',
             padding: '12px 16px',
-            borderTop: '1px solid var(--cal-border)',
+            borderTop: '1px solid var(--hsn-border-primary)',
             gap: 8,
           }}
         >
@@ -549,8 +549,8 @@ export function EventDialog() {
               style={{
                 padding: '7px 16px',
                 border: 'none',
-                borderRadius: 'var(--cal-radius-sm)',
-                background: 'var(--cal-danger)',
+                borderRadius: '6px',
+                background: 'var(--hsn-accent-red)',
                 color: '#fff',
                 fontSize: 13,
                 fontWeight: 500,
@@ -564,11 +564,11 @@ export function EventDialog() {
               onClick={closeEventDialog}
               style={{
                 padding: '7px 16px',
-                border: '1px solid var(--cal-border)',
-                borderRadius: 'var(--cal-radius-sm)',
-                background: 'var(--cal-bg)',
+                border: '1px solid var(--hsn-border-primary)',
+                borderRadius: '6px',
+                background: 'var(--hsn-bg-app)',
                 fontSize: 13,
-                color: 'var(--cal-text)',
+                color: 'var(--hsn-text-primary)',
               }}
             >
               Cancel
@@ -578,8 +578,8 @@ export function EventDialog() {
               style={{
                 padding: '7px 16px',
                 border: 'none',
-                borderRadius: 'var(--cal-radius-sm)',
-                background: 'var(--cal-brand)',
+                borderRadius: '6px',
+                background: 'var(--hsn-accent-teal)',
                 color: '#fff',
                 fontSize: 13,
                 fontWeight: 500,

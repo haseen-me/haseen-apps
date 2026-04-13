@@ -52,22 +52,22 @@ export function ThreadRow({ thread }: { thread: Thread }) {
         alignItems: 'center',
         gap: 12,
         padding: '10px 16px',
-        borderBottom: '1px solid var(--mail-border-subtle)',
+        borderBottom: '1px solid var(--hsn-border-primary)',
         background: isActive
-          ? 'var(--mail-brand-subtle)'
+          ? 'rgba(45,184,175,0.08)'
           : isSelected
-          ? 'var(--mail-bg-active)'
+          ? 'var(--hsn-bg-cell)'
           : isUnread
-          ? 'var(--mail-bg-unread, rgba(45,184,175,0.04))'
-          : 'var(--mail-bg)',
+          ? 'rgba(45,184,175,0.04)'
+          : 'var(--hsn-bg-l1-solid)',
         cursor: 'pointer',
         transition: 'background 0.1s',
       }}
       onMouseEnter={(e) => {
-        if (!isActive && !isSelected) e.currentTarget.style.background = 'var(--mail-bg-hover)';
+        if (!isActive && !isSelected) e.currentTarget.style.background = 'var(--hsn-bg-cell)';
       }}
       onMouseLeave={(e) => {
-        if (!isActive && !isSelected) e.currentTarget.style.background = isUnread ? 'var(--mail-bg-unread, rgba(45,184,175,0.04))' : 'var(--mail-bg)';
+        if (!isActive && !isSelected) e.currentTarget.style.background = isUnread ? 'rgba(45,184,175,0.04)' : 'var(--hsn-bg-l1-solid)';
       }}
     >
       {/* Checkbox / Avatar */}
@@ -80,7 +80,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
           width: 32,
           height: 32,
           borderRadius: '50%',
-          background: isSelected ? 'var(--mail-brand)' : stringToColor(from.name || from.address),
+          background: isSelected ? 'var(--hsn-accent-teal)' : stringToColor(from.name || from.address),
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
@@ -102,7 +102,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
             style={{
               fontWeight: isUnread ? 600 : 400,
               fontSize: 14,
-              color: 'var(--mail-text)',
+              color: 'var(--hsn-text-primary)',
               whiteSpace: 'nowrap',
               overflow: 'hidden',
               textOverflow: 'ellipsis',
@@ -111,7 +111,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
           >
             {from.name || from.address}
             {thread.messages.length > 1 && (
-              <span style={{ color: 'var(--mail-text-muted)', fontWeight: 400, fontSize: 12, marginLeft: 4 }}>
+              <span style={{ color: 'var(--hsn-text-tertiary)', fontWeight: 400, fontSize: 12, marginLeft: 4 }}>
                 ({thread.messages.length})
               </span>
             )}
@@ -119,7 +119,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
           <span
             style={{
               fontSize: 12,
-              color: isUnread ? 'var(--mail-brand)' : 'var(--mail-text-muted)',
+              color: isUnread ? 'var(--hsn-accent-teal)' : 'var(--hsn-text-tertiary)',
               whiteSpace: 'nowrap',
               flexShrink: 0,
             }}
@@ -132,7 +132,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
           style={{
             fontSize: 13,
             fontWeight: isUnread ? 600 : 400,
-            color: 'var(--mail-text)',
+            color: 'var(--hsn-text-primary)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -145,7 +145,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
         <div
           style={{
             fontSize: 13,
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             whiteSpace: 'nowrap',
             overflow: 'hidden',
             textOverflow: 'ellipsis',
@@ -158,9 +158,9 @@ export function ThreadRow({ thread }: { thread: Thread }) {
 
       {/* Right indicators */}
       <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexShrink: 0 }}>
-        {thread.hasAttachments && <Paperclip size={14} style={{ color: 'var(--mail-text-muted)' }} />}
+        {thread.hasAttachments && <Paperclip size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />}
         {thread.messages[0]?.starred && (
-          <Star size={14} style={{ color: 'var(--mail-warning)', fill: 'var(--mail-warning)' }} />
+          <Star size={14} style={{ color: '#f59e0b', fill: '#f59e0b' }} />
         )}
         {isUnread && (
           <div
@@ -168,7 +168,7 @@ export function ThreadRow({ thread }: { thread: Thread }) {
               width: 8,
               height: 8,
               borderRadius: '50%',
-              background: 'var(--mail-brand)',
+              background: 'var(--hsn-accent-teal)',
               flexShrink: 0,
             }}
           />

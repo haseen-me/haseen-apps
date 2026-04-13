@@ -50,9 +50,9 @@ export function FolderCard({ folder }: { folder: Folder }) {
       onDrop={handleDrop}
       style={{
         padding: '14px 16px',
-        borderRadius: 'var(--drive-radius)',
-        border: `2px solid ${dragOver ? 'var(--drive-brand)' : selected ? 'var(--drive-brand)' : 'var(--drive-border)'}`,
-        background: dragOver ? 'var(--drive-brand-subtle)' : selected ? 'var(--drive-brand-subtle)' : 'var(--drive-bg)',
+        borderRadius: '8px',
+        border: `2px solid ${dragOver ? 'var(--hsn-cta-primary-default)' : selected ? 'var(--hsn-cta-primary-default)' : 'var(--hsn-border-primary)'}`,
+        background: dragOver ? 'rgba(45,184,175,0.08)' : selected ? 'rgba(45,184,175,0.08)' : 'var(--hsn-bg-l1-solid)',
         display: 'flex',
         alignItems: 'center',
         gap: 12,
@@ -62,15 +62,15 @@ export function FolderCard({ folder }: { folder: Folder }) {
       }}
       onMouseEnter={(e) => {
         if (!selected) {
-          e.currentTarget.style.borderColor = 'var(--drive-border)';
-          e.currentTarget.style.background = 'var(--drive-bg-hover)';
-          e.currentTarget.style.boxShadow = 'var(--drive-shadow)';
+          e.currentTarget.style.borderColor = 'var(--hsn-border-primary)';
+          e.currentTarget.style.background = 'var(--hsn-bg-cell)';
+          e.currentTarget.style.boxShadow = 'var(--hsn-shadow-l1)';
         }
       }}
       onMouseLeave={(e) => {
         if (!selected) {
-          e.currentTarget.style.borderColor = 'var(--drive-border)';
-          e.currentTarget.style.background = 'var(--drive-bg)';
+          e.currentTarget.style.borderColor = 'var(--hsn-border-primary)';
+          e.currentTarget.style.background = 'var(--hsn-bg-l1-solid)';
           e.currentTarget.style.boxShadow = 'none';
         }
       }}
@@ -81,11 +81,11 @@ export function FolderCard({ folder }: { folder: Folder }) {
           width: 36,
           height: 36,
           borderRadius: 8,
-          background: selected ? 'var(--drive-brand)' : 'rgba(45, 184, 175, 0.1)',
+          background: selected ? 'var(--hsn-cta-primary-default)' : 'rgba(45, 184, 175, 0.1)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'center',
-          color: selected ? '#fff' : 'var(--drive-brand)',
+          color: selected ? '#fff' : 'var(--hsn-cta-primary-default)',
           flexShrink: 0,
         }}
       >
@@ -94,7 +94,7 @@ export function FolderCard({ folder }: { folder: Folder }) {
       <span style={{
         fontSize: 14,
         fontWeight: 500,
-        color: 'var(--drive-text)',
+        color: 'var(--hsn-text-primary)',
         overflow: 'hidden',
         textOverflow: 'ellipsis',
         whiteSpace: 'nowrap',

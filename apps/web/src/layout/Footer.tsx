@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Mail, Shield, Github } from 'lucide-react';
+import { Typography, TypographySize } from '@haseen-me/ui';
 
 const PRODUCT_LINKS = [
   { label: 'Mail', path: '/features' },
@@ -58,7 +59,7 @@ export function Footer() {
                 width: 32,
                 height: 32,
                 borderRadius: 8,
-                background: 'var(--hsn-brand)',
+                background: 'var(--hsn-cta-primary-default)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',

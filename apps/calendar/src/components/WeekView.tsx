@@ -138,10 +138,10 @@ export function WeekView() {
         style={{
           display: 'grid',
           gridTemplateColumns: '60px repeat(7, 1fr)',
-          borderBottom: '1px solid var(--cal-border)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500, color: 'var(--cal-text-muted)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 10, fontWeight: 500, color: 'var(--hsn-text-tertiary)' }}>
           W{getISOWeekNumber(weekDates[0]!)}
         </div>
         {weekDates.map((date, i) => {
@@ -155,7 +155,7 @@ export function WeekView() {
                 fontSize: 12,
               }}
             >
-              <div style={{ color: 'var(--cal-text-muted)', fontWeight: 600, fontSize: 11 }}>
+              <div style={{ color: 'var(--hsn-text-tertiary)', fontWeight: 600, fontSize: 11 }}>
                 {DAYS[i]}
               </div>
               <div
@@ -167,8 +167,8 @@ export function WeekView() {
                   alignItems: 'center',
                   justifyContent: 'center',
                   borderRadius: '50%',
-                  background: isToday ? 'var(--cal-brand)' : 'transparent',
-                  color: isToday ? '#fff' : 'var(--cal-text)',
+                  background: isToday ? 'var(--hsn-accent-teal)' : 'transparent',
+                  color: isToday ? '#fff' : 'var(--hsn-text-primary)',
                   fontWeight: isToday ? 600 : 400,
                   fontSize: 14,
                 }}
@@ -200,7 +200,7 @@ export function WeekView() {
                     alignItems: 'flex-start',
                     justifyContent: 'flex-end',
                     fontSize: 10,
-                    color: 'var(--cal-text-muted)',
+                    color: 'var(--hsn-text-tertiary)',
                     transform: 'translateY(-6px)',
                   }}
                 >
@@ -249,10 +249,10 @@ export function WeekView() {
                       }}
                       style={{
                         height: 48,
-                        borderBottom: '1px solid var(--cal-border-subtle)',
-                        borderRight: di < 6 ? '1px solid var(--cal-border-subtle)' : undefined,
+                        borderBottom: '1px solid var(--hsn-border-primary)',
+                        borderRight: di < 6 ? '1px solid var(--hsn-border-primary)' : undefined,
                         cursor: 'pointer',
-                        background: isInDrag ? 'var(--cal-brand-subtle, rgba(66,133,244,0.15))' : undefined,
+                        background: isInDrag ? 'rgba(45,184,175,0.1)' : undefined,
                         transition: 'background 0.05s',
                       }}
                     />
@@ -336,7 +336,7 @@ export function WeekView() {
                       >
                         <div style={{ fontWeight: 500, color: evt.color }}>{evt.title}</div>
                         {(evt.attendeeCount ?? 0) > 0 && height >= 32 && (
-                          <div style={{ fontSize: 9, color: 'var(--cal-text-muted)', marginTop: 1 }}>
+                          <div style={{ fontSize: 9, color: 'var(--hsn-text-tertiary)', marginTop: 1 }}>
                             {evt.attendeeCount} attendee{evt.attendeeCount !== 1 ? 's' : ''}
                           </div>
                         )}

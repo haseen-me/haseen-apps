@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
 import { requireAuth } from '@haseen-me/shared';
+import { HaseenThemeProvider } from '@haseen-me/ui';
 import { CalendarLayout } from '@/layout/CalendarLayout';
 import { Sidebar } from '@/components/Sidebar';
 import { CalendarHeader } from '@/components/CalendarHeader';
@@ -162,6 +163,7 @@ export default function App() {
   if (!authed) return null;
 
   return (
+    <HaseenThemeProvider>
     <ErrorBoundary>
     <CalendarLayout>
       <Sidebar />
@@ -173,5 +175,6 @@ export default function App() {
       <Toast message={toast.message} visible={toast.visible} onDismiss={toast.hide} />
     </CalendarLayout>
     </ErrorBoundary>
+    </HaseenThemeProvider>
   );
 }

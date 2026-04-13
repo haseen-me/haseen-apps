@@ -1,4 +1,4 @@
-import { useState, useRef, useEffect } from 'react';
+import { useState, useRef } from 'react';
 import {
   MoreVertical,
   Download,
@@ -9,6 +9,7 @@ import {
   FolderInput,
   Star,
 } from 'lucide-react';
+import { IconButton, Dropdown, DropdownItem, DropdownItemColor, Type, Size } from '@haseen-me/ui';
 import { useDriveStore } from '@/store/drive';
 import { useToastStore } from '@haseen-me/shared/toast';
 import { driveApi } from '@/api/client';
@@ -30,7 +31,7 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
   const [newName, setNewName] = useState(file.name);
   const [confirmDelete, setConfirmDelete] = useState(false);
   const [moveOpen, setMoveOpen] = useState(false);
-  const menuRef = useRef<HTMLDivElement>(null);
+  const anchorRef = useRef<HTMLButtonElement>(null);
   const toast = useToastStore();
   const { files, setFiles, setShareDialogFileId } = useDriveStore();
 
@@ -39,18 +40,6 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
     setOpen(false);
     onCloseContext?.();
   };
-
-  // Close on click outside
-  useEffect(() => {
-    if (!isMenuOpen) return;
-    const handler = (e: MouseEvent) => {
-      if (menuRef.current && !menuRef.current.contains(e.target as Node)) {
-        closeMenu();
-      }
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, [isMenuOpen]);
 
   const handleDownload = async () => {
     closeMenu();
@@ -182,11 +171,11 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
           style={{
             fontSize: 13,
             padding: '2px 6px',
-            border: '1px solid var(--drive-brand)',
+            border: '1px solid var(--hsn-accent-teal)',
             borderRadius: 4,
             outline: 'none',
-            background: 'var(--drive-bg)',
-            color: 'var(--drive-text)',
+            background: 'var(--hsn-bg-l1-solid)',
+            color: 'var(--hsn-text-primary)',
             width: 140,
           }}
         />
@@ -195,160 +184,50 @@ export function FileContextMenu({ file, isTrash, contextPos, onCloseContext }: P
   }
 
   return (
-    <div ref={menuRef} style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
+    <div style={{ position: 'relative' }} onClick={(e) => e.stopPropagation()}>
       {!contextPos && (
-        <button
+        <IconButton
+          ref={anchorRef}
+          icon={<MoreVertical size={16} />}
           onClick={() => setOpen(!open)}
-          title="More actions"
-          style={{
-            background: 'none',
-            border: 'none',
-            color: 'var(--drive-text-muted)',
-            padding: 4,
-            borderRadius: 4,
-            display: 'flex',
-            cursor: 'pointer',
-          }}
-        >
-          <MoreVertical size={16} />
-        </button>
-      )}
-      {isMenuOpen && (
-        <div
-          style={contextPos ? {
-            position: 'fixed',
-            top: contextPos.y,
-            left: contextPos.x,
-            background: 'var(--drive-bg)',
-            border: '1px solid var(--drive-border)',
-            borderRadius: 'var(--drive-radius)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-            zIndex: 200,
-            minWidth: 160,
-            overflow: 'hidden',
-          } : {
-            position: 'absolute',
-            top: '100%',
-            right: 0,
-            marginTop: 4,
-            background: 'var(--drive-bg)',
-            border: '1px solid var(--drive-border)',
-            borderRadius: 'var(--drive-radius)',
-            boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
-            zIndex: 100,
-            minWidth: 160,
-            overflow: 'hidden',
-          }}
-        >
-          <MenuItem
-            icon={<Download size={15} />}
-            label="Download"
-            onClick={handleDownload}
-          />
-          {isTrash ? (
-            <MenuItem
-              icon={<RotateCcw size={15} />}
-              label="Restore"
-              onClick={handleRestore}
-            />
-          ) : (
-            <>
-              <MenuItem
-                icon={<Pencil size={15} />}
-                label="Rename"
-                onClick={() => {
-                  closeMenu();
-                  setNewName(file.name);
-                  setRenaming(true);
-                }}
-              />
-              <MenuItem
-                icon={<Share2 size={15} />}
-                label="Share"
-                onClick={handleShare}
-              />
-              <MenuItem
-                icon={<Star size={15} style={file.starred ? { fill: 'var(--drive-warning, #f5a623)', color: 'var(--drive-warning, #f5a623)' } : undefined} />}
-                label={file.starred ? 'Unstar' : 'Star'}
-                onClick={handleToggleStar}
-              />
-              <MenuItem
-                icon={<FolderInput size={15} />}
-                label="Move to…"
-                onClick={() => {
-                  closeMenu();
-                  setMoveOpen(true);
-                }}
-              />
-              <div style={{ height: 1, background: 'var(--drive-border)', margin: '4px 0' }} />
-              <MenuItem
-                icon={<Trash2 size={15} />}
-                label="Move to trash"
-                onClick={() => {
-                  closeMenu();
-                  setConfirmDelete(true);
-                }}
-                danger
-              />
-            </>
-          )}
-        </div>
-      )}
-
-      {confirmDelete && (
-        <ConfirmDialog
-          title="Move to trash?"
-          message={`"${file.name}" will be moved to trash. You can restore it later.`}
-          confirmLabel="Move to trash"
-          danger
-          onConfirm={handleDelete}
-          onCancel={() => setConfirmDelete(false)}
+          type={Type.TERTIARY}
+          size={Size.SMALL}
+          tooltip="More actions"
         />
       )}
 
-      {moveOpen && (
-        <MoveToDialog
-          title={`Move "${file.name}" to…`}
-          onSelect={handleMove}
-          onCancel={() => setMoveOpen(false)}
-        />
-      )}
+      <Dropdown open={isMenuOpen} onClose={closeMenu} anchor={anchorRef} width={180} style={contextPos ? { position: 'fixed', top: contextPos.y, left: contextPos.x } : undefined}>
+        <DropdownItem label="Download" icon={<Download size={15} />} onClick={handleDownload} />
+        {isTrash ? (
+          <DropdownItem label="Restore" icon={<RotateCcw size={15} />} onClick={handleRestore} />
+        ) : (
+          <>
+            <DropdownItem label="Rename" icon={<Pencil size={15} />} onClick={() => { closeMenu(); setNewName(file.name); setRenaming(true); }} />
+            <DropdownItem label="Share" icon={<Share2 size={15} />} onClick={handleShare} />
+            <DropdownItem label={file.starred ? 'Unstar' : 'Star'} icon={<Star size={15} />} onClick={handleToggleStar} />
+            <DropdownItem label="Move to…" icon={<FolderInput size={15} />} onClick={() => { closeMenu(); setMoveOpen(true); }} />
+            <DropdownItem label="Move to trash" icon={<Trash2 size={15} />} color={DropdownItemColor.DESTRUCTIVE} onClick={() => { closeMenu(); setConfirmDelete(true); }} />
+          </>
+        )}
+      </Dropdown>
+
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Move to trash?"
+        message={`"${file.name}" will be moved to trash. You can restore it later.`}
+        confirmLabel="Move to trash"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
+
+      <MoveToDialog
+        open={moveOpen}
+        title={`Move "${file.name}" to…`}
+        onSelect={handleMove}
+        onCancel={() => setMoveOpen(false)}
+      />
     </div>
   );
 }
 
-function MenuItem({
-  icon,
-  label,
-  onClick,
-  danger,
-}: {
-  icon: React.ReactNode;
-  label: string;
-  onClick: () => void;
-  danger?: boolean;
-}) {
-  return (
-    <button
-      onClick={onClick}
-      style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        width: '100%',
-        padding: '8px 12px',
-        background: 'none',
-        border: 'none',
-        color: danger ? '#e5484d' : 'var(--drive-text)',
-        fontSize: 13,
-        cursor: 'pointer',
-        textAlign: 'left',
-      }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-bg-hover)')}
-      onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
-    >
-      {icon}
-      {label}
-    </button>
-  );
-}

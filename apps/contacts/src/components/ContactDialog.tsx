@@ -67,13 +67,13 @@ export function ContactDialog() {
   const inputStyle: React.CSSProperties = {
     width: '100%',
     padding: '8px 10px',
-    border: '1px solid var(--ct-border)',
-    borderRadius: 'var(--ct-radius-sm)',
+    border: '1px solid var(--hsn-border-primary)',
+    borderRadius: '6px',
     fontSize: 13,
     fontFamily: 'inherit',
     outline: 'none',
-    background: 'var(--ct-bg)',
-    color: 'var(--ct-text)',
+    background: 'var(--hsn-bg-app)',
+    color: 'var(--hsn-text-primary)',
   };
 
   return (
@@ -87,61 +87,61 @@ export function ContactDialog() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--ct-bg)', borderRadius: 'var(--ct-radius)',
-          boxShadow: 'var(--ct-shadow-lg)', width: 400, padding: 0, animation: 'fadeIn 0.15s ease-out',
+          background: 'var(--hsn-bg-app)', borderRadius: '8px',
+          boxShadow: 'var(--hsn-shadow-l3)', width: 400, padding: 0, animation: 'fadeIn 0.15s ease-out',
         }}
       >
-        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--ct-border)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '14px 16px', borderBottom: '1px solid var(--hsn-border-primary)' }}>
           <h3 style={{ fontSize: 15, fontWeight: 600, margin: 0 }}>
             {editingContact ? 'Edit Contact' : 'New Contact'}
           </h3>
-          <button onClick={handleClose} style={{ background: 'none', border: 'none', padding: 4, color: 'var(--ct-text-muted)' }}>
+          <button onClick={handleClose} style={{ background: 'none', border: 'none', padding: 4, color: 'var(--hsn-text-tertiary)' }}>
             <X size={18} />
           </button>
         </div>
 
         <div style={{ padding: 16, display: 'flex', flexDirection: 'column', gap: 14 }}>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Name</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Name</label>
             <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Full name" style={inputStyle} autoFocus />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Email</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Email</label>
             <input value={email} onChange={(e) => setEmail(e.target.value)} placeholder="email@example.com" type="email" style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Phone</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Phone</label>
             <input value={phone} onChange={(e) => setPhone(e.target.value)} placeholder="+1 555-1234" type="tel" style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Company</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Company</label>
             <input value={company} onChange={(e) => setCompany(e.target.value)} placeholder="Company name" style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Address</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Address</label>
             <input value={address} onChange={(e) => setAddress(e.target.value)} placeholder="Street address" style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Birthday</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Birthday</label>
             <input value={birthday} onChange={(e) => setBirthday(e.target.value)} type="date" style={inputStyle} />
           </div>
           <div>
-            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--ct-text-secondary)', marginBottom: 4, display: 'block' }}>Notes</label>
+            <label style={{ fontSize: 12, fontWeight: 500, color: 'var(--hsn-text-secondary)', marginBottom: 4, display: 'block' }}>Notes</label>
             <textarea value={notes} onChange={(e) => setNotes(e.target.value)} placeholder="Add notes..." rows={3} style={{ ...inputStyle, resize: 'vertical' }} />
           </div>
         </div>
 
-        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 16px', borderTop: '1px solid var(--ct-border)', gap: 8 }}>
-          <button onClick={handleClose} style={{ padding: '7px 16px', border: '1px solid var(--ct-border)', borderRadius: 'var(--ct-radius-sm)', background: 'var(--ct-bg)', fontSize: 13, color: 'var(--ct-text)' }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', padding: '12px 16px', borderTop: '1px solid var(--hsn-border-primary)', gap: 8 }}>
+          <button onClick={handleClose} style={{ padding: '7px 16px', border: '1px solid var(--hsn-border-primary)', borderRadius: '6px', background: 'var(--hsn-bg-app)', fontSize: 13, color: 'var(--hsn-text-primary)' }}>
             Cancel
           </button>
           <button
             onClick={handleSave}
             disabled={!email.trim() || saving}
             style={{
-              padding: '7px 16px', border: 'none', borderRadius: 'var(--ct-radius-sm)',
-              background: email.trim() && !saving ? 'var(--ct-brand)' : 'var(--ct-border)',
-              color: email.trim() && !saving ? '#fff' : 'var(--ct-text-muted)', fontSize: 13, fontWeight: 500,
+              padding: '7px 16px', border: 'none', borderRadius: '6px',
+              background: email.trim() && !saving ? 'var(--hsn-accent-teal)' : 'var(--hsn-border-primary)',
+              color: email.trim() && !saving ? '#fff' : 'var(--hsn-text-tertiary)', fontSize: 13, fontWeight: 500,
             }}
           >
             {saving ? 'Saving...' : 'Save'}

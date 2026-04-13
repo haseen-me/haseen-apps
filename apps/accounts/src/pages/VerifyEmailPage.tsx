@@ -2,7 +2,7 @@ import { useEffect, useState } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
 import { CheckCircle2, XCircle, ArrowLeft } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
-import { Alert, Button } from '@/components/FormUI';
+import { Banner, Button, Typography, TypographySize, Type, Size } from '@haseen-me/ui';
 import { authApi } from '@/api/auth';
 import { useToastStore } from '@haseen-me/shared/toast';
 
@@ -35,8 +35,10 @@ export function VerifyEmailPage() {
 
   if (state === 'verifying') {
     return (
-      <AuthLayout title="Verifying your email" subtitle="Just a moment...">
-        <p style={{ textAlign: 'center', color: 'var(--acc-text-muted)' }}>Verifying…</p>
+      <AuthLayout title="Verifying your email" subtitle="Just a moment…">
+        <Typography size={TypographySize.BODY} style={{ textAlign: 'center', color: 'var(--hsn-text-secondary)' }}>
+          Verifying…
+        </Typography>
       </AuthLayout>
     );
   }
@@ -44,11 +46,10 @@ export function VerifyEmailPage() {
   if (state === 'ok') {
     return (
       <AuthLayout title="Email verified" subtitle="Your account is ready.">
-        <Alert type="success">
-          <CheckCircle2 size={16} style={{ marginRight: 8 }} />
+        <Banner color="success" icon={<CheckCircle2 size={16} />} style={{ marginBottom: 20, borderRadius: 8 }}>
           Your email has been verified.
-        </Alert>
-        <Button fullWidth style={{ marginTop: 12 }} onClick={() => navigate('/settings')}>
+        </Banner>
+        <Button type={Type.PRIMARY} size={Size.LARGE} fullWidth onClick={() => navigate('/settings')}>
           Continue
         </Button>
       </AuthLayout>
@@ -57,28 +58,14 @@ export function VerifyEmailPage() {
 
   return (
     <AuthLayout title="Verification failed" subtitle="We could not verify this email.">
-      <Alert type="error">
-        <XCircle size={16} style={{ marginRight: 8 }} />
+      <Banner color="error" icon={<XCircle size={16} />} style={{ marginBottom: 20, borderRadius: 8 }}>
         {err ?? 'Verification failed.'}
-      </Alert>
-      <div style={{ marginTop: 24, textAlign: 'center' }}>
-        <Link
-          to="/sign-in"
-          style={{
-            color: 'var(--acc-brand)',
-            textDecoration: 'none',
-            fontSize: 14,
-            fontWeight: 500,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <ArrowLeft size={14} />
-          Back to Sign In
+      </Banner>
+      <div style={{ textAlign: 'center' }}>
+        <Link to="/sign-in" style={{ color: 'var(--hsn-accent-teal)', textDecoration: 'none', fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6 }}>
+          <ArrowLeft size={14} /> Back to Sign In
         </Link>
       </div>
     </AuthLayout>
   );
 }
-

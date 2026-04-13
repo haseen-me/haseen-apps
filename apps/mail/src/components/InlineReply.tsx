@@ -78,9 +78,9 @@ export function InlineReply({ thread, onClose }: Props) {
     <div
       style={{
         margin: '12px 20px 20px',
-        border: '1px solid var(--mail-border)',
-        borderRadius: 'var(--mail-radius)',
-        background: 'var(--mail-bg)',
+        border: '1px solid var(--hsn-border-primary)',
+        borderRadius: '8px',
+        background: 'var(--hsn-bg-l1-solid)',
         overflow: 'hidden',
       }}
     >
@@ -88,8 +88,8 @@ export function InlineReply({ thread, onClose }: Props) {
         style={{
           padding: '8px 12px',
           fontSize: 12,
-          color: 'var(--mail-text-muted)',
-          borderBottom: '1px solid var(--mail-border)',
+          color: 'var(--hsn-text-tertiary)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           display: 'flex',
           alignItems: 'center',
           justifyContent: 'space-between',
@@ -104,7 +104,7 @@ export function InlineReply({ thread, onClose }: Props) {
             background: 'none',
             border: 'none',
             cursor: 'pointer',
-            color: 'var(--mail-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             padding: 2,
             display: 'flex',
           }}
@@ -134,20 +134,20 @@ export function InlineReply({ thread, onClose }: Props) {
           lineHeight: '1.5',
           fontFamily: 'inherit',
           background: 'transparent',
-          color: 'var(--mail-text)',
+          color: 'var(--hsn-text-primary)',
           boxSizing: 'border-box',
         }}
       />
       <div
         style={{
           padding: '8px 12px',
-          borderTop: '1px solid var(--mail-border)',
+          borderTop: '1px solid var(--hsn-border-primary)',
           display: 'flex',
           justifyContent: 'space-between',
           alignItems: 'center',
         }}
       >
-        <span style={{ fontSize: 11, color: 'var(--mail-text-muted)' }}>
+        <span style={{ fontSize: 11, color: 'var(--hsn-text-tertiary)' }}>
           ⌘ Enter to send
         </span>
         <button
@@ -158,9 +158,9 @@ export function InlineReply({ thread, onClose }: Props) {
             alignItems: 'center',
             gap: 6,
             padding: '6px 14px',
-            borderRadius: 'var(--mail-radius)',
-            background: sending || !body.trim() ? 'var(--mail-bg-secondary)' : 'var(--mail-brand)',
-            color: sending || !body.trim() ? 'var(--mail-text-muted)' : '#fff',
+            borderRadius: '8px',
+            background: sending || !body.trim() ? 'var(--hsn-bg-l0-solid)' : 'var(--hsn-accent-teal)',
+            color: sending || !body.trim() ? 'var(--hsn-text-tertiary)' : '#fff',
             border: 'none',
             fontWeight: 500,
             fontSize: 13,

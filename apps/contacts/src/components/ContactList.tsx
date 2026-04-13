@@ -51,13 +51,13 @@ export function ContactList() {
             key={i}
             style={{
               padding: '12px 16px', display: 'flex', alignItems: 'center', gap: 12,
-              borderBottom: '1px solid var(--ct-border-subtle)',
+              borderBottom: '1px solid var(--hsn-border-primary)',
             }}
           >
-            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--ct-bg-hover)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
+            <div style={{ width: 36, height: 36, borderRadius: '50%', background: 'var(--hsn-bg-cell)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
             <div style={{ flex: 1 }}>
-              <div style={{ width: 120, height: 13, borderRadius: 4, background: 'var(--ct-bg-hover)', animation: 'skeletonPulse 1.5s ease-in-out infinite', marginBottom: 4 }} />
-              <div style={{ width: 180, height: 11, borderRadius: 4, background: 'var(--ct-bg-hover)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
+              <div style={{ width: 120, height: 13, borderRadius: 4, background: 'var(--hsn-bg-cell)', animation: 'skeletonPulse 1.5s ease-in-out infinite', marginBottom: 4 }} />
+              <div style={{ width: 180, height: 11, borderRadius: 4, background: 'var(--hsn-bg-cell)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
             </div>
           </div>
         ))}
@@ -67,7 +67,7 @@ export function ContactList() {
 
   if (filtered.length === 0) {
     return (
-      <div style={{ padding: 32, textAlign: 'center', color: 'var(--ct-text-muted)', fontSize: 13 }}>
+      <div style={{ padding: 32, textAlign: 'center', color: 'var(--hsn-text-tertiary)', fontSize: 13 }}>
         {searchQuery ? 'No contacts match your search' : 'No contacts yet. Click "New contact" to add one.'}
       </div>
     );
@@ -88,8 +88,8 @@ export function ContactList() {
         <div key={letter}>
           <div
             style={{
-              padding: '6px 16px', fontSize: 11, fontWeight: 600, color: 'var(--ct-brand)',
-              background: 'var(--ct-bg-secondary)', textTransform: 'uppercase', letterSpacing: '0.06em',
+              padding: '6px 16px', fontSize: 11, fontWeight: 600, color: 'var(--hsn-accent-teal)',
+              background: 'var(--hsn-bg-l0-solid)', textTransform: 'uppercase', letterSpacing: '0.06em',
               position: 'sticky', top: 0, zIndex: 1,
             }}
           >
@@ -107,17 +107,17 @@ export function ContactList() {
                 style={{
                   display: 'flex', alignItems: 'center', gap: 12,
                   padding: '10px 16px', cursor: 'pointer', transition: 'background 0.1s',
-                  background: isActive ? 'var(--ct-brand-subtle)' : 'var(--ct-bg)',
-                  borderBottom: '1px solid var(--ct-border-subtle)',
+                  background: isActive ? 'rgba(45,184,175,0.08)' : 'var(--hsn-bg-app)',
+                  borderBottom: '1px solid var(--hsn-border-primary)',
                 }}
-                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--ct-bg-hover)'; }}
-                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--ct-bg)'; }}
+                onMouseEnter={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--hsn-bg-cell)'; }}
+                onMouseLeave={(e) => { if (!isActive) e.currentTarget.style.background = 'var(--hsn-bg-app)'; }}
               >
                 <div
                   style={{
                     width: 36, height: 36, borderRadius: '50%',
-                    background: isActive ? 'var(--ct-brand)' : 'var(--ct-bg-active)',
-                    color: isActive ? '#fff' : 'var(--ct-text-secondary)',
+                    background: isActive ? 'var(--hsn-accent-teal)' : 'var(--hsn-bg-cell)',
+                    color: isActive ? '#fff' : 'var(--hsn-text-secondary)',
                     display: 'flex', alignItems: 'center', justifyContent: 'center',
                     fontSize: 12, fontWeight: 600, flexShrink: 0,
                   }}
@@ -129,7 +129,7 @@ export function ContactList() {
                     {c.name || c.email}
                   </div>
                   {c.name && (
-                    <div style={{ fontSize: 12, color: 'var(--ct-text-muted)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
+                    <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>
                       {c.email}
                       {c.company && <span style={{ marginLeft: 6 }}>· {c.company}</span>}
                     </div>

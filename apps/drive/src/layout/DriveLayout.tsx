@@ -1,12 +1,16 @@
 import { type ReactNode, useState, useCallback, useRef } from 'react';
 import { Upload, Menu } from 'lucide-react';
-import { ProductRail } from '@/components/ProductRail';
+import { AppShell, AppShellMain, IconButton, Type, Size, Typography, TypographySize } from '@haseen-me/ui';
+import { ProductRail } from '@haseen-me/shared/ProductRail';
 import { Sidebar } from './Sidebar';
 import { useDriveStore } from '@/store/drive';
 import { useCryptoStore } from '@/store/crypto';
 import { useToastStore } from '@haseen-me/shared/toast';
 import { encryptSymmetric, deriveSessionKey } from '@haseen-me/crypto';
 import { driveApi } from '@/api/client';
+
+const RAIL_WIDTH = 48;
+const SIDEBAR_WIDTH = 220;
 
 export function DriveLayout({ children }: { children: ReactNode }) {
   const [dragOver, setDragOver] = useState(false);
@@ -78,16 +82,17 @@ export function DriveLayout({ children }: { children: ReactNode }) {
   }, [encryptionKeyPair, currentFolderId, toast]);
 
   return (
-    <div
-      style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}
-      onDragEnter={handleDragEnter}
-      onDragLeave={handleDragLeave}
-      onDragOver={handleDragOver}
-      onDrop={handleDrop}
+    <AppShell
+      sidebar={
+        <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+          <div className="drive-product-rail" style={{ width: RAIL_WIDTH, flexShrink: 0 }}>
+            <ProductRail activeProduct="drive" />
+          </div>
+          <Sidebar mobileSidebarOpen={mobileSidebarOpen} />
+        </div>
+      }
+      sidebarWidth={RAIL_WIDTH + SIDEBAR_WIDTH}
     >
-      <div className="drive-product-rail">
-        <ProductRail activeProduct="drive" />
-      </div>
       {/* Mobile header */}
       <div
         className="drive-mobile-header"
@@ -98,36 +103,57 @@ export function DriveLayout({ children }: { children: ReactNode }) {
           left: 0,
           right: 0,
           height: 48,
-          background: 'var(--drive-bg)',
-          borderBottom: '1px solid var(--drive-border)',
+          background: 'var(--hsn-bg-header)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           alignItems: 'center',
           padding: '0 12px',
           gap: 10,
           zIndex: 250,
         }}
       >
-        <button
+        <IconButton
+          icon={<Menu size={20} />}
           onClick={() => setMobileSidebarOpen(true)}
-          style={{ background: 'none', border: 'none', color: 'var(--drive-text)', padding: 4, display: 'flex' }}
-        >
-          <Menu size={20} />
-        </button>
-        <span style={{ fontWeight: 600, fontSize: 15 }}>Drive</span>
+          type={Type.TERTIARY}
+          size={Size.SMALL}
+        />
+        <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--hsn-text-primary)' }}>Drive</span>
       </div>
-      <div
-        className={`drive-sidebar-backdrop${mobileSidebarOpen ? ' mobile-open' : ''}`}
-        onClick={() => setMobileSidebarOpen(false)}
-      />
-      <Sidebar mobileSidebarOpen={mobileSidebarOpen} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden', position: 'relative' }}>
+
+      {/* Mobile sidebar backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'var(--hsn-bg-overlay)',
+            zIndex: 199,
+          }}
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      <AppShellMain
+        noPadding
+        style={{ overflow: 'hidden' }}
+      >
+        <div
+          style={{ display: 'flex', flexDirection: 'column', height: '100%', position: 'relative' }}
+          onDragEnter={handleDragEnter}
+          onDragLeave={handleDragLeave}
+          onDragOver={handleDragOver}
+          onDrop={handleDrop}
+        >
+          {children}
         {children}
+
         {dragOver && (
           <div
             style={{
               position: 'absolute',
               inset: 0,
-              background: 'rgba(45, 184, 175, 0.08)',
-              border: '2px dashed var(--drive-brand)',
+              background: 'rgba(45, 184, 175, 0.06)',
+              border: '2px dashed var(--hsn-accent-teal)',
               borderRadius: 12,
               display: 'flex',
               alignItems: 'center',
@@ -138,16 +164,17 @@ export function DriveLayout({ children }: { children: ReactNode }) {
               pointerEvents: 'none',
             }}
           >
-            <Upload size={48} style={{ color: 'var(--drive-brand)' }} />
-            <div style={{ fontSize: 16, fontWeight: 600, color: 'var(--drive-brand)' }}>
+            <Upload size={48} style={{ color: 'var(--hsn-accent-teal)' }} />
+            <Typography size={TypographySize.H3} style={{ color: 'var(--hsn-accent-teal)' }}>
               Drop files to upload
-            </div>
-            <div style={{ fontSize: 13, color: 'var(--drive-text-muted)' }}>
+            </Typography>
+            <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-secondary)' }}>
               Files will be encrypted and uploaded
-            </div>
+            </Typography>
           </div>
         )}
-      </div>
-    </div>
+        </div>
+      </AppShellMain>
+    </AppShell>
   );
 }

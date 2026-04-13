@@ -104,9 +104,9 @@ export function SearchOverlay() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--drive-bg)',
-          borderRadius: 'var(--drive-radius)',
-          boxShadow: 'var(--drive-shadow-lg)',
+          background: 'var(--hsn-bg-l1-solid)',
+          borderRadius: '8px',
+          boxShadow: 'var(--hsn-shadow-l3)',
           width: 520,
           maxWidth: '90vw',
           maxHeight: '60vh',
@@ -123,10 +123,10 @@ export function SearchOverlay() {
             alignItems: 'center',
             gap: 10,
             padding: '14px 16px',
-            borderBottom: '1px solid var(--drive-border)',
+            borderBottom: '1px solid var(--hsn-border-primary)',
           }}
         >
-          <Search size={18} style={{ color: 'var(--drive-text-muted)', flexShrink: 0 }} />
+          <Search size={18} style={{ color: 'var(--hsn-text-tertiary)', flexShrink: 0 }} />
           <input
             ref={inputRef}
             type="text"
@@ -140,7 +140,7 @@ export function SearchOverlay() {
               fontSize: 15,
               outline: 'none',
               fontFamily: 'inherit',
-              color: 'var(--drive-text)',
+              color: 'var(--hsn-text-primary)',
             }}
           />
           <button
@@ -148,7 +148,7 @@ export function SearchOverlay() {
             style={{
               background: 'none',
               border: 'none',
-              color: 'var(--drive-text-muted)',
+              color: 'var(--hsn-text-tertiary)',
               padding: 4,
               display: 'flex',
               borderRadius: 4,
@@ -161,13 +161,13 @@ export function SearchOverlay() {
         {/* Results */}
         <div style={{ overflow: 'auto', flex: 1 }}>
           {!query && (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--drive-text-muted)', fontSize: 13 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--hsn-text-tertiary)', fontSize: 13 }}>
               Type to search files and folders
             </div>
           )}
 
           {query && !searching && matchingFolders.length === 0 && matchingFiles.length === 0 && (
-            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--drive-text-muted)', fontSize: 13 }}>
+            <div style={{ padding: '32px 16px', textAlign: 'center', color: 'var(--hsn-text-tertiary)', fontSize: 13 }}>
               No results for &quot;{query}&quot;
             </div>
           )}
@@ -177,7 +177,7 @@ export function SearchOverlay() {
               <div style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: 'var(--drive-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 textTransform: 'uppercase',
                 padding: '4px 12px',
                 letterSpacing: '0.04em',
@@ -195,16 +195,16 @@ export function SearchOverlay() {
                     gap: 10,
                     padding: '10px 12px',
                     border: 'none',
-                    borderRadius: 'var(--drive-radius-sm)',
+                    borderRadius: '6px',
                     background: 'transparent',
-                    color: 'var(--drive-text)',
+                    color: 'var(--hsn-text-primary)',
                     fontSize: 14,
                     textAlign: 'left',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-bg-hover)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-bg-cell)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
-                  <FolderIcon size={18} style={{ color: 'var(--drive-brand)' }} />
+                  <FolderIcon size={18} style={{ color: 'var(--hsn-cta-primary-default)' }} />
                   {folder.name}
                 </button>
               ))}
@@ -216,7 +216,7 @@ export function SearchOverlay() {
               <div style={{
                 fontSize: 11,
                 fontWeight: 600,
-                color: 'var(--drive-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 textTransform: 'uppercase',
                 padding: '4px 12px',
                 letterSpacing: '0.04em',
@@ -234,19 +234,19 @@ export function SearchOverlay() {
                     gap: 10,
                     padding: '10px 12px',
                     border: 'none',
-                    borderRadius: 'var(--drive-radius-sm)',
+                    borderRadius: '6px',
                     background: 'transparent',
-                    color: 'var(--drive-text)',
+                    color: 'var(--hsn-text-primary)',
                     fontSize: 14,
                     textAlign: 'left',
                   }}
-                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-bg-hover)')}
+                  onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-bg-cell)')}
                   onMouseLeave={(e) => (e.currentTarget.style.background = 'transparent')}
                 >
                   <FileText size={18} style={{ color: getFileIcon(file.mimeType).color }} />
                   <div style={{ flex: 1, minWidth: 0 }}>
                     <div style={{ overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{file.name}</div>
-                    <div style={{ fontSize: 12, color: 'var(--drive-text-muted)' }}>{formatFileSize(file.size)}</div>
+                    <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>{formatFileSize(file.size)}</div>
                   </div>
                 </button>
               ))}

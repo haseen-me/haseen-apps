@@ -1,7 +1,10 @@
 import type { ReactNode } from 'react';
 import { useState, createContext, useContext } from 'react';
 import { Menu } from 'lucide-react';
-import { ProductRail } from '@/components/ProductRail';
+import { AppShell, AppShellMain, IconButton, Type, Size } from '@haseen-me/ui';
+import { ProductRail } from '@haseen-me/shared/ProductRail';
+
+const RAIL_WIDTH = 48;
 
 const MobileSidebarCtx = createContext(false);
 const MobileSidebarToggleCtx = createContext<() => void>(() => {});
@@ -16,17 +19,14 @@ export function CalendarLayout({ children }: { children: ReactNode }) {
   return (
     <MobileSidebarCtx.Provider value={mobileSidebarOpen}>
     <MobileSidebarToggleCtx.Provider value={() => setMobileSidebarOpen(!mobileSidebarOpen)}>
-    <div
-      style={{
-        display: 'flex',
-        height: '100vh',
-        overflow: 'hidden',
-        background: 'var(--cal-bg)',
-      }}
+    <AppShell
+      sidebar={
+        <div className="cal-product-rail" style={{ width: RAIL_WIDTH, height: '100%' }}>
+          <ProductRail activeProduct="calendar" />
+        </div>
+      }
+      sidebarWidth={RAIL_WIDTH}
     >
-      <div className="cal-product-rail">
-        <ProductRail activeProduct="calendar" />
-      </div>
       {/* Mobile header */}
       <div
         className="cal-mobile-header"
@@ -37,28 +37,42 @@ export function CalendarLayout({ children }: { children: ReactNode }) {
           left: 0,
           right: 0,
           height: 48,
-          background: 'var(--cal-bg)',
-          borderBottom: '1px solid var(--cal-border)',
+          background: 'var(--hsn-bg-header)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           alignItems: 'center',
           padding: '0 12px',
           gap: 10,
           zIndex: 250,
         }}
       >
-        <button
+        <IconButton
+          icon={<Menu size={20} />}
           onClick={() => setMobileSidebarOpen(true)}
-          style={{ background: 'none', border: 'none', color: 'var(--cal-text)', padding: 4, display: 'flex' }}
-        >
-          <Menu size={20} />
-        </button>
-        <span style={{ fontWeight: 600, fontSize: 15 }}>Calendar</span>
+          type={Type.TERTIARY}
+          size={Size.SMALL}
+        />
+        <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--hsn-text-primary)' }}>Calendar</span>
       </div>
-      <div
-        className={`cal-sidebar-backdrop${mobileSidebarOpen ? ' mobile-open' : ''}`}
-        onClick={() => setMobileSidebarOpen(false)}
-      />
-      {children}
-    </div>
+
+      {/* Mobile sidebar backdrop */}
+      {mobileSidebarOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'var(--hsn-bg-overlay)',
+            zIndex: 199,
+          }}
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      <AppShellMain noPadding style={{ overflow: 'hidden' }}>
+        <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+          {children}
+        </div>
+      </AppShellMain>
+    </AppShell>
     </MobileSidebarToggleCtx.Provider>
     </MobileSidebarCtx.Provider>
   );

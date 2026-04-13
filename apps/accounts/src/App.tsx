@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
+import { HaseenThemeProvider } from '@haseen-me/ui';
 import { SignUpPage } from '@/pages/SignUpPage';
 import { SignInPage } from '@/pages/SignInPage';
 import { ForgotPasswordPage } from '@/pages/ForgotPasswordPage';
@@ -49,10 +50,12 @@ function AppRoutes() {
 
 export default function App() {
   return (
-    <ErrorBoundary>
-      <BrowserRouter basename="/accounts">
-        <AppRoutes />
-      </BrowserRouter>
-    </ErrorBoundary>
+    <HaseenThemeProvider>
+      <ErrorBoundary>
+        <BrowserRouter basename="/accounts">
+          <AppRoutes />
+        </BrowserRouter>
+      </ErrorBoundary>
+    </HaseenThemeProvider>
   );
 }

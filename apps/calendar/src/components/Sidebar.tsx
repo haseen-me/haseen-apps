@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Calendar as CalIcon, Eye, EyeOff, Plus } from 'lucide-react';
+import { Calendar as CalIcon, Plus } from 'lucide-react';
+import { Button, IconButton, Toggle, Typography, TypographySize, TypographyWeight, Type, Size } from '@haseen-me/ui';
 import { useCalendarStore } from '@/store/calendar';
 import { MiniCalendar } from '@/components/MiniCalendar';
 import { AddCalendarDialog } from '@/components/AddCalendarDialog';
@@ -15,52 +16,41 @@ export function Sidebar() {
     <aside
       className={`cal-sidebar${mobileSidebarOpen ? ' mobile-open' : ''}`}
       style={{
-        width: 'var(--cal-sidebar-width)',
-        borderRight: '1px solid var(--cal-border)',
+        width: 'var(--cal-sidebar-width, 260px)',
+        borderRight: '1px solid var(--hsn-border-primary)',
         display: 'flex',
         flexDirection: 'column',
-        background: 'var(--cal-bg)',
+        background: 'var(--hsn-bg-sidepanel)',
         flexShrink: 0,
+        height: '100%',
       }}
     >
       {/* Header */}
       <div
         style={{
-          height: 'var(--cal-header-height)',
+          height: 'var(--cal-header-height, 52px)',
           display: 'flex',
           alignItems: 'center',
           padding: '0 16px',
           gap: 8,
-          borderBottom: '1px solid var(--cal-border)',
-          fontWeight: 600,
-          fontSize: 15,
+          borderBottom: '1px solid var(--hsn-border-primary)',
         }}
       >
-        <CalIcon size={18} color="var(--cal-brand)" />
-        Calendar
+        <CalIcon size={18} style={{ color: 'var(--hsn-accent-teal)' }} />
+        <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>Calendar</Typography>
       </div>
 
       {/* New event button */}
       <div style={{ padding: '12px 16px' }}>
-        <button
+        <Button
+          type={Type.PRIMARY}
+          size={Size.MEDIUM}
+          fullWidth
           onClick={() => openNewEvent(new Date())}
-          style={{
-            width: '100%',
-            display: 'flex',
-            alignItems: 'center',
-            justifyContent: 'center',
-            gap: 6,
-            padding: '8px 12px',
-            background: 'var(--cal-brand)',
-            color: '#fff',
-            border: 'none',
-            borderRadius: 'var(--cal-radius-sm)',
-            fontSize: 13,
-            fontWeight: 500,
-          }}
+          startIcon={<Plus size={16} />}
         >
-          <Plus size={16} /> New Event
-        </button>
+          New Event
+        </Button>
       </div>
 
       {/* Mini calendar */}
@@ -74,7 +64,7 @@ export function Sidebar() {
             fontWeight: 600,
             textTransform: 'uppercase',
             letterSpacing: '0.05em',
-            color: 'var(--cal-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             marginBottom: 8,
             display: 'flex',
             justifyContent: 'space-between',
@@ -82,41 +72,25 @@ export function Sidebar() {
           }}
         >
           My calendars
-          <button
+          <IconButton
+            icon={<Plus size={14} />}
             onClick={() => setShowAddCalendar(true)}
-            title="Add calendar"
-            style={{
-              background: 'none',
-              border: 'none',
-              cursor: 'pointer',
-              color: 'var(--cal-text-muted)',
-              padding: 2,
-              borderRadius: 4,
-              display: 'flex',
-              alignItems: 'center',
-            }}
-          >
-            <Plus size={14} />
-          </button>
+            type={Type.TERTIARY}
+            size={Size.SMALL}
+            tooltip="Add calendar"
+          />
         </div>
         {calendars.map((cal) => {
           const visible = visibleCalendarIds.has(cal.id);
           return (
-            <button
+            <div
               key={cal.id}
-              onClick={() => toggleCalendarVisibility(cal.id)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 gap: 8,
-                width: '100%',
-                padding: '6px 8px',
-                border: 'none',
-                borderRadius: 'var(--cal-radius-sm)',
-                background: 'transparent',
-                fontSize: 13,
-                color: visible ? 'var(--cal-text)' : 'var(--cal-text-muted)',
-                textAlign: 'left',
+                padding: '5px 4px',
+                borderRadius: 6,
               }}
             >
               <span
@@ -129,11 +103,17 @@ export function Sidebar() {
                   flexShrink: 0,
                 }}
               />
-              {cal.name}
-              <span style={{ marginLeft: 'auto', opacity: 0.4 }}>
-                {visible ? <Eye size={14} /> : <EyeOff size={14} />}
-              </span>
-            </button>
+              <Typography
+                size={TypographySize.BODY}
+                style={{ flex: 1, color: visible ? 'var(--hsn-text-primary)' : 'var(--hsn-text-tertiary)' }}
+              >
+                {cal.name}
+              </Typography>
+              <Toggle
+                checked={visible}
+                onChange={() => toggleCalendarVisibility(cal.id)}
+              />
+            </div>
           );
         })}
       </div>

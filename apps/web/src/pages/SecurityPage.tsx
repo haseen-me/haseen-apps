@@ -1,4 +1,5 @@
 import { Shield, Lock, Key, Eye, Server, Code, FileCheck, AlertTriangle } from 'lucide-react';
+import { Surface, Typography, TypographySize, TypographyWeight } from '@haseen-me/ui';
 
 const PRINCIPLES = [
   {
@@ -80,9 +81,9 @@ export function SecurityPage() {
                 key={p.title}
                 style={{
                   padding: 32,
-                  borderRadius: 'var(--hsn-radius)',
-                  background: 'var(--hsn-bg)',
-                  border: '1px solid var(--hsn-border)',
+                  borderRadius: '8px',
+                  background: 'var(--hsn-bg-app)',
+                  border: '1px solid var(--hsn-border-primary)',
                 }}
               >
                 <div
@@ -91,7 +92,7 @@ export function SecurityPage() {
                     height: 48,
                     borderRadius: 12,
                     background: 'var(--hsn-brand-subtle)',
-                    color: 'var(--hsn-brand)',
+                    color: 'var(--hsn-cta-primary-default)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
@@ -129,7 +130,7 @@ export function SecurityPage() {
                   display: 'flex',
                   gap: 20,
                   padding: '24px 0',
-                  borderBottom: i < ENCRYPTION_STEPS.length - 1 ? '1px solid var(--hsn-border)' : 'none',
+                  borderBottom: i < ENCRYPTION_STEPS.length - 1 ? '1px solid var(--hsn-border-primary)' : 'none',
                 }}
               >
                 <div
@@ -137,7 +138,7 @@ export function SecurityPage() {
                     width: 40,
                     height: 40,
                     borderRadius: '50%',
-                    background: 'var(--hsn-brand)',
+                    background: 'var(--hsn-cta-primary-default)',
                     color: '#fff',
                     display: 'flex',
                     alignItems: 'center',
@@ -178,7 +179,7 @@ export function SecurityPage() {
             style={{
               maxWidth: 640,
               margin: '0 auto',
-              borderRadius: 'var(--hsn-radius)',
+              borderRadius: '8px',
               border: '1px solid #30363d',
               overflow: 'hidden',
             }}
@@ -227,8 +228,8 @@ export function SecurityPage() {
                 key={p.title}
                 style={{
                   padding: 24,
-                  borderRadius: 'var(--hsn-radius-sm)',
-                  border: '1px solid var(--hsn-border)',
+                  borderRadius: '6px',
+                  border: '1px solid var(--hsn-border-primary)',
                   textAlign: 'center',
                 }}
               >
@@ -238,7 +239,7 @@ export function SecurityPage() {
                     height: 44,
                     borderRadius: 10,
                     background: 'var(--hsn-brand-subtle)',
-                    color: 'var(--hsn-brand)',
+                    color: 'var(--hsn-cta-primary-default)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',

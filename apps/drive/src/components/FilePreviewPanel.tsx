@@ -133,9 +133,9 @@ export function FilePreviewPanel() {
       <div
         onClick={(e) => e.stopPropagation()}
         style={{
-          background: 'var(--drive-bg)',
-          border: '1px solid var(--drive-border)',
-          borderRadius: 'var(--drive-radius)',
+          background: 'var(--hsn-bg-l1-solid)',
+          border: '1px solid var(--hsn-border-primary)',
+          borderRadius: '8px',
           width: '80vw',
           maxWidth: 900,
           height: '80vh',
@@ -151,12 +151,12 @@ export function FilePreviewPanel() {
             alignItems: 'center',
             justifyContent: 'space-between',
             padding: '12px 20px',
-            borderBottom: '1px solid var(--drive-border)',
+            borderBottom: '1px solid var(--hsn-border-primary)',
             flexShrink: 0,
           }}
         >
           <div style={{ display: 'flex', alignItems: 'center', gap: 10, minWidth: 0 }}>
-            <FileText size={18} style={{ color: 'var(--drive-brand)', flexShrink: 0 }} />
+            <FileText size={18} style={{ color: 'var(--hsn-cta-primary-default)', flexShrink: 0 }} />
             <span
               style={{
                 fontSize: 15,
@@ -168,7 +168,7 @@ export function FilePreviewPanel() {
             >
               {file.name}
             </span>
-            <span style={{ fontSize: 12, color: 'var(--drive-text-muted)', flexShrink: 0 }}>
+            <span style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)', flexShrink: 0 }}>
               {formatFileSize(file.size)}
             </span>
           </div>
@@ -178,15 +178,15 @@ export function FilePreviewPanel() {
               title="Download"
               style={{
                 background: 'none',
-                border: '1px solid var(--drive-border)',
-                borderRadius: 'var(--drive-radius-sm)',
+                border: '1px solid var(--hsn-border-primary)',
+                borderRadius: '6px',
                 padding: '6px 12px',
                 cursor: 'pointer',
                 display: 'flex',
                 alignItems: 'center',
                 gap: 6,
                 fontSize: 13,
-                color: 'var(--drive-text)',
+                color: 'var(--hsn-text-primary)',
               }}
             >
               <Download size={14} /> Download
@@ -197,7 +197,7 @@ export function FilePreviewPanel() {
                 background: 'none',
                 border: 'none',
                 cursor: 'pointer',
-                color: 'var(--drive-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 padding: 4,
               }}
             >
@@ -218,7 +218,7 @@ export function FilePreviewPanel() {
           }}
         >
           {loading ? (
-            <div style={{ color: 'var(--drive-text-muted)', fontSize: 14 }}>Loading preview...</div>
+            <div style={{ color: 'var(--hsn-text-tertiary)', fontSize: 14 }}>Loading preview...</div>
           ) : error ? (
             <div style={{ color: '#dc3545', fontSize: 14 }}>{error}</div>
           ) : isImage(mime) && blobUrl ? (
@@ -243,9 +243,9 @@ export function FilePreviewPanel() {
                 padding: 16,
                 fontSize: 13,
                 fontFamily: '"SF Mono", "Fira Code", "Consolas", monospace',
-                background: 'var(--drive-bg-secondary, #fafafa)',
+                background: 'var(--hsn-bg-l0-solid)',
                 borderRadius: 8,
-                color: 'var(--drive-text)',
+                color: 'var(--hsn-text-primary)',
                 whiteSpace: 'pre-wrap',
                 wordBreak: 'break-word',
               }}
@@ -259,11 +259,11 @@ export function FilePreviewPanel() {
                 flexDirection: 'column',
                 alignItems: 'center',
                 gap: 16,
-                color: 'var(--drive-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
               }}
             >
               <File size={48} />
-              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--drive-text)' }}>{file.name}</div>
+              <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--hsn-text-primary)' }}>{file.name}</div>
               <div style={{ fontSize: 13 }}>{mime || 'Unknown type'} · {formatFileSize(file.size)}</div>
               <div style={{ fontSize: 13 }}>No preview available for this file type.</div>
               <button
@@ -271,10 +271,10 @@ export function FilePreviewPanel() {
                 style={{
                   marginTop: 8,
                   padding: '10px 24px',
-                  background: 'var(--drive-brand)',
+                  background: 'var(--hsn-cta-primary-default)',
                   color: '#fff',
                   border: 'none',
-                  borderRadius: 'var(--drive-radius-sm)',
+                  borderRadius: '6px',
                   fontSize: 14,
                   fontWeight: 500,
                   cursor: 'pointer',

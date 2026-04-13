@@ -1,1 +1,1 @@
-declare module '@haseen-me/ui';
+/// <reference types="vite/client" />

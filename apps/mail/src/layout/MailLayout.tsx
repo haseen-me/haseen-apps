@@ -1,17 +1,33 @@
 import type { ReactNode } from 'react';
 import { useState } from 'react';
 import { Menu } from 'lucide-react';
-import { ProductRail } from '@/components/ProductRail';
+import { AppShell, AppShellMain, IconButton, Type, Size } from '@haseen-me/ui';
+import { ProductRail } from '@haseen-me/shared/ProductRail';
 import { Sidebar } from './Sidebar';
+import { useMailStore } from '@/store/mail';
+
+const RAIL_WIDTH = 48;
+const SIDEBAR_EXPANDED = 240;
+const SIDEBAR_COLLAPSED = 64;
 
 export function MailLayout({ children }: { children: ReactNode }) {
   const [mobileSidebarOpen, setMobileSidebarOpen] = useState(false);
+  const sidebarCollapsed = useMailStore((s) => s.sidebarCollapsed);
+
+  const totalSidebarWidth = RAIL_WIDTH + (sidebarCollapsed ? SIDEBAR_COLLAPSED : SIDEBAR_EXPANDED);
 
   return (
-    <div style={{ display: 'flex', height: '100vh', overflow: 'hidden' }}>
-      <div className="mail-product-rail">
-        <ProductRail activeProduct="mail" />
-      </div>
+    <AppShell
+      sidebar={
+        <div style={{ display: 'flex', height: '100%', overflow: 'hidden' }}>
+          <div className="mail-product-rail" style={{ width: RAIL_WIDTH, flexShrink: 0 }}>
+            <ProductRail activeProduct="mail" />
+          </div>
+          <Sidebar mobileSidebarOpen={mobileSidebarOpen} />
+        </div>
+      }
+      sidebarWidth={totalSidebarWidth}
+    >
       {/* Mobile header */}
       <div
         className="mail-mobile-header"
@@ -22,31 +38,39 @@ export function MailLayout({ children }: { children: ReactNode }) {
           left: 0,
           right: 0,
           height: 48,
-          background: 'var(--mail-bg)',
-          borderBottom: '1px solid var(--mail-border)',
+          background: 'var(--hsn-bg-header)',
+          borderBottom: '1px solid var(--hsn-border-primary)',
           alignItems: 'center',
           padding: '0 12px',
           gap: 10,
           zIndex: 250,
         }}
       >
-        <button
+        <IconButton
+          icon={<Menu size={20} />}
           onClick={() => setMobileSidebarOpen(true)}
-          style={{ background: 'none', border: 'none', color: 'var(--mail-text)', padding: 4, display: 'flex' }}
-        >
-          <Menu size={20} />
-        </button>
-        <span style={{ fontWeight: 600, fontSize: 15 }}>Mail</span>
+          type={Type.TERTIARY}
+          size={Size.SMALL}
+        />
+        <span style={{ fontWeight: 600, fontSize: 15, color: 'var(--hsn-text-primary)' }}>Mail</span>
       </div>
+
       {/* Mobile sidebar backdrop */}
-      <div
-        className={`mail-sidebar-backdrop${mobileSidebarOpen ? ' mobile-open' : ''}`}
-        onClick={() => setMobileSidebarOpen(false)}
-      />
-      <Sidebar mobileSidebarOpen={mobileSidebarOpen} />
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', minWidth: 0, overflow: 'hidden' }}>
+      {mobileSidebarOpen && (
+        <div
+          style={{
+            position: 'fixed',
+            inset: 0,
+            background: 'var(--hsn-bg-overlay)',
+            zIndex: 199,
+          }}
+          onClick={() => setMobileSidebarOpen(false)}
+        />
+      )}
+
+      <AppShellMain noPadding style={{ overflow: 'hidden' }}>
         {children}
-      </div>
-    </div>
+      </AppShellMain>
+    </AppShell>
   );
 }

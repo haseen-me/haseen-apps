@@ -10,9 +10,9 @@ export function ContactDetail() {
 
   if (!contact) {
     return (
-      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--ct-text-muted)', gap: 8 }}>
+      <div style={{ flex: 1, display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', color: 'var(--hsn-text-tertiary)', gap: 8 }}>
         <Mail size={40} style={{ opacity: 0.3 }} />
-        <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--ct-text-secondary)' }}>Select a contact</div>
+        <div style={{ fontSize: 15, fontWeight: 500, color: 'var(--hsn-text-secondary)' }}>Select a contact</div>
         <div style={{ fontSize: 13 }}>Choose a contact from the list to view details</div>
       </div>
     );
@@ -46,7 +46,7 @@ export function ContactDetail() {
           <div
             style={{
               width: 72, height: 72, borderRadius: '50%',
-              background: 'var(--ct-brand-subtle)', color: 'var(--ct-brand)',
+              background: 'rgba(45,184,175,0.08)', color: 'var(--hsn-accent-teal)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               fontWeight: 700, fontSize: 24, flexShrink: 0,
             }}
@@ -58,7 +58,7 @@ export function ContactDetail() {
               {contact.name || contact.email}
             </h2>
             {contact.name && (
-              <div style={{ fontSize: 14, color: 'var(--ct-text-secondary)', marginTop: 2 }}>
+              <div style={{ fontSize: 14, color: 'var(--hsn-text-secondary)', marginTop: 2 }}>
                 {contact.email}
               </div>
             )}
@@ -68,9 +68,9 @@ export function ContactDetail() {
               onClick={handleEdit}
               title="Edit"
               style={{
-                padding: 8, borderRadius: 'var(--ct-radius-sm)',
-                border: '1px solid var(--ct-border)', background: 'var(--ct-bg)',
-                color: 'var(--ct-text-secondary)', display: 'flex', cursor: 'pointer',
+                padding: 8, borderRadius: '6px',
+                border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)',
+                color: 'var(--hsn-text-secondary)', display: 'flex', cursor: 'pointer',
               }}
             >
               <Pencil size={15} />
@@ -79,9 +79,9 @@ export function ContactDetail() {
               onClick={handleDelete}
               title="Delete"
               style={{
-                padding: 8, borderRadius: 'var(--ct-radius-sm)',
-                border: '1px solid var(--ct-border)', background: 'var(--ct-bg)',
-                color: 'var(--ct-danger)', display: 'flex', cursor: 'pointer',
+                padding: 8, borderRadius: '6px',
+                border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)',
+                color: 'var(--hsn-accent-red)', display: 'flex', cursor: 'pointer',
               }}
             >
               <Trash2 size={15} />
@@ -91,79 +91,79 @@ export function ContactDetail() {
 
         {/* Details cards */}
         <div style={{ display: 'flex', flexDirection: 'column', gap: 16 }}>
-          <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+          <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
             <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-              <Mail size={14} style={{ color: 'var(--ct-text-muted)' }} />
-              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Email</h3>
+              <Mail size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />
+              <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)' }}>Email</h3>
             </div>
-            <a href={`mailto:${contact.email}`} style={{ fontSize: 14, color: 'var(--ct-brand)' }}>
+            <a href={`mailto:${contact.email}`} style={{ fontSize: 14, color: 'var(--hsn-accent-teal)' }}>
               {contact.email}
             </a>
           </div>
 
           {contact.phone && (
-            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+            <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <Phone size={14} style={{ color: 'var(--ct-text-muted)' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Phone</h3>
+                <Phone size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)' }}>Phone</h3>
               </div>
-              <a href={`tel:${contact.phone}`} style={{ fontSize: 14, color: 'var(--ct-brand)' }}>
+              <a href={`tel:${contact.phone}`} style={{ fontSize: 14, color: 'var(--hsn-accent-teal)' }}>
                 {contact.phone}
               </a>
             </div>
           )}
 
           {contact.company && (
-            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+            <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <Building size={14} style={{ color: 'var(--ct-text-muted)' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Company</h3>
+                <Building size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)' }}>Company</h3>
               </div>
-              <span style={{ fontSize: 14, color: 'var(--ct-text)' }}>{contact.company}</span>
+              <span style={{ fontSize: 14, color: 'var(--hsn-text-primary)' }}>{contact.company}</span>
             </div>
           )}
 
           {contact.address && (
-            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+            <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <MapPin size={14} style={{ color: 'var(--ct-text-muted)' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Address</h3>
+                <MapPin size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)' }}>Address</h3>
               </div>
-              <span style={{ fontSize: 14, color: 'var(--ct-text)' }}>{contact.address}</span>
+              <span style={{ fontSize: 14, color: 'var(--hsn-text-primary)' }}>{contact.address}</span>
             </div>
           )}
 
           {contact.birthday && (
-            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+            <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <Cake size={14} style={{ color: 'var(--ct-text-muted)' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Birthday</h3>
+                <Cake size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)' }}>Birthday</h3>
               </div>
-              <span style={{ fontSize: 14, color: 'var(--ct-text)' }}>{new Date(contact.birthday).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}</span>
+              <span style={{ fontSize: 14, color: 'var(--hsn-text-primary)' }}>{new Date(contact.birthday).toLocaleDateString([], { month: 'long', day: 'numeric', year: 'numeric' })}</span>
             </div>
           )}
 
           {contact.notes && (
-            <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
+            <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
-                <StickyNote size={14} style={{ color: 'var(--ct-text-muted)' }} />
-                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)' }}>Notes</h3>
+                <StickyNote size={14} style={{ color: 'var(--hsn-text-tertiary)' }} />
+                <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)' }}>Notes</h3>
               </div>
-              <p style={{ fontSize: 14, color: 'var(--ct-text)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
+              <p style={{ fontSize: 14, color: 'var(--hsn-text-primary)', whiteSpace: 'pre-wrap', lineHeight: 1.6 }}>
                 {contact.notes}
               </p>
             </div>
           )}
 
-          <div style={{ padding: 20, borderRadius: 'var(--ct-radius)', border: '1px solid var(--ct-border)', background: 'var(--ct-bg)' }}>
-            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--ct-text-secondary)', marginBottom: 8 }}>Details</h3>
+          <div style={{ padding: 20, borderRadius: '8px', border: '1px solid var(--hsn-border-primary)', background: 'var(--hsn-bg-app)' }}>
+            <h3 style={{ fontSize: 13, fontWeight: 600, color: 'var(--hsn-text-secondary)', marginBottom: 8 }}>Details</h3>
             <div style={{ display: 'flex', flexDirection: 'column', gap: 6, fontSize: 13 }}>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--ct-text-muted)' }}>Added</span>
+                <span style={{ color: 'var(--hsn-text-tertiary)' }}>Added</span>
                 <span>{new Date(contact.createdAt).toLocaleDateString()}</span>
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-                <span style={{ color: 'var(--ct-text-muted)' }}>Updated</span>
+                <span style={{ color: 'var(--hsn-text-tertiary)' }}>Updated</span>
                 <span>{new Date(contact.updatedAt).toLocaleDateString()}</span>
               </div>
             </div>

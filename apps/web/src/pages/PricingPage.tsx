@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Check, ArrowRight } from 'lucide-react';
+import { Button, Surface, Typography, TypographySize, TypographyWeight, Type, Size } from '@haseen-me/ui';
 
 interface Plan {
   name: string;
@@ -114,11 +115,11 @@ export function PricingPage() {
                 key={plan.name}
                 style={{
                   padding: 36,
-                  borderRadius: 'var(--hsn-radius-lg)',
+                  borderRadius: '12px',
                   border: plan.highlighted
-                    ? '2px solid var(--hsn-brand)'
-                    : '1px solid var(--hsn-border)',
-                  background: plan.highlighted ? 'var(--hsn-brand-subtle)' : 'var(--hsn-bg)',
+                    ? '2px solid var(--hsn-cta-primary-default)'
+                    : '1px solid var(--hsn-border-primary)',
+                  background: plan.highlighted ? 'var(--hsn-brand-subtle)' : 'var(--hsn-bg-app)',
                   position: 'relative',
                 }}
               >
@@ -129,7 +130,7 @@ export function PricingPage() {
                       top: -12,
                       left: '50%',
                       transform: 'translateX(-50%)',
-                      background: 'var(--hsn-brand)',
+                      background: 'var(--hsn-cta-primary-default)',
                       color: '#fff',
                       fontSize: 12,
                       fontWeight: 600,
@@ -146,7 +147,7 @@ export function PricingPage() {
                 </p>
                 <div style={{ marginBottom: 24 }}>
                   <span style={{ fontSize: 40, fontWeight: 800 }}>{plan.price}</span>
-                  <span style={{ fontSize: 14, color: 'var(--hsn-text-muted)', marginLeft: 4 }}>
+                  <span style={{ fontSize: 14, color: 'var(--hsn-text-tertiary)', marginLeft: 4 }}>
                     {plan.period}
                   </span>
                 </div>
@@ -159,9 +160,9 @@ export function PricingPage() {
                     borderRadius: 8,
                     fontWeight: 600,
                     fontSize: 15,
-                    background: plan.highlighted ? 'var(--hsn-brand)' : 'transparent',
-                    color: plan.highlighted ? '#fff' : 'var(--hsn-brand)',
-                    border: plan.highlighted ? 'none' : '1px solid var(--hsn-brand)',
+                    background: plan.highlighted ? 'var(--hsn-cta-primary-default)' : 'transparent',
+                    color: plan.highlighted ? '#fff' : 'var(--hsn-cta-primary-default)',
+                    border: plan.highlighted ? 'none' : '1px solid var(--hsn-cta-primary-default)',
                     marginBottom: 24,
                     transition: 'background 0.15s',
                   }}
@@ -180,7 +181,7 @@ export function PricingPage() {
                         color: 'var(--hsn-text-secondary)',
                       }}
                     >
-                      <Check size={16} style={{ color: 'var(--hsn-brand)', flexShrink: 0 }} />
+                      <Check size={16} style={{ color: 'var(--hsn-cta-primary-default)', flexShrink: 0 }} />
                       {f}
                     </li>
                   ))}
@@ -204,9 +205,9 @@ export function PricingPage() {
                 key={faq.question}
                 style={{
                   padding: '20px 24px',
-                  borderRadius: 'var(--hsn-radius-sm)',
-                  border: '1px solid var(--hsn-border)',
-                  background: 'var(--hsn-bg)',
+                  borderRadius: '6px',
+                  border: '1px solid var(--hsn-border-primary)',
+                  background: 'var(--hsn-bg-app)',
                 }}
               >
                 <summary
@@ -221,7 +222,7 @@ export function PricingPage() {
                   }}
                 >
                   {faq.question}
-                  <ArrowRight size={16} style={{ color: 'var(--hsn-text-muted)', transition: 'transform 0.2s', flexShrink: 0 }} />
+                  <ArrowRight size={16} style={{ color: 'var(--hsn-text-tertiary)', transition: 'transform 0.2s', flexShrink: 0 }} />
                 </summary>
                 <p style={{ marginTop: 12, fontSize: 15, color: 'var(--hsn-text-secondary)', lineHeight: 1.7 }}>
                   {faq.answer}

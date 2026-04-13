@@ -111,7 +111,7 @@ export function BulkActionBar() {
           position: 'sticky',
           top: 0,
           zIndex: 50,
-          background: 'var(--drive-brand)',
+          background: 'var(--hsn-cta-primary-default)',
           color: '#fff',
           display: 'flex',
           alignItems: 'center',
@@ -154,24 +154,22 @@ export function BulkActionBar() {
         </button>
       </div>
 
-      {confirmDelete && (
-        <ConfirmDialog
-          title="Delete selected items?"
-          message={`${count} item${count > 1 ? 's' : ''} will be moved to trash.`}
-          confirmLabel="Delete"
-          danger
-          onConfirm={handleBulkDelete}
-          onCancel={() => setConfirmDelete(false)}
-        />
-      )}
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete selected items?"
+        message={`${count} item${count > 1 ? 's' : ''} will be moved to trash.`}
+        confirmLabel="Delete"
+        danger
+        onConfirm={handleBulkDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
 
-      {moveOpen && (
-        <MoveToDialog
-          title={`Move ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} to…`}
-          onSelect={handleBulkMove}
-          onCancel={() => setMoveOpen(false)}
-        />
-      )}
+      <MoveToDialog
+        open={moveOpen}
+        title={`Move ${selectedFiles.length} file${selectedFiles.length > 1 ? 's' : ''} to…`}
+        onSelect={handleBulkMove}
+        onCancel={() => setMoveOpen(false)}
+      />
     </>
   );
 }

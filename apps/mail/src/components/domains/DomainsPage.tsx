@@ -12,7 +12,7 @@ export function DomainsPage() {
         flex: 1,
         height: '100%',
         overflow: 'hidden',
-        background: 'var(--mail-bg)',
+        background: 'var(--hsn-bg-l1-solid)',
       }}
     >
       <AnimatePresence mode="wait">

@@ -17,7 +17,7 @@ export function AdminPage() {
             alignItems: 'center',
             gap: 8,
             fontSize: 13,
-            color: 'var(--hsn-brand)',
+            color: 'var(--hsn-cta-primary-default)',
             background: 'var(--hsn-brand-subtle)',
             border: '1px solid var(--hsn-brand-soft)',
             padding: '6px 10px',
@@ -48,14 +48,14 @@ export function AdminPage() {
           <article
             key={card.label}
             style={{
-              border: '1px solid var(--hsn-border)',
+              border: '1px solid var(--hsn-border-primary)',
               borderRadius: 12,
-              background: 'var(--hsn-bg)',
+              background: 'var(--hsn-bg-app)',
               padding: 16,
             }}
           >
-            <div style={{ color: 'var(--hsn-brand)', marginBottom: 8 }}>{card.icon}</div>
-            <div style={{ color: 'var(--hsn-text-muted)', fontSize: 13 }}>{card.label}</div>
+            <div style={{ color: 'var(--hsn-cta-primary-default)', marginBottom: 8 }}>{card.icon}</div>
+            <div style={{ color: 'var(--hsn-text-tertiary)', fontSize: 13 }}>{card.label}</div>
             <div style={{ fontSize: 26, fontWeight: 700, marginTop: 4 }}>{card.value}</div>
           </article>
         ))}
@@ -63,9 +63,9 @@ export function AdminPage() {
 
       <section
         style={{
-          border: '1px solid var(--hsn-border)',
+          border: '1px solid var(--hsn-border-primary)',
           borderRadius: 12,
-          background: 'var(--hsn-bg)',
+          background: 'var(--hsn-bg-app)',
           padding: 18,
           marginTop: 18,
         }}

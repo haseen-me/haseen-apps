@@ -1,8 +1,8 @@
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { User, Camera, Trash2 } from 'lucide-react';
+import { User, Trash2 } from 'lucide-react';
 import { SettingsLayout } from '@/layout/SettingsLayout';
-import { FormField, Button, Alert } from '@/components/FormUI';
+import { InputField, Input, InputType, Banner, Button, Avatar, Surface, Typography, TypographySize, TypographyWeight, MonoTag, Type, Size } from '@haseen-me/ui';
 import { useAuthStore } from '@/store/auth';
 import { authApi } from '@/api/auth';
 
@@ -23,11 +23,7 @@ export function ProfileSettingsPage() {
     setError(null);
     try {
       const updated = await authApi.updateAccount({ displayName: name.trim() });
-      setUser({
-        ...user,
-        displayName: updated.displayName ?? name.trim(),
-        email: updated.email,
-      });
+      setUser({ ...user, displayName: updated.displayName ?? name.trim(), email: updated.email });
       await fetchSession();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
@@ -53,177 +49,145 @@ export function ProfileSettingsPage() {
 
   return (
     <SettingsLayout activeTab="/settings">
-      <h1 style={{ fontSize: 22, fontWeight: 700, marginBottom: 4 }}>Profile</h1>
-      <p style={{ fontSize: 14, color: 'var(--acc-text-secondary)', marginBottom: 32 }}>
+      <Typography size={TypographySize.H3} weight={TypographyWeight.SEMIBOLD} style={{ marginBottom: 4 }}>
+        Profile
+      </Typography>
+      <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 32 }}>
         Manage your personal information.
-      </p>
+      </Typography>
 
-      {saved && <Alert type="success">Profile updated successfully.</Alert>}
-      {error && <Alert type="error">{error}</Alert>}
+      {saved && <Banner color="success" style={{ marginBottom: 16, borderRadius: 8 }}>Profile updated successfully.</Banner>}
+      {error && <Banner color="error" style={{ marginBottom: 16, borderRadius: 8 }}>{error}</Banner>}
 
-      {/* Avatar */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-          marginBottom: 20,
-        }}
-      >
+      {/* Avatar card */}
+      <Surface level="l1" style={{ padding: 24, marginBottom: 20 }}>
         <div style={{ display: 'flex', alignItems: 'center', gap: 20 }}>
-          <div
-            style={{
-              width: 72,
-              height: 72,
-              borderRadius: '50%',
-              background: 'var(--acc-brand-subtle)',
-              color: 'var(--acc-brand)',
-              display: 'flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              fontWeight: 700,
-              fontSize: 28,
-              position: 'relative',
-            }}
-          >
-            {user?.displayName?.charAt(0)?.toUpperCase() ?? <User size={28} />}
-            <div
-              style={{
-                position: 'absolute',
-                bottom: 0,
-                right: 0,
-                width: 24,
-                height: 24,
-                borderRadius: '50%',
-                background: 'var(--acc-bg-card)',
-                border: '1px solid var(--acc-border)',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                cursor: 'pointer',
-              }}
-            >
-              <Camera size={12} style={{ color: 'var(--acc-text-muted)' }} />
-            </div>
-          </div>
+          <Avatar
+            label={user?.displayName?.charAt(0)?.toUpperCase() ?? 'U'}
+            style={{ width: 72, height: 72, fontSize: 28 }}
+          />
           <div>
-            <p style={{ fontSize: 16, fontWeight: 600 }}>{user?.displayName ?? 'User'}</p>
-            <p style={{ fontSize: 13, color: 'var(--acc-text-muted)' }}>{user?.email ?? 'user@haseen.me'}</p>
+            <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD}>
+              {user?.displayName ?? 'User'}
+            </Typography>
+            <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-tertiary)' }}>
+              {user?.email ?? 'user@haseen.me'}
+            </Typography>
           </div>
         </div>
-      </div>
+      </Surface>
 
-      {/* Details */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-          marginBottom: 20,
-        }}
-      >
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 16 }}>Personal Information</h3>
+      {/* Personal info */}
+      <Surface level="l1" style={{ padding: 24, marginBottom: 20 }}>
+        <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD} style={{ marginBottom: 16 }}>
+          Personal Information
+        </Typography>
         <div style={{ maxWidth: 360 }}>
-          <FormField
-            label="Display name"
-            value={name}
-            onChange={(e: React.ChangeEvent<HTMLInputElement>) => setName(e.target.value)}
-            icon={<User size={16} />}
-          />
-          <FormField
-            label="Email"
-            value={user?.email ?? ''}
-            disabled
-            style={{ opacity: 0.6 }}
-          />
-          <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', marginBottom: 16 }}>
+          <InputField label="Display name" style={{ marginBottom: 14 }}>
+            <Input
+              type={InputType.TEXT}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              startIcon={<User size={16} />}
+            />
+          </InputField>
+          <InputField label="Email" style={{ marginBottom: 8 }}>
+            <Input
+              type={InputType.EMAIL}
+              value={user?.email ?? ''}
+              disabled
+            />
+          </InputField>
+          <Typography size={TypographySize.CAPTION} style={{ color: 'var(--hsn-text-tertiary)', marginBottom: 16 }}>
             Email address cannot be changed as it is bound to your encryption keys.
-          </p>
-          <Button onClick={handleSave} disabled={!name.trim() || name === user?.displayName} loading={saving}>
+          </Typography>
+          <Button
+            type={Type.PRIMARY}
+            size={Size.MEDIUM}
+            onClick={handleSave}
+            disabled={!name.trim() || name === user?.displayName}
+            loading={saving}
+          >
             Save changes
           </Button>
         </div>
-      </div>
+      </Surface>
 
-      {/* Account info */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-border)',
-          background: 'var(--acc-bg-card)',
-          marginBottom: 20,
-        }}
-      >
-        <h3 style={{ fontSize: 16, fontWeight: 600, marginBottom: 12 }}>Account Details</h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: 8, fontSize: 13 }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--acc-text-muted)' }}>Account ID</span>
-            <span style={{ fontFamily: 'monospace', fontSize: 12 }}>{user?.id?.slice(0, 8) ?? '...'}</span>
+      {/* Account details */}
+      <Surface level="l1" style={{ padding: 24, marginBottom: 20 }}>
+        <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD} style={{ marginBottom: 12 }}>
+          Account Details
+        </Typography>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 8 }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)' }}>Account ID</Typography>
+            <MonoTag>{user?.id?.slice(0, 8) ?? '...'}</MonoTag>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--acc-text-muted)' }}>Created</span>
-            <span>{user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '...'}</span>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)' }}>Created</Typography>
+            <Typography size={TypographySize.BODY}>
+              {user?.createdAt ? new Date(user.createdAt).toLocaleDateString() : '...'}
+            </Typography>
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between' }}>
-            <span style={{ color: 'var(--acc-text-muted)' }}>MFA</span>
-            <span style={{ color: user?.mfaEnabled ? 'var(--acc-success)' : 'var(--acc-text-muted)' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+            <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)' }}>2FA</Typography>
+            <Typography
+              size={TypographySize.BODY}
+              style={{ color: user?.mfaEnabled ? 'var(--hsn-accent-green)' : 'var(--hsn-text-tertiary)' }}
+            >
               {user?.mfaEnabled ? 'Enabled' : 'Disabled'}
-            </span>
+            </Typography>
           </div>
         </div>
-      </div>
+      </Surface>
 
       {/* Danger zone */}
-      <div
-        style={{
-          padding: 24,
-          borderRadius: 'var(--acc-radius)',
-          border: '1px solid var(--acc-danger)',
-          background: 'var(--acc-danger-subtle)',
-        }}
-      >
-        <h3 style={{ fontSize: 16, fontWeight: 600, color: 'var(--acc-danger)', marginBottom: 8 }}>
+      <Surface level="l1" style={{ padding: 24, border: '1px solid var(--hsn-accent-red)' }}>
+        <Typography size={TypographySize.LARGE} weight={TypographyWeight.SEMIBOLD} style={{ color: 'var(--hsn-accent-red)', marginBottom: 8 }}>
           Danger Zone
-        </h3>
-        <p style={{ fontSize: 13, color: 'var(--acc-text-secondary)', marginBottom: 16 }}>
+        </Typography>
+        <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)', marginBottom: 16 }}>
           Permanently delete your account and all associated data. This action cannot be undone.
-        </p>
+        </Typography>
 
         {!showDelete ? (
-          <Button variant="danger" onClick={() => setShowDelete(true)}>
-            <Trash2 size={14} /> Delete account
+          <Button type={Type.DESTRUCTIVE} size={Size.MEDIUM} onClick={() => setShowDelete(true)} startIcon={<Trash2 size={14} />}>
+            Delete account
           </Button>
         ) : (
           <div style={{ maxWidth: 360 }}>
-            <Alert type="error">
-              This will permanently delete all your encrypted data, keys, and account information.
-              Type your email to confirm.
-            </Alert>
-            <FormField
-              label={`Type "${user?.email}" to confirm`}
-              value={deleteConfirm}
-              onChange={(e: React.ChangeEvent<HTMLInputElement>) => setDeleteConfirm(e.target.value)}
-              placeholder={user?.email}
-            />
+            <Banner color="error" style={{ marginBottom: 16, borderRadius: 8 }}>
+              This will permanently delete all your encrypted data, keys, and account information. Type your email to confirm.
+            </Banner>
+            <InputField label={`Type "${user?.email}" to confirm`} style={{ marginBottom: 16 }}>
+              <Input
+                type={InputType.EMAIL}
+                value={deleteConfirm}
+                onChange={(e) => setDeleteConfirm(e.target.value)}
+                placeholder={user?.email}
+              />
+            </InputField>
             <div style={{ display: 'flex', gap: 8 }}>
               <Button
-                variant="danger"
+                type={Type.DESTRUCTIVE}
+                size={Size.MEDIUM}
                 disabled={deleteConfirm !== user?.email}
                 loading={deleting}
                 onClick={handleDelete}
               >
                 Permanently Delete
               </Button>
-              <Button variant="secondary" onClick={() => { setShowDelete(false); setDeleteConfirm(''); }}>
+              <Button
+                type={Type.SECONDARY}
+                size={Size.MEDIUM}
+                onClick={() => { setShowDelete(false); setDeleteConfirm(''); }}
+              >
                 Cancel
               </Button>
             </div>
           </div>
         )}
-      </div>
+      </Surface>
     </SettingsLayout>
   );
 }

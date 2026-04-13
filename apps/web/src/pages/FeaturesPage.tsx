@@ -92,7 +92,7 @@ export function FeaturesPage() {
                   padding: '8px 16px',
                   borderRadius: 20,
                   background: 'var(--hsn-brand-subtle)',
-                  color: 'var(--hsn-brand)',
+                  color: 'var(--hsn-cta-primary-default)',
                   fontWeight: 600,
                   fontSize: 14,
                   marginBottom: 16,
@@ -111,9 +111,9 @@ export function FeaturesPage() {
                   key={feat.title}
                   style={{
                     padding: 28,
-                    borderRadius: 'var(--hsn-radius)',
-                    border: '1px solid var(--hsn-border)',
-                    background: 'var(--hsn-bg)',
+                    borderRadius: '8px',
+                    border: '1px solid var(--hsn-border-primary)',
+                    background: 'var(--hsn-bg-app)',
                   }}
                 >
                   <div
@@ -122,7 +122,7 @@ export function FeaturesPage() {
                       height: 44,
                       borderRadius: 10,
                       background: 'var(--hsn-brand-subtle)',
-                      color: 'var(--hsn-brand)',
+                      color: 'var(--hsn-cta-primary-default)',
                       display: 'flex',
                       alignItems: 'center',
                       justifyContent: 'center',

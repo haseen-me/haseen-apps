@@ -1,5 +1,6 @@
 import { BrowserRouter, Routes, Route, Link } from 'react-router-dom';
 import { ErrorBoundary } from '@haseen-me/shared/ErrorBoundary';
+import { HaseenThemeProvider } from '@haseen-me/ui';
 import { Navbar } from './layout/Navbar';
 import { Footer } from './layout/Footer';
 import { HomePage } from './pages/HomePage';
@@ -11,6 +12,7 @@ import { AdminPage } from './pages/AdminPage';
 
 export function App() {
   return (
+    <HaseenThemeProvider>
     <ErrorBoundary>
     <BrowserRouter>
       <Navbar />
@@ -35,5 +37,6 @@ export function App() {
       <Footer />
     </BrowserRouter>
     </ErrorBoundary>
+    </HaseenThemeProvider>
   );
 }

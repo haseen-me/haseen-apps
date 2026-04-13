@@ -7,101 +7,57 @@
 }
 
 :root {
-  --cal-font: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
-  --cal-brand: #2db8af;
-  --cal-brand-hover: #28a79e;
-  --cal-brand-subtle: rgba(45, 184, 175, 0.08);
-  --cal-bg: #ffffff;
-  --cal-bg-secondary: #f8f9fa;
-  --cal-bg-hover: #f3f5f7;
-  --cal-bg-active: #eef0f3;
-  --cal-text: #1a1a2e;
-  --cal-text-secondary: #5a6275;
-  --cal-text-muted: #8b95a8;
-  --cal-border: #e4e8ee;
-  --cal-border-subtle: #eef0f3;
-  --cal-danger: #e5484d;
-  --cal-success: #30a46c;
-  --cal-warning: #f5a623;
-  --cal-shadow: 0 2px 8px rgba(0, 0, 0, 0.06);
-  --cal-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.1);
-  --cal-radius: 10px;
-  --cal-radius-sm: 6px;
-  --cal-sidebar-width: 240px;
-  --cal-header-height: 56px;
-}
-
-body.dark {
-  --cal-bg: #0d0f12;
-  --cal-bg-secondary: #161a20;
-  --cal-bg-hover: #1c2028;
-  --cal-bg-active: #242830;
-  --cal-text: #e8eaed;
-  --cal-text-secondary: #9ba3b0;
-  --cal-text-muted: #6b7280;
-  --cal-border: #2a2f38;
-  --cal-border-subtle: #1f242c;
-  --cal-brand-subtle: rgba(45, 184, 175, 0.12);
-  --cal-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
-  --cal-shadow-lg: 0 8px 30px rgba(0, 0, 0, 0.35);
+  /* Layout dimensions only — colors/surfaces from @haseen-me/ui */
+  --cal-sidebar-width: 260px;
+  --cal-header-height: 52px;
 }
 
 html { font-size: 16px; -webkit-font-smoothing: antialiased; }
 
 body {
-  font-family: var(--cal-font);
-  color: var(--cal-text);
-  background: var(--cal-bg);
+  font-family: 'Inter', -apple-system, BlinkMacSystemFont, sans-serif;
   line-height: 1.5;
   overflow: hidden;
   height: 100vh;
 }
 
 #root { height: 100vh; overflow: hidden; }
-a { color: var(--cal-brand); text-decoration: none; }
+
+a { color: var(--hsn-accent-teal); text-decoration: none; }
 button { font-family: inherit; cursor: pointer; }
 
 ::-webkit-scrollbar { width: 6px; }
 ::-webkit-scrollbar-track { background: transparent; }
-::-webkit-scrollbar-thumb { background: var(--cal-border); border-radius: 3px; }
-::-webkit-scrollbar-thumb:hover { background: var(--cal-text-muted); }
+::-webkit-scrollbar-thumb { background: var(--hsn-border-primary); border-radius: 3px; }
+::-webkit-scrollbar-thumb:hover { background: var(--hsn-icon-secondary); }
 
-*:focus-visible { outline: 2px solid var(--cal-brand); outline-offset: 2px; }
+*:focus-visible { outline: 2px solid var(--hsn-accent-teal); outline-offset: 2px; }
 
-@keyframes fadeIn { from { opacity: 0; transform: translateY(4px); } to { opacity: 1; transform: translateY(0); } }
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(4px); }
+  to { opacity: 1; transform: translateY(0); }
+}
 
 /* ── Responsive ────────────────────────────────── */
 @media (max-width: 1024px) {
-  :root { --cal-sidebar-width: 200px; }
+  :root { --cal-sidebar-width: 220px; }
 }
 
 @media (max-width: 768px) {
   .cal-product-rail { display: none !important; }
   .cal-sidebar {
     position: fixed !important;
-    left: -280px;
-    top: 0;
-    z-index: 300;
+    left: -280px; top: 0; z-index: 300;
     width: 260px !important;
     transition: left 0.25s ease !important;
-    box-shadow: none;
   }
   .cal-sidebar.mobile-open {
     left: 0;
     box-shadow: 4px 0 20px rgba(0, 0, 0, 0.15);
   }
-  .cal-sidebar-backdrop {
-    display: none;
-    position: fixed;
-    inset: 0;
-    background: rgba(0, 0, 0, 0.3);
-    z-index: 299;
-  }
-  .cal-sidebar-backdrop.mobile-open { display: block; }
   .cal-mobile-header { display: flex !important; }
 }
 
 @media (min-width: 769px) {
   .cal-mobile-header { display: none !important; }
-  .cal-sidebar-backdrop { display: none !important; }
 }

@@ -1,4 +1,5 @@
 import { useEffect, useRef, useCallback } from 'react';
+import { Skeleton } from '@haseen-me/ui';
 import { useMailStore } from '@/store/mail';
 import { mailApi } from '@/api/client';
 import { MailboxHeader } from './MailboxHeader';
@@ -60,7 +61,7 @@ export function MailboxList() {
     <div
       style={{
         width: '100%',
-        borderRight: '1px solid var(--mail-border)',
+        borderRight: '1px solid var(--hsn-border-primary)',
         display: 'flex',
         flexDirection: 'column',
         height: '100%',
@@ -77,21 +78,20 @@ export function MailboxList() {
                 key={i}
                 style={{
                   padding: '14px 16px',
-                  borderBottom: '1px solid var(--mail-border)',
+                  borderBottom: '1px solid var(--hsn-border-primary)',
                   display: 'flex',
                   flexDirection: 'column',
                   gap: 8,
                 }}
               >
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                  <div style={{ width: 120, height: 14, borderRadius: 4, background: 'var(--mail-bg-hover, #f0f0f0)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
-                  <div style={{ width: 50, height: 12, borderRadius: 4, background: 'var(--mail-bg-hover, #f0f0f0)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
+                  <Skeleton style={{ width: 120, height: 14, borderRadius: 4 }} />
+                  <Skeleton style={{ width: 50, height: 12, borderRadius: 4 }} />
                 </div>
-                <div style={{ width: '80%', height: 13, borderRadius: 4, background: 'var(--mail-bg-hover, #f0f0f0)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
-                <div style={{ width: '60%', height: 12, borderRadius: 4, background: 'var(--mail-bg-hover, #f0f0f0)', animation: 'skeletonPulse 1.5s ease-in-out infinite' }} />
+                <Skeleton style={{ width: '80%', height: 13, borderRadius: 4 }} />
+                <Skeleton style={{ width: '60%', height: 12, borderRadius: 4 }} />
               </div>
             ))}
-            <style>{`@keyframes skeletonPulse { 0%, 100% { opacity: 1; } 50% { opacity: 0.4; } }`}</style>
           </div>
         ) : sorted.length === 0 ? (
           <EmptyState label={activeLabel} />
@@ -101,7 +101,7 @@ export function MailboxList() {
             {hasMore && (
               <div
                 ref={sentinelRef}
-                style={{ padding: '12px 16px', textAlign: 'center', fontSize: 12, color: 'var(--mail-text-muted)' }}
+                style={{ padding: '12px 16px', textAlign: 'center', fontSize: 12, color: 'var(--hsn-text-tertiary)' }}
               >
                 {loadingMore ? 'Loading more...' : '\u00A0'}
               </div>

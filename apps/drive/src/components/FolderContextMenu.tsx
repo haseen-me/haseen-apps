@@ -83,11 +83,11 @@ export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props)
           style={{
             fontSize: 13,
             padding: '2px 6px',
-            border: '1px solid var(--drive-brand)',
+            border: '1px solid var(--hsn-cta-primary-default)',
             borderRadius: 4,
             outline: 'none',
-            background: 'var(--drive-bg)',
-            color: 'var(--drive-text)',
+            background: 'var(--hsn-bg-l1-solid)',
+            color: 'var(--hsn-text-primary)',
             width: 140,
           }}
         />
@@ -104,7 +104,7 @@ export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props)
           style={{
             background: 'none',
             border: 'none',
-            color: 'var(--drive-text-muted)',
+            color: 'var(--hsn-text-tertiary)',
             padding: 4,
             borderRadius: 4,
             display: 'flex',
@@ -120,9 +120,9 @@ export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props)
             position: 'fixed',
             top: contextPos.y,
             left: contextPos.x,
-            background: 'var(--drive-bg)',
-            border: '1px solid var(--drive-border)',
-            borderRadius: 'var(--drive-radius)',
+            background: 'var(--hsn-bg-l1-solid)',
+            border: '1px solid var(--hsn-border-primary)',
+            borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
             zIndex: 200,
             minWidth: 150,
@@ -132,9 +132,9 @@ export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props)
             top: '100%',
             right: 0,
             marginTop: 4,
-            background: 'var(--drive-bg)',
-            border: '1px solid var(--drive-border)',
-            borderRadius: 'var(--drive-radius)',
+            background: 'var(--hsn-bg-l1-solid)',
+            border: '1px solid var(--hsn-border-primary)',
+            borderRadius: '8px',
             boxShadow: '0 4px 12px rgba(0,0,0,0.12)',
             zIndex: 100,
             minWidth: 150,
@@ -150,7 +150,7 @@ export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props)
               setRenaming(true);
             }}
           />
-          <div style={{ height: 1, background: 'var(--drive-border)', margin: '4px 0' }} />
+          <div style={{ height: 1, background: 'var(--hsn-border-primary)', margin: '4px 0' }} />
           <MenuItem
             icon={<Trash2 size={15} />}
             label="Delete folder"
@@ -163,16 +163,15 @@ export function FolderContextMenu({ folder, contextPos, onCloseContext }: Props)
         </div>
       )}
 
-      {confirmDelete && (
-        <ConfirmDialog
-          title="Delete folder?"
-          message={`"${folder.name}" and all its contents will be permanently deleted.`}
-          confirmLabel="Delete"
-          danger
-          onConfirm={handleDelete}
-          onCancel={() => setConfirmDelete(false)}
-        />
-      )}
+      <ConfirmDialog
+        open={confirmDelete}
+        title="Delete folder?"
+        message={`"${folder.name}" and all its contents will be permanently deleted.`}
+        confirmLabel="Delete"
+        danger
+        onConfirm={handleDelete}
+        onCancel={() => setConfirmDelete(false)}
+      />
     </div>
   );
 }
@@ -199,12 +198,12 @@ function MenuItem({
         padding: '8px 12px',
         background: 'none',
         border: 'none',
-        color: danger ? '#e5484d' : 'var(--drive-text)',
+        color: danger ? '#e5484d' : 'var(--hsn-text-primary)',
         fontSize: 13,
         cursor: 'pointer',
         textAlign: 'left',
       }}
-      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-bg-hover)')}
+      onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-bg-cell)')}
       onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
     >
       {icon}

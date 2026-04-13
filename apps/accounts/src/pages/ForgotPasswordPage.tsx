@@ -2,7 +2,7 @@ import { useState, type FormEvent } from 'react';
 import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
-import { FormField, Button, Alert } from '@/components/FormUI';
+import { InputField, Input, InputType, Banner, Button, Type, Size } from '@haseen-me/ui';
 import { authApi } from '@/api/auth';
 
 export function ForgotPasswordPage() {
@@ -12,14 +12,13 @@ export function ForgotPasswordPage() {
   const [submitted, setSubmitted] = useState(false);
   const [resetUrl, setResetUrl] = useState<string | null>(null);
 
-  const handleSubmit = async (e: FormEvent) => {
-    e.preventDefault();
-    
+  const handleSubmit = async (e?: FormEvent | React.MouseEvent) => {
+    e?.preventDefault();
+
     if (!email.trim()) {
       setError('Please enter your email address');
       return;
     }
-
     if (!/^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(email)) {
       setError('Please enter a valid email address');
       return;
@@ -31,7 +30,6 @@ export function ForgotPasswordPage() {
     try {
       const res = await authApi.forgotPassword(email.toLowerCase().trim());
       setResetUrl(res.resetUrl ?? null);
-
       setSubmitted(true);
     } catch (err) {
       setError(err instanceof Error ? err.message : 'An error occurred');
@@ -40,89 +38,54 @@ export function ForgotPasswordPage() {
     }
   };
 
+  const backLink = (
+    <div style={{ marginTop: 20, textAlign: 'center' }}>
+      <Link to="/sign-in" style={{ color: 'var(--hsn-accent-teal)', fontSize: 14, fontWeight: 500, display: 'inline-flex', alignItems: 'center', gap: 6, textDecoration: 'none' }}>
+        <ArrowLeft size={14} /> Back to Sign In
+      </Link>
+    </div>
+  );
+
   if (submitted) {
     return (
       <AuthLayout title="Check your email" subtitle="If the account exists, we sent reset instructions.">
-        <Alert type="info">
+        <Banner color="info" style={{ marginBottom: 16, borderRadius: 8 }}>
           Open your inbox and follow the reset link.
-          {resetUrl ? (
-            <>
-              {' '}
-              <a href={resetUrl} style={{ color: 'var(--acc-brand)' }}>
-                Use the reset link now
-              </a>
-              .
-            </>
-          ) : null}
-        </Alert>
-        
-        <div style={{ marginTop: 24, textAlign: 'center' }}>
-          <Link
-            to="/sign-in"
-            style={{
-              color: 'var(--acc-brand)',
-              textDecoration: 'none',
-              fontSize: 14,
-              fontWeight: 500,
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-            }}
-          >
-            <ArrowLeft size={14} />
-            Back to Sign In
-          </Link>
-        </div>
+          {resetUrl && (
+            <> <a href={resetUrl} style={{ color: 'var(--hsn-accent-teal)' }}>Use the reset link now</a>.</>
+          )}
+        </Banner>
+        {backLink}
       </AuthLayout>
     );
   }
 
   return (
-    <AuthLayout 
-      title="Reset your password" 
-      subtitle="Enter your account email to continue."
-    >
-      {error && <Alert type="error">{error}</Alert>}
+    <AuthLayout title="Reset your password" subtitle="Enter your account email to continue.">
+      {error && (
+        <Banner color="error" style={{ marginBottom: 16, borderRadius: 8 }}>
+          {error}
+        </Banner>
+      )}
 
       <form onSubmit={handleSubmit}>
-        <FormField
-          label="Email address"
-          type="email"
-          placeholder="john@example.com"
-          value={email}
-          onChange={(e) => setEmail(e.target.value)}
-          icon={<Mail size={16} />}
-          autoComplete="email"
-        />
+        <InputField label="Email address" style={{ marginBottom: 16 }}>
+          <Input
+            type={InputType.EMAIL}
+            placeholder="john@example.com"
+            value={email}
+            onChange={(e) => setEmail(e.target.value)}
+            startIcon={<Mail size={16} />}
+            autoComplete="email"
+          />
+        </InputField>
 
-        <Button
-          type="submit"
-          disabled={loading}
-          loading={loading}
-          fullWidth
-          style={{ marginTop: 8 }}
-        >
-          {loading ? 'Sending...' : 'Send Recovery Link'}
+        <Button type={Type.PRIMARY} size={Size.LARGE} fullWidth onClick={handleSubmit} disabled={loading} loading={loading}>
+          {loading ? 'Sending…' : 'Send Recovery Link'}
         </Button>
       </form>
 
-      <div style={{ marginTop: 18, textAlign: 'center' }}>
-        <Link
-          to="/sign-in"
-          style={{
-            color: 'var(--acc-brand)',
-            textDecoration: 'none',
-            fontSize: 14,
-            fontWeight: 500,
-            display: 'inline-flex',
-            alignItems: 'center',
-            gap: 6,
-          }}
-        >
-          <ArrowLeft size={14} />
-          Back to Sign In
-        </Link>
-      </div>
+      {backLink}
     </AuthLayout>
   );
 }

@@ -7,7 +7,9 @@ import {
   FolderPlus,
   Trash2,
 } from 'lucide-react';
-import { useState, useRef, useEffect } from 'react';
+import { useRef, useState } from 'react';
+import { Button, IconButton, Dropdown, DropdownItem, Tabs, Typography, TypographySize, Type, Size } from '@haseen-me/ui';
+import type { Tab } from '@haseen-me/ui';
 import { useDriveStore } from '@/store/drive';
 import { driveApi } from '@/api/client';
 import { useToastStore } from '@haseen-me/shared/toast';
@@ -17,6 +19,11 @@ const SORT_OPTIONS: { field: SortField; label: string }[] = [
   { field: 'name', label: 'Name' },
   { field: 'updatedAt', label: 'Modified' },
   { field: 'size', label: 'Size' },
+];
+
+const VIEW_TABS: Tab[] = [
+  { id: 'grid', label: 'Grid', icon: <LayoutGrid size={14} /> },
+  { id: 'list', label: 'List', icon: <List size={14} /> },
 ];
 
 export function DriveHeader() {
@@ -43,15 +50,7 @@ export function DriveHeader() {
   const isSpecial = isTrash || isShared;
 
   const [sortOpen, setSortOpen] = useState(false);
-  const sortRef = useRef<HTMLDivElement>(null);
-
-  useEffect(() => {
-    const handler = (e: MouseEvent) => {
-      if (sortRef.current && !sortRef.current.contains(e.target as Node)) setSortOpen(false);
-    };
-    document.addEventListener('mousedown', handler);
-    return () => document.removeEventListener('mousedown', handler);
-  }, []);
+  const sortAnchorRef = useRef<HTMLButtonElement>(null);
 
   const breadcrumbs = isTrash
     ? [{ id: '__trash', name: 'Trash' }]
@@ -62,34 +61,30 @@ export function DriveHeader() {
   return (
     <div
       style={{
-        height: 'var(--drive-header-height)',
-        borderBottom: '1px solid var(--drive-border)',
+        height: 'var(--drive-header-height, 52px)',
+        borderBottom: '1px solid var(--hsn-border-primary)',
         display: 'flex',
         alignItems: 'center',
-        padding: '0 20px',
-        gap: 12,
+        padding: '0 16px',
+        gap: 8,
         flexShrink: 0,
+        background: 'var(--hsn-bg-l1-solid)',
       }}
     >
       {/* Breadcrumbs */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: 4, flex: 1, minWidth: 0 }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 2, flex: 1, minWidth: 0 }}>
         {breadcrumbs.map((crumb, i) => (
-          <div key={crumb.id} style={{ display: 'flex', alignItems: 'center', gap: 4 }}>
-            {i > 0 && <ChevronRight size={14} style={{ color: 'var(--drive-text-muted)' }} />}
+          <div key={crumb.id} style={{ display: 'flex', alignItems: 'center', gap: 2 }}>
+            {i > 0 && <ChevronRight size={14} style={{ color: 'var(--hsn-icon-secondary)' }} />}
             <button
               onClick={() => setCurrentFolderId(crumb.id)}
               style={{
-                background: 'none',
-                border: 'none',
-                padding: '4px 8px',
-                borderRadius: 'var(--drive-radius-sm)',
-                fontSize: 14,
-                fontWeight: i === breadcrumbs.length - 1 ? 600 : 400,
-                color: i === breadcrumbs.length - 1 ? 'var(--drive-text)' : 'var(--drive-text-secondary)',
-                whiteSpace: 'nowrap',
-                transition: 'background 0.12s',
+                background: 'none', border: 'none', padding: '4px 6px', borderRadius: 6,
+                fontSize: 14, fontWeight: i === breadcrumbs.length - 1 ? 600 : 400,
+                color: i === breadcrumbs.length - 1 ? 'var(--hsn-text-primary)' : 'var(--hsn-text-secondary)',
+                whiteSpace: 'nowrap', cursor: 'pointer',
               }}
-              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-bg-hover)')}
+              onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--hsn-bg-cell)')}
               onMouseLeave={(e) => (e.currentTarget.style.background = 'none')}
             >
               {crumb.name}
@@ -100,173 +95,77 @@ export function DriveHeader() {
 
       {/* Selection info */}
       {selectedIds.size > 0 && (
-        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-          <span style={{ fontSize: 13, color: 'var(--drive-text-secondary)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+          <Typography size={TypographySize.BODY} style={{ color: 'var(--hsn-text-secondary)' }}>
             {selectedIds.size} selected
-          </span>
-          <button
-            onClick={clearSelection}
-            style={{
-              background: 'none',
-              border: 'none',
-              fontSize: 12,
-              color: 'var(--drive-brand)',
-              fontWeight: 500,
-              padding: '4px 8px',
-              borderRadius: 'var(--drive-radius-sm)',
-            }}
-          >
-            Clear
-          </button>
+          </Typography>
+          <Button type={Type.TERTIARY} size={Size.SMALL} onClick={clearSelection}>Clear</Button>
         </div>
       )}
 
-      {/* Sort dropdown */}
-      <div ref={sortRef} style={{ position: 'relative' }}>
+      {/* Sort */}
+      <div style={{ position: 'relative' }}>
         <button
+          ref={sortAnchorRef}
           onClick={() => setSortOpen(!sortOpen)}
           style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 4,
-            padding: '6px 10px',
-            borderRadius: 'var(--drive-radius-sm)',
-            border: '1px solid var(--drive-border)',
-            background: 'var(--drive-bg)',
-            fontSize: 13,
-            color: 'var(--drive-text-secondary)',
+            display: 'flex', alignItems: 'center', gap: 4, padding: '6px 10px',
+            borderRadius: 6, border: '1px solid var(--hsn-border-primary)',
+            background: 'var(--hsn-bg-field-default)', fontSize: 13, color: 'var(--hsn-text-secondary)', cursor: 'pointer',
           }}
         >
           <ArrowUpDown size={14} />
           {SORT_OPTIONS.find((s) => s.field === sortField)?.label}
         </button>
-        {sortOpen && (
-          <div
-            style={{
-              position: 'absolute',
-              top: '100%',
-              right: 0,
-              marginTop: 4,
-              background: 'var(--drive-bg)',
-              border: '1px solid var(--drive-border)',
-              borderRadius: 'var(--drive-radius)',
-              boxShadow: 'var(--drive-shadow-lg)',
-              padding: 4,
-              minWidth: 160,
-              zIndex: 50,
-            }}
-          >
-            {SORT_OPTIONS.map((opt) => (
-              <button
-                key={opt.field}
-                onClick={() => {
-                  const newDir: SortDir = sortField === opt.field && sortDir === 'asc' ? 'desc' : 'asc';
-                  setSort(opt.field, newDir);
-                  setSortOpen(false);
-                }}
-                style={{
-                  width: '100%',
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'space-between',
-                  gap: 8,
-                  padding: '8px 12px',
-                  border: 'none',
-                  borderRadius: 'var(--drive-radius-sm)',
-                  background: sortField === opt.field ? 'var(--drive-brand-subtle)' : 'transparent',
-                  color: sortField === opt.field ? 'var(--drive-brand)' : 'var(--drive-text)',
-                  fontSize: 13,
-                  fontWeight: sortField === opt.field ? 600 : 400,
-                  textAlign: 'left',
-                }}
-                onMouseEnter={(e) => (e.currentTarget.style.background = sortField === opt.field ? 'var(--drive-brand-subtle)' : 'var(--drive-bg-hover)')}
-                onMouseLeave={(e) => (e.currentTarget.style.background = sortField === opt.field ? 'var(--drive-brand-subtle)' : 'transparent')}
-              >
-                {opt.label}
-                {sortField === opt.field && (
-                  <span style={{ fontSize: 11 }}>{sortDir === 'asc' ? '↑' : '↓'}</span>
-                )}
-              </button>
-            ))}
-          </div>
-        )}
+        <Dropdown open={sortOpen} onClose={() => setSortOpen(false)} anchor={sortAnchorRef} width={160}>
+          {SORT_OPTIONS.map((opt) => (
+            <DropdownItem
+              key={opt.field}
+              label={opt.label}
+              active={sortField === opt.field}
+              endElement={sortField === opt.field ? <span style={{ fontSize: 11 }}>{sortDir === 'asc' ? '↑' : '↓'}</span> : undefined}
+              onClick={() => {
+                const newDir: SortDir = sortField === opt.field && sortDir === 'asc' ? 'desc' : 'asc';
+                setSort(opt.field, newDir);
+                setSortOpen(false);
+              }}
+            />
+          ))}
+        </Dropdown>
       </div>
 
       {/* View toggle */}
-      <div
-        style={{
-          display: 'flex',
-          borderRadius: 'var(--drive-radius-sm)',
-          border: '1px solid var(--drive-border)',
-          overflow: 'hidden',
-        }}
-      >
-        {(['grid', 'list'] as const).map((mode) => (
-          <button
-            key={mode}
-            onClick={() => setViewMode(mode)}
-            style={{
-              padding: '6px 10px',
-              border: 'none',
-              background: viewMode === mode ? 'var(--drive-brand)' : 'var(--drive-bg)',
-              color: viewMode === mode ? '#fff' : 'var(--drive-text-secondary)',
-              display: 'flex',
-              transition: 'background 0.12s, color 0.12s',
-            }}
-          >
-            {mode === 'grid' ? <LayoutGrid size={16} /> : <List size={16} />}
-          </button>
-        ))}
-      </div>
+      <Tabs tabs={VIEW_TABS} activeTab={viewMode} onTabChange={(t) => setViewMode(t as 'grid' | 'list')} />
 
       {/* New folder */}
       {!isSpecial && (
-        <button
+        <IconButton
+          icon={<FolderPlus size={16} />}
+          type={Type.SECONDARY}
+          size={Size.MEDIUM}
+          tooltip="New folder"
           onClick={() => setNewFolderOpen(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 12px',
-            borderRadius: 'var(--drive-radius-sm)',
-            border: '1px solid var(--drive-border)',
-            background: 'var(--drive-bg)',
-            color: 'var(--drive-text-secondary)',
-            fontSize: 13,
-          }}
-        >
-          <FolderPlus size={16} />
-        </button>
+        />
       )}
 
       {/* Upload */}
       {!isSpecial && (
-        <button
+        <Button
+          type={Type.PRIMARY}
+          size={Size.MEDIUM}
           onClick={() => setUploadOpen(true)}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 14px',
-            borderRadius: 'var(--drive-radius-sm)',
-            border: 'none',
-            background: 'var(--drive-brand)',
-            color: '#fff',
-            fontSize: 13,
-            fontWeight: 600,
-            transition: 'background 0.15s',
-          }}
-          onMouseEnter={(e) => (e.currentTarget.style.background = 'var(--drive-brand-hover)')}
-          onMouseLeave={(e) => (e.currentTarget.style.background = 'var(--drive-brand)')}
+          startIcon={<Upload size={16} />}
         >
-          <Upload size={16} />
           Upload
-        </button>
+        </Button>
       )}
 
       {/* Empty Trash */}
       {isTrash && files.length > 0 && (
-        <button
+        <Button
+          type={Type.DESTRUCTIVE}
+          size={Size.MEDIUM}
+          startIcon={<Trash2 size={14} />}
           onClick={async () => {
             try {
               await driveApi.emptyTrash();
@@ -276,22 +175,9 @@ export function DriveHeader() {
               toast.show('Failed to empty trash');
             }
           }}
-          style={{
-            display: 'flex',
-            alignItems: 'center',
-            gap: 6,
-            padding: '6px 14px',
-            borderRadius: 'var(--drive-radius-sm)',
-            border: 'none',
-            background: '#dc2626',
-            color: '#fff',
-            fontSize: 13,
-            fontWeight: 600,
-          }}
         >
-          <Trash2 size={14} />
           Empty Trash
-        </button>
+        </Button>
       )}
     </div>
   );

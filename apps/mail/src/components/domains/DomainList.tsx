@@ -40,7 +40,7 @@ export function DomainList() {
               style={{
                 fontSize: 24,
                 fontWeight: 700,
-                color: 'var(--mail-text)',
+                color: 'var(--hsn-text-primary)',
                 margin: 0,
                 letterSpacing: '-0.025em',
               }}
@@ -50,7 +50,7 @@ export function DomainList() {
             <p
               style={{
                 fontSize: 14,
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 margin: '6px 0 0',
               }}
             >
@@ -63,9 +63,9 @@ export function DomainList() {
               style={{
                 padding: '9px 14px',
                 borderRadius: 10,
-                border: '1px solid var(--mail-border)',
+                border: '1px solid var(--hsn-border-primary)',
                 background: 'transparent',
-                color: 'var(--mail-text-secondary)',
+                color: 'var(--hsn-text-secondary)',
                 fontSize: 13,
                 fontWeight: 500,
                 cursor: 'pointer',
@@ -82,7 +82,7 @@ export function DomainList() {
                 padding: '9px 18px',
                 borderRadius: 10,
                 border: 'none',
-                background: 'var(--mail-brand)',
+                background: 'var(--hsn-accent-teal)',
                 color: '#fff',
                 fontSize: 13,
                 fontWeight: 600,
@@ -107,8 +107,8 @@ export function DomainList() {
             style={{
               textAlign: 'center',
               padding: '64px 32px',
-              background: 'var(--mail-bg-secondary)',
-              border: '1px dashed var(--mail-border)',
+              background: 'var(--hsn-bg-l0-solid)',
+              border: '1px dashed var(--hsn-border-primary)',
               borderRadius: 16,
             }}
           >
@@ -117,20 +117,20 @@ export function DomainList() {
                 width: 56,
                 height: 56,
                 borderRadius: 14,
-                background: 'var(--mail-brand-subtle)',
+                background: 'rgba(45,184,175,0.08)',
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'center',
                 margin: '0 auto 16px',
               }}
             >
-              <Globe size={28} color="var(--mail-brand)" />
+              <Globe size={28} color="var(--hsn-accent-teal)" />
             </div>
             <h3
               style={{
                 fontSize: 16,
                 fontWeight: 600,
-                color: 'var(--mail-text)',
+                color: 'var(--hsn-text-primary)',
                 margin: '0 0 8px',
               }}
             >
@@ -139,7 +139,7 @@ export function DomainList() {
             <p
               style={{
                 fontSize: 14,
-                color: 'var(--mail-text-muted)',
+                color: 'var(--hsn-text-tertiary)',
                 margin: '0 0 20px',
                 maxWidth: 340,
                 marginLeft: 'auto',
@@ -154,7 +154,7 @@ export function DomainList() {
                 padding: '10px 24px',
                 borderRadius: 10,
                 border: 'none',
-                background: 'var(--mail-brand)',
+                background: 'var(--hsn-accent-teal)',
                 color: '#fff',
                 fontSize: 14,
                 fontWeight: 600,
@@ -182,14 +182,14 @@ export function DomainList() {
                   alignItems: 'center',
                   gap: 16,
                   padding: '18px 20px',
-                  background: 'var(--mail-bg-secondary)',
-                  border: '1px solid var(--mail-border)',
+                  background: 'var(--hsn-bg-l0-solid)',
+                  border: '1px solid var(--hsn-border-primary)',
                   borderRadius: 12,
                   cursor: 'pointer',
                   transition: 'all 0.15s',
                 }}
                 whileHover={{
-                  borderColor: 'var(--mail-brand)',
+                  borderColor: 'var(--hsn-accent-teal)',
                   boxShadow: '0 4px 16px rgba(45, 184, 175, 0.08)',
                 }}
               >
@@ -198,27 +198,27 @@ export function DomainList() {
                     width: 40,
                     height: 40,
                     borderRadius: 10,
-                    background: 'var(--mail-brand-subtle)',
+                    background: 'rgba(45,184,175,0.08)',
                     display: 'flex',
                     alignItems: 'center',
                     justifyContent: 'center',
                     flexShrink: 0,
                   }}
                 >
-                  <Globe size={20} color="var(--mail-brand)" />
+                  <Globe size={20} color="var(--hsn-accent-teal)" />
                 </div>
                 <div style={{ flex: 1, minWidth: 0 }}>
                   <div
                     style={{
                       fontSize: 15,
                       fontWeight: 600,
-                      color: 'var(--mail-text)',
+                      color: 'var(--hsn-text-primary)',
                       marginBottom: 2,
                     }}
                   >
                     {domain.domain}
                   </div>
-                  <div style={{ fontSize: 12, color: 'var(--mail-text-muted)' }}>
+                  <div style={{ fontSize: 12, color: 'var(--hsn-text-tertiary)' }}>
                     Added {new Date(domain.createdAt).toLocaleDateString()}
                   </div>
                 </div>
@@ -232,7 +232,7 @@ export function DomainList() {
                           width: 6,
                           height: 6,
                           borderRadius: '50%',
-                          background: v ? '#30a46c' : 'var(--mail-border)',
+                          background: v ? '#30a46c' : 'var(--hsn-border-primary)',
                         }}
                       />
                     ),
@@ -240,7 +240,7 @@ export function DomainList() {
                 </div>
 
                 <StatusBadge status={domain.status} />
-                <ChevronRight size={16} color="var(--mail-text-muted)" />
+                <ChevronRight size={16} color="var(--hsn-text-tertiary)" />
               </motion.div>
             ))}
           </div>
