@@ -48,10 +48,9 @@ export function ForgotPasswordPage() {
 
   if (submitted) {
     return (
-      <AuthLayout title="Check your email" subtitle="Password recovery instructions have been sent.">
+      <AuthLayout title="Check your email" subtitle="If the account exists, we sent reset instructions.">
         <Alert type="info">
-          If an account exists with this email, you'll receive a password recovery link. 
-          Please check your inbox and follow the instructions to reset your password.
+          Open your inbox and follow the reset link.
         </Alert>
         
         <div style={{ marginTop: 24, textAlign: 'center' }}>
@@ -78,7 +77,7 @@ export function ForgotPasswordPage() {
   return (
     <AuthLayout 
       title="Reset your password" 
-      subtitle="Enter your email address and we'll send you a link to reset your password."
+      subtitle="Enter your account email to continue."
     >
       {error && <Alert type="error">{error}</Alert>}
 
@@ -98,13 +97,13 @@ export function ForgotPasswordPage() {
           disabled={loading}
           loading={loading}
           fullWidth
-          style={{ marginTop: 24 }}
+          style={{ marginTop: 8 }}
         >
           {loading ? 'Sending...' : 'Send Recovery Link'}
         </Button>
       </form>
 
-      <div style={{ marginTop: 24, textAlign: 'center' }}>
+      <div style={{ marginTop: 18, textAlign: 'center' }}>
         <Link
           to="/sign-in"
           style={{

@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, User, Shield } from 'lucide-react';
+import { Mail, Lock, User } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
-import { FormField, Button, Divider, Alert } from '@/components/FormUI';
+import { FormField, Button, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
 import {
   generateKeyPair,
@@ -132,7 +132,7 @@ export function SignUpPage() {
   };
 
   return (
-    <AuthLayout title="Create your account" subtitle="End-to-end encrypted. Zero-knowledge. Your data stays yours.">
+    <AuthLayout title="Create account" subtitle="Set up your Haseen account.">
       {error && <Alert type="error">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
@@ -176,26 +176,18 @@ export function SignUpPage() {
           autoComplete="new-password"
         />
 
-        <div style={{ marginTop: 4, marginBottom: 16 }}>
+        <div style={{ marginTop: 2, marginBottom: 12 }}>
           <p style={{ fontSize: 12, color: 'var(--acc-text-muted)', lineHeight: 1.5 }}>
-            Your password is used to derive encryption keys on your device.
-            We never receive or store your password.
+            Your password never leaves your device.
           </p>
         </div>
 
-        {status && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 13, color: 'var(--acc-brand)' }}>
-            <Shield size={14} />
-            {status}
-          </div>
-        )}
+        {status && <p style={{ marginBottom: 10, fontSize: 12, color: 'var(--acc-text-muted)' }}>{status}</p>}
 
         <Button type="submit" fullWidth loading={loading} disabled={loading}>
           {loading ? status || 'Creating Account...' : 'Create Account'}
         </Button>
       </form>
-
-      <Divider text="or" />
 
       <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--acc-text-secondary)' }}>
         Already have an account?{' '}

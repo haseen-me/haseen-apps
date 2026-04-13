@@ -8,16 +8,14 @@ interface FormFieldProps extends InputHTMLAttributes<HTMLInputElement> {
 
 export function FormField({ label, error, icon, style, ...props }: FormFieldProps) {
   return (
-    <div style={{ marginBottom: 18 }}>
+    <div style={{ marginBottom: 14 }}>
       <label
         style={{
           display: 'block',
-          fontSize: 12,
-          fontWeight: 700,
-          letterSpacing: '0.06em',
-          textTransform: 'uppercase',
+          fontSize: 13,
+          fontWeight: 600,
           color: 'var(--acc-text-secondary)',
-          marginBottom: 8,
+          marginBottom: 6,
         }}
       >
         {label}
@@ -40,16 +38,14 @@ export function FormField({ label, error, icon, style, ...props }: FormFieldProp
         <input
           style={{
             width: '100%',
-            padding: icon ? '14px 16px 14px 44px' : '14px 16px',
-            borderRadius: '18px',
+            padding: icon ? '12px 14px 12px 40px' : '12px 14px',
+            borderRadius: '12px',
             border: `1px solid ${error ? 'var(--acc-danger)' : 'var(--acc-border)'}`,
-            fontSize: 15,
-            fontWeight: 600,
-            letterSpacing: '-0.02em',
+            fontSize: 14,
+            fontWeight: 500,
             fontFamily: 'inherit',
             color: 'var(--acc-text)',
             background: 'var(--acc-bg-elevated)',
-            boxShadow: 'inset 0 1px 0 rgba(255,255,255,0.18)',
             transition: 'border-color 0.2s, box-shadow 0.2s, background 0.2s',
             ...style,
           }}
@@ -94,8 +90,8 @@ export function Button({
       disabled={disabled || loading}
       style={{
         width: fullWidth ? '100%' : undefined,
-        padding: '14px 22px',
-        borderRadius: '18px',
+        padding: '11px 18px',
+        borderRadius: '12px',
         background:
           variant === 'primary'
             ? 'linear-gradient(135deg, var(--acc-brand), var(--acc-brand-2))'
@@ -104,14 +100,13 @@ export function Button({
         border,
         fontSize: 14,
         fontWeight: 600,
-        letterSpacing: '-0.02em',
         cursor: disabled || loading ? 'not-allowed' : 'pointer',
         opacity: disabled || loading ? 0.6 : 1,
         transition: 'opacity 0.15s, background 0.15s, box-shadow 0.2s',
         boxShadow:
           variant === 'primary'
-            ? '0 24px 36px -24px rgba(45, 184, 175, 0.65)'
-            : '0 12px 28px -24px rgba(15, 23, 42, 0.28)',
+            ? '0 16px 26px -18px rgba(45, 184, 175, 0.45)'
+            : 'none',
         display: 'inline-flex',
         alignItems: 'center',
         justifyContent: 'center',

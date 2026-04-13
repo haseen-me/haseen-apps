@@ -1,8 +1,8 @@
 import { useState, type FormEvent } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
-import { Mail, Lock, Shield } from 'lucide-react';
+import { Mail, Lock } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
-import { FormField, Button, Divider, Alert } from '@/components/FormUI';
+import { FormField, Button, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
 import {
   generateEphemeral,
@@ -132,7 +132,7 @@ export function SignInPage() {
   };
 
   return (
-    <AuthLayout title="Welcome back" subtitle="Sign in to your encrypted workspace.">
+    <AuthLayout title="Sign in" subtitle="Welcome back to Haseen.">
       {error && <Alert type="error">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
@@ -156,7 +156,7 @@ export function SignInPage() {
               icon={<Lock size={16} />}
               autoComplete="current-password"
             />
-            <div style={{ textAlign: 'right', marginBottom: 16 }}>
+            <div style={{ textAlign: 'right', marginBottom: 12 }}>
               <Link
                 to="/forgot-password"
                 style={{ fontSize: 13, color: 'var(--acc-brand)' }}
@@ -168,7 +168,7 @@ export function SignInPage() {
         ) : (
           <>
             <Alert type="info">
-              Two-factor authentication is enabled. Enter the 6-digit code from your authenticator app.
+              Enter your 6-digit authentication code.
             </Alert>
             <FormField
               label="Authentication code"
@@ -183,19 +183,12 @@ export function SignInPage() {
           </>
         )}
 
-        {status && (
-          <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12, fontSize: 13, color: 'var(--acc-brand)' }}>
-            <Shield size={14} />
-            {status}
-          </div>
-        )}
+        {status && <p style={{ marginBottom: 10, fontSize: 12, color: 'var(--acc-text-muted)' }}>{status}</p>}
 
         <Button type="submit" fullWidth loading={loading} disabled={loading}>
           {loading ? status || 'Signing In...' : mfaRequired ? 'Verify' : 'Sign In'}
         </Button>
       </form>
-
-      <Divider text="or" />
 
       <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--acc-text-secondary)' }}>
         Don&apos;t have an account?{' '}
