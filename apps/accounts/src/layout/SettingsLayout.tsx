@@ -20,8 +20,8 @@ export function SettingsLayout({ children, activeTab }: SettingsLayoutProps) {
   const { user, logout: storeLogout } = useAuthStore();
   const navigate = useNavigate();
 
-  const handleLogout = () => {
-    storeLogout();
+  const handleLogout = async () => {
+    await storeLogout();
     navigate('/sign-in');
   };
 

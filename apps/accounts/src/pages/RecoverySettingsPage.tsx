@@ -6,7 +6,7 @@ import { useAuthStore } from '@/store/auth';
 import { authApi } from '@/api/auth';
 
 export function RecoverySettingsPage() {
-  const { token, recoveryKey: storedKey, setRecoveryKey } = useAuthStore();
+  const { recoveryKey: storedKey, setRecoveryKey } = useAuthStore();
   const [showKey, setShowKey] = useState(false);
   const [copied, setCopied] = useState(false);
   const [regenerating, setRegenerating] = useState(false);
@@ -22,11 +22,10 @@ export function RecoverySettingsPage() {
   };
 
   const handleRegenerate = async () => {
-    if (!token) return;
     setRegenerating(true);
     setError(null);
     try {
-      const { recoveryKey: newKey } = await authApi.generateRecoveryKey(token);
+      const { recoveryKey: newKey } = await authApi.generateRecoveryKey();
       setRecoveryKey(newKey);
       setShowKey(true);
     } catch (err) {

@@ -1,15 +1,13 @@
 import { useEffect, useState, type FormEvent } from 'react';
 import { Link, useLocation, useNavigate } from 'react-router-dom';
-import { Mail, Lock } from 'lucide-react';
+import { Mail, Lock, Fingerprint } from 'lucide-react';
+import { startAuthentication } from '@simplewebauthn/browser';
 import { AuthLayout } from '@/layout/AuthLayout';
 import { FormField, Button, Alert } from '@/components/FormUI';
 import { useAuthStore } from '@/store/auth';
-import {
-  generateEphemeral,
-  computeClientProof,
-  decryptPrivateKeys,
-} from '@haseen-me/crypto';
+import { decryptPrivateKeys } from '@haseen-me/crypto';
 import { authApi } from '@/api/auth';
+import { useToastStore } from '@haseen-me/shared/toast';
 
 function fromBase64(str: string): Uint8Array {
   const binary = atob(str);
@@ -21,12 +19,13 @@ function fromBase64(str: string): Uint8Array {
 export function SignInPage() {
   const navigate = useNavigate();
   const location = useLocation();
-  const { token, loginSuccess, setLoading, setError, loading, error } = useAuthStore();
+  const toast = useToastStore();
+  const { user, hydrated, fetchSession, loginSuccess, setLoading, setError, loading, error } = useAuthStore();
 
   const [email, setEmail] = useState('');
   const [password, setPassword] = useState('');
   const [mfaCode, setMfaCode] = useState('');
-  const [mfaRequired, setMfaRequired] = useState(false);
+  const [mfaToken, setMfaToken] = useState<string | null>(null);
   const [status, setStatus] = useState('');
 
   const getSafeReturnTo = () => {
@@ -51,10 +50,24 @@ export function SignInPage() {
   };
 
   useEffect(() => {
-    if (token) {
+    void fetchSession();
+  }, [fetchSession]);
+
+  useEffect(() => {
+    if (hydrated && user) {
       redirectAfterLogin();
     }
-  }, [token]);
+  }, [hydrated, user]);
+
+  const tryDecryptKeys = async (pwd: string) => {
+    const encryptedKeysBase64 = localStorage.getItem('haseen-encrypted-keys');
+    if (!encryptedKeysBase64) return;
+    try {
+      await decryptPrivateKeys(pwd, fromBase64(encryptedKeysBase64));
+    } catch {
+      toast.show('Could not unlock local encryption keys. Check your password.', { countdown: 5 });
+    }
+  };
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -66,91 +79,49 @@ export function SignInPage() {
     setError(null);
 
     try {
-      if (mfaRequired) {
-        // MFA verification step
-        if (!mfaCode.trim()) return setLoading(false);
-        setStatus('Verifying 2FA code...');
-        const mfaResult = await authApi.verifyMfaLogin(normalizedEmail, mfaCode);
-        if (mfaResult.user && mfaResult.token) {
-          loginSuccess(
-            {
-              id: mfaResult.user.id,
-              email: mfaResult.user.email,
-              displayName: mfaResult.user.displayName || email.split('@')[0] || email,
-              mfaEnabled: true,
-              createdAt: mfaResult.user.createdAt || new Date().toISOString(),
-            },
-            mfaResult.token,
-          );
-          setStatus('');
-          redirectAfterLogin();
+      if (mfaToken) {
+        if (!mfaCode.trim()) {
+          setLoading(false);
+          return;
         }
+        setStatus('Verifying 2FA code...');
+        const mfaResult = await authApi.loginMfa(mfaToken, mfaCode.trim());
+        loginSuccess({
+          id: mfaResult.user.id,
+          email: mfaResult.user.email,
+          displayName: mfaResult.user.displayName || normalizedEmail.split('@')[0] || '',
+          mfaEnabled: true,
+          createdAt: mfaResult.user.createdAt || new Date().toISOString(),
+        });
+        await tryDecryptKeys(password);
+        setMfaToken(null);
+        setStatus('');
+        toast.show('Signed in successfully');
+        redirectAfterLogin();
         return;
       }
 
-      // Step 1: Generate client ephemeral A
-      setStatus('Generating ephemeral...');
-      const ephemeral = generateEphemeral();
+      setStatus('Signing in...');
+      const result = await authApi.login(normalizedEmail, password);
 
-      // Step 2: Send email + A to server, receive B + salt
-      setStatus('Authenticating with server...');
-      const { srpB, srpSalt } = await authApi.loginInit({
-        email: normalizedEmail,
-        srpA: ephemeral.public,
-      });
-
-      // Step 3: Compute client proof M1
-      setStatus('Computing proof...');
-      const { m1 } = computeClientProof(
-        ephemeral.secret,
-        ephemeral.public,
-        srpB,
-        srpSalt,
-        normalizedEmail,
-        password,
-      );
-
-      // Step 4: Send M1 to server, receive M2 + token
-      setStatus('Verifying credentials...');
-      const result = await authApi.loginVerify({
-        email: normalizedEmail,
-        srpM1: m1,
-      });
-
-      // Check if MFA is required
-      if (result.mfaRequired && !result.token) {
-        setMfaRequired(true);
+      if (result.mfaRequired && result.mfaToken) {
+        setMfaToken(result.mfaToken);
         setStatus('');
         setLoading(false);
         return;
       }
 
-      // Step 5: Decrypt local private keys
-      setStatus('Decrypting keys...');
-      const encryptedKeysBase64 = localStorage.getItem('haseen-encrypted-keys');
-      if (encryptedKeysBase64) {
-        try {
-          await decryptPrivateKeys(password, fromBase64(encryptedKeysBase64));
-        } catch {
-          console.warn('[Auth] Could not decrypt local keys');
-        }
-      }
-
-      // Step 6: Verify server proof M2
-      if (result.user && result.token) {
-        loginSuccess(
-          {
-            id: result.user.id,
-            email: result.user.email,
-            displayName: result.user.displayName || email.split('@')[0] || email,
-            mfaEnabled: result.user.mfaEnabled ?? false,
-            createdAt: result.user.createdAt || new Date().toISOString(),
-          },
-          result.token,
-        );
-        setStatus('');
-        redirectAfterLogin();
-      }
+      loginSuccess({
+        id: result.user.id,
+        email: result.user.email,
+        displayName: result.user.displayName || normalizedEmail.split('@')[0] || '',
+        mfaEnabled: false,
+        createdAt: result.user.createdAt || new Date().toISOString(),
+      });
+      await tryDecryptKeys(password);
+      setStatus('');
+      toast.show('Signed in successfully');
+      redirectAfterLogin();
     } catch (err) {
       setStatus('');
       setError(err instanceof Error ? err.message : 'Sign in failed');
@@ -159,12 +130,53 @@ export function SignInPage() {
     }
   };
 
+  const handlePasskey = async () => {
+    if (!email.trim()) {
+      setError('Enter your email to use a passkey');
+      return;
+    }
+    const normalizedEmail = email.trim().toLowerCase();
+    setLoading(true);
+    setError(null);
+    try {
+      const opts = await authApi.webauthnLoginBegin(normalizedEmail);
+      const assertion = await startAuthentication({ optionsJSON: opts as any });
+      const result = await authApi.webauthnLoginFinish(assertion);
+      if (result.mfaRequired && result.mfaToken) {
+        setMfaToken(result.mfaToken);
+        setLoading(false);
+        return;
+      }
+      loginSuccess({
+        id: result.user.id,
+        email: result.user.email,
+        displayName: result.user.displayName || normalizedEmail.split('@')[0] || '',
+        mfaEnabled: false,
+        createdAt: result.user.createdAt || new Date().toISOString(),
+      });
+      toast.show('Signed in with passkey');
+      redirectAfterLogin();
+    } catch (err) {
+      setError(err instanceof Error ? err.message : 'Passkey sign-in failed');
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  if (!hydrated) {
+    return (
+      <AuthLayout title="Sign in" subtitle="Welcome back to Haseen.">
+        <p style={{ textAlign: 'center', color: 'var(--acc-text-muted)' }}>Loading…</p>
+      </AuthLayout>
+    );
+  }
+
   return (
     <AuthLayout title="Sign in" subtitle="Welcome back to Haseen.">
       {error && <Alert type="error">{error}</Alert>}
 
       <form onSubmit={handleSubmit}>
-        {!mfaRequired ? (
+        {!mfaToken ? (
           <>
             <FormField
               label="Email address"
@@ -185,28 +197,24 @@ export function SignInPage() {
               autoComplete="current-password"
             />
             <div style={{ textAlign: 'right', marginBottom: 12 }}>
-              <Link
-                to="/forgot-password"
-                style={{ fontSize: 13, color: 'var(--acc-brand)' }}
-              >
+              <Link to="/forgot-password" style={{ fontSize: 13, color: 'var(--acc-brand)' }}>
                 Forgot password?
               </Link>
             </div>
+            <Button type="button" variant="secondary" fullWidth onClick={handlePasskey} disabled={loading} style={{ marginBottom: 10 }}>
+              <Fingerprint size={16} style={{ marginRight: 8 }} />
+              Continue with passkey
+            </Button>
           </>
         ) : (
           <>
-            <Alert type="info">
-              Enter your 6-digit authentication code.
-            </Alert>
+            <Alert type="info">Enter your 6-digit authentication code.</Alert>
             <FormField
-              label="Authentication code"
+              label="Authenticator code"
               placeholder="000000"
               value={mfaCode}
               onChange={(e) => setMfaCode(e.target.value.replace(/\D/g, '').slice(0, 6))}
-              icon={<Lock size={16} />}
-              autoComplete="one-time-code"
               inputMode="numeric"
-              style={{ letterSpacing: '0.3em', fontFamily: 'monospace', fontSize: 18, textAlign: 'center' }}
             />
           </>
         )}
@@ -214,13 +222,12 @@ export function SignInPage() {
         {status && <p style={{ marginBottom: 10, fontSize: 12, color: 'var(--acc-text-muted)' }}>{status}</p>}
 
         <Button type="submit" fullWidth loading={loading} disabled={loading}>
-          {loading ? status || 'Signing In...' : mfaRequired ? 'Verify' : 'Sign In'}
+          {mfaToken ? 'Verify & continue' : 'Sign in'}
         </Button>
       </form>
 
-      <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--acc-text-secondary)' }}>
-        Don&apos;t have an account?{' '}
-        <Link to="/sign-up">Create one</Link>
+      <p style={{ textAlign: 'center', fontSize: 14, color: 'var(--acc-text-secondary)', marginTop: 16 }}>
+        New here? <Link to="/sign-up">Create an account</Link>
       </p>
     </AuthLayout>
   );

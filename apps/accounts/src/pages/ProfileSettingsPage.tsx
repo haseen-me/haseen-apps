@@ -8,7 +8,7 @@ import { authApi } from '@/api/auth';
 
 export function ProfileSettingsPage() {
   const navigate = useNavigate();
-  const { user, token, setUser, logout } = useAuthStore();
+  const { user, setUser, logout, fetchSession } = useAuthStore();
   const [name, setName] = useState(user?.displayName ?? '');
   const [saved, setSaved] = useState(false);
   const [saving, setSaving] = useState(false);
@@ -18,12 +18,17 @@ export function ProfileSettingsPage() {
   const [deleting, setDeleting] = useState(false);
 
   const handleSave = async () => {
-    if (!user || !name.trim() || !token) return;
+    if (!user || !name.trim()) return;
     setSaving(true);
     setError(null);
     try {
-      const updated = await authApi.updateAccount(token, { displayName: name.trim() });
-      setUser({ ...user, ...updated });
+      const updated = await authApi.updateAccount({ displayName: name.trim() });
+      setUser({
+        ...user,
+        displayName: updated.displayName ?? name.trim(),
+        email: updated.email,
+      });
+      await fetchSession();
       setSaved(true);
       setTimeout(() => setSaved(false), 2000);
     } catch (err) {
@@ -34,11 +39,11 @@ export function ProfileSettingsPage() {
   };
 
   const handleDelete = async () => {
-    if (!token || deleteConfirm !== user?.email) return;
+    if (deleteConfirm !== user?.email) return;
     setDeleting(true);
     try {
-      await authApi.deleteAccount(token);
-      logout();
+      await authApi.deleteAccount();
+      await logout();
       navigate('/sign-in');
     } catch (err) {
       setError(err instanceof Error ? err.message : 'Failed to delete account');

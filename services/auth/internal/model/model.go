@@ -4,25 +4,30 @@ import "time"
 
 // User represents a registered Haseen user.
 type User struct {
-	ID          string    `json:"id"`
-	Email       string    `json:"email"`
-	DisplayName string    `json:"displayName,omitempty"`
-	SRPSalt     string    `json:"-"`
-	SRPVerifier string    `json:"-"`
-	CreatedAt   time.Time `json:"createdAt"`
-	UpdatedAt   time.Time `json:"updatedAt"`
+	ID              string     `json:"id"`
+	Email           string     `json:"email"`
+	DisplayName     string     `json:"displayName,omitempty"`
+	PasswordHash    string     `json:"-"`
+	AvatarURL       string     `json:"avatarUrl,omitempty"`
+	EmailVerifiedAt *time.Time `json:"emailVerifiedAt,omitempty"`
+	SuspendedAt     *time.Time `json:"suspendedAt,omitempty"`
+	MFAEnforced     bool       `json:"mfaEnforced"`
+	IsAdmin         bool       `json:"isAdmin"`
+	IsSuperAdmin    bool       `json:"isSuperAdmin"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	UpdatedAt       time.Time  `json:"updatedAt"`
 }
 
 // PublicKeyBundle stores the user's public encryption + signing keys.
 type PublicKeyBundle struct {
-	ID                  string     `json:"id"`
-	UserID              string     `json:"userId"`
-	EncryptionPublicKey []byte     `json:"encryptionPublicKey"`
-	SigningPublicKey    []byte     `json:"signingPublicKey"`
-	SelfSignature       []byte     `json:"selfSignature"`
-	IsActive            bool       `json:"isActive"`
-	CreatedAt           time.Time  `json:"createdAt"`
-	RevokedAt           *time.Time `json:"revokedAt,omitempty"`
+	ID                   string     `json:"id"`
+	UserID               string     `json:"userId"`
+	EncryptionPublicKey  []byte     `json:"encryptionPublicKey"`
+	SigningPublicKey     []byte     `json:"signingPublicKey"`
+	SelfSignature        []byte     `json:"selfSignature"`
+	IsActive             bool       `json:"isActive"`
+	CreatedAt            time.Time  `json:"createdAt"`
+	RevokedAt            *time.Time `json:"revokedAt,omitempty"`
 }
 
 // Session represents an authenticated session.
@@ -54,49 +59,43 @@ type RecoveryKey struct {
 	CreatedAt    time.Time `json:"createdAt"`
 }
 
+// WebAuthnCredential is a registered passkey.
+type WebAuthnCredential struct {
+	ID              string     `json:"id"`
+	UserID          string     `json:"userId"`
+	Name            string     `json:"name"`
+	CreatedAt       time.Time  `json:"createdAt"`
+	LastUsedAt      *time.Time `json:"lastUsedAt,omitempty"`
+	SignCount       uint32     `json:"signCount"`
+	CredentialIDB64 string     `json:"credentialId"`
+}
+
 // --- API request/response types ---
 
 type RegisterRequest struct {
 	Email       string `json:"email"`
-	SRPSalt     string `json:"srpSalt"`
-	SRPVerifier string `json:"srpVerifier"`
+	Password    string `json:"password"`
+	DisplayName string `json:"displayName"`
 	PublicKey   []byte `json:"publicKey"`
 	SigningKey  []byte `json:"signingKey"`
 	Signature   []byte `json:"signature"`
 }
 
-type RegisterResponse struct {
-	UserID       string `json:"userId"`
-	SessionToken string `json:"sessionToken"`
-	RecoveryKey  string `json:"recoveryKey"`
+type LoginRequest struct {
+	Email    string `json:"email"`
+	Password string `json:"password"`
 }
 
-type LoginInitRequest struct {
-	Email string `json:"email"`
-	SRPA  string `json:"srpA"`
+type LoginResponse struct {
+	User          User   `json:"user"`
+	MFARequired   bool   `json:"mfaRequired,omitempty"`
+	MFAToken      string `json:"mfaToken,omitempty"`
+	EmailVerified bool   `json:"emailVerified"`
 }
 
-type LoginInitResponse struct {
-	SRPB    string `json:"srpB"`
-	SRPSalt string `json:"srpSalt"`
-}
-
-type LoginVerifyRequest struct {
-	Email string `json:"email"`
-	SRPM1 string `json:"srpM1"`
-}
-
-type LoginVerifyResponse struct {
-	SessionToken string `json:"sessionToken"`
-	SRPM2        string `json:"srpM2"`
-	User         User   `json:"user"`
-	MFARequired  bool   `json:"mfaRequired,omitempty"`
-}
-
-type MFAVerifyRequest struct {
-	Email string `json:"email"`
-	Code  string `json:"code"`
-	SRPM1 string `json:"srpM1"`
+type MFALoginRequest struct {
+	MFAToken string `json:"mfaToken"`
+	Code     string `json:"code"`
 }
 
 type MFASetupResponse struct {
@@ -112,11 +111,12 @@ type MFAVerifySetupRequest struct {
 type UpdateAccountRequest struct {
 	Email       string `json:"email,omitempty"`
 	DisplayName string `json:"displayName,omitempty"`
+	AvatarURL   string `json:"avatarUrl,omitempty"`
 }
 
 type ChangePasswordRequest struct {
-	NewSRPSalt     string `json:"newSrpSalt"`
-	NewSRPVerifier string `json:"newSrpVerifier"`
+	CurrentPassword string `json:"currentPassword"`
+	NewPassword     string `json:"newPassword"`
 }
 
 type RecoveryKeyResponse struct {
@@ -133,6 +133,24 @@ type OkResponse struct {
 	OK bool `json:"ok"`
 }
 
-type ErrorResponse struct {
-	Error string `json:"error"`
+type MeResponse struct {
+	User User `json:"user"`
+}
+
+type AuditEvent struct {
+	ID         string         `json:"id"`
+	ActorID    *string        `json:"actorId,omitempty"`
+	Action     string         `json:"action"`
+	TargetType string         `json:"targetType"`
+	TargetID   string         `json:"targetId"`
+	Metadata   map[string]any `json:"metadata"`
+	IPAddress  string         `json:"ipAddress,omitempty"`
+	CreatedAt  time.Time      `json:"createdAt"`
+}
+
+type AdminUserRow struct {
+	User
+	MFAEnabled     bool `json:"mfaEnabled"`
+	EmailVerified  bool `json:"emailVerified"`
+	SessionCount   int  `json:"sessionCount"`
 }

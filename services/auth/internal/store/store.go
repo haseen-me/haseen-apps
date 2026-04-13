@@ -32,3 +32,7 @@ func New(ctx context.Context, databaseURL string) (*Store, error) {
 func (s *Store) Close() {
 	s.DB.Close()
 }
+
+func (s *Store) Ping(ctx context.Context) error {
+	return s.DB.Ping(ctx)
+}

@@ -2,16 +2,15 @@ package main
 
 import (
 	"context"
-	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
 	"time"
 
-	"github.com/go-chi/chi/v5"
-	chimw "github.com/go-chi/chi/v5/middleware"
-	"github.com/haseen-me/haseen-apps/services/auth/internal/handler"
-	"github.com/haseen-me/haseen-apps/services/auth/internal/middleware"
+	"github.com/go-webauthn/webauthn/protocol"
+	"github.com/go-webauthn/webauthn/webauthn"
+	"github.com/haseen-me/haseen-apps/services/auth/internal/config"
+	"github.com/haseen-me/haseen-apps/services/auth/internal/httpapi"
 	"github.com/haseen-me/haseen-apps/services/auth/internal/store"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
@@ -21,85 +20,38 @@ func main() {
 	zerolog.TimeFieldFormat = zerolog.TimeFormatUnix
 	log.Logger = log.Output(zerolog.ConsoleWriter{Out: os.Stderr})
 
-	port := os.Getenv("AUTH_PORT")
-	if port == "" {
-		port = "8081"
-	}
-	dbURL := os.Getenv("DATABASE_URL")
-	if dbURL == "" {
-		dbURL = "postgres://haseen:haseen@localhost:5432/haseen?sslmode=disable"
-	}
-	devMode := os.Getenv("DEV_MODE") == "true"
+	cfg := config.Load()
 
 	ctx := context.Background()
-	db, err := store.New(ctx, dbURL)
+	db, err := store.New(ctx, cfg.DatabaseURL)
 	if err != nil {
 		log.Fatal().Err(err).Msg("failed to connect to database")
 	}
 	defer db.Close()
 
-	h := &handler.Handler{
-		Store: db,
-		Log:   log.Logger,
+	var wa *webauthn.WebAuthn
+	wcfg := &webauthn.Config{
+		RPDisplayName:         cfg.WebAuthnDisplay,
+		RPID:                  cfg.WebAuthnRPID,
+		RPOrigins:             cfg.WebAuthnOrigins,
+		AttestationPreference: protocol.PreferNoAttestation,
 	}
-
-	r := chi.NewRouter()
-	r.Use(chimw.RequestID)
-	r.Use(chimw.RealIP)
-	r.Use(chimw.Recoverer)
-
-	r.Get("/health", func(w http.ResponseWriter, r *http.Request) {
-		w.Header().Set("Content-Type", "application/json")
-		w.Write([]byte(`{"status":"ok","service":"auth"}`))
-	})
-
-	// Select auth middleware
-	var authMW func(http.Handler) http.Handler
-	if devMode {
-		log.Warn().Msg("running in DEV mode — using X-User-ID header auth")
-		authMW = middleware.DevAuth()
+	if w, err := webauthn.New(wcfg); err != nil {
+		log.Warn().Err(err).Msg("WebAuthn disabled — check WEBAUTHN_RP_ID and WEBAUTHN_ORIGINS")
 	} else {
-		authMW = middleware.Auth(db.DB)
+		wa = w
 	}
 
-	r.Route("/v1", func(r chi.Router) {
-		// Public routes (no auth required)
-		r.Post("/register", h.Register)
-		r.Post("/login/init", h.LoginInit)
-		r.Post("/login/verify", h.LoginVerify)
-		r.Post("/mfa/verify-login", h.MFAVerifyLogin)
-		r.Post("/logout", h.Logout)
-		r.Post("/session/refresh", h.SessionRefresh)
+	srv := &httpapi.Server{
+		Store:   db,
+		Log:     log.Logger,
+		Cfg:     cfg,
+		WebAuth: wa,
+	}
+	app := httpapi.NewFiberApp(srv)
 
-		// Public key lookup (no auth)
-		r.Get("/keys/{userID}", h.GetKeys)
-
-		// Authenticated routes
-		r.Group(func(r chi.Router) {
-			r.Use(authMW)
-
-			r.Delete("/session", h.SessionDelete)
-			r.Get("/sessions", h.ListSessions)
-			r.Delete("/sessions/{sessionID}", h.RevokeSession)
-			r.Post("/keys/upload", h.UploadKeys)
-
-			// MFA management
-			r.Post("/mfa/setup", h.MFASetup)
-			r.Post("/mfa/verify", h.MFAVerifySetup)
-			r.Delete("/mfa", h.MFADisable)
-
-			// Account
-			r.Get("/account", h.GetAccount)
-			r.Put("/account", h.UpdateAccount)
-			r.Delete("/account", h.DeleteAccount)
-			r.Put("/account/password", h.ChangePassword)
-			r.Post("/account/recovery-key", h.GenerateRecoveryKey)
-		})
-	})
-
-	// Start periodic session cleanup
 	go func() {
-		ticker := time.NewTicker(1 * time.Hour)
+		ticker := time.NewTicker(time.Hour)
 		defer ticker.Stop()
 		for range ticker.C {
 			n, err := db.CleanExpiredSessions(context.Background())
@@ -111,11 +63,10 @@ func main() {
 		}
 	}()
 
-	log.Info().Str("port", port).Bool("devMode", devMode).Msg("auth service started")
-
-	srv := &http.Server{Addr: ":" + port, Handler: r}
 	go func() {
-		if err := srv.ListenAndServe(); err != nil && err != http.ErrServerClosed {
+		addr := ":" + cfg.Port
+		log.Info().Str("addr", addr).Bool("devMode", cfg.DevMode).Msg("auth service listening")
+		if err := app.Listen(addr); err != nil {
 			log.Fatal().Err(err).Msg("auth service failed")
 		}
 	}()
@@ -124,8 +75,5 @@ func main() {
 	signal.Notify(quit, syscall.SIGINT, syscall.SIGTERM)
 	<-quit
 	log.Info().Msg("shutting down auth service...")
-
-	shutCtx, cancel := context.WithTimeout(context.Background(), 10*time.Second)
-	defer cancel()
-	srv.Shutdown(shutCtx)
+	_ = app.Shutdown()
 }

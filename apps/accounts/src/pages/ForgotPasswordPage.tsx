@@ -3,12 +3,14 @@ import { Link } from 'react-router-dom';
 import { Mail, ArrowLeft } from 'lucide-react';
 import { AuthLayout } from '@/layout/AuthLayout';
 import { FormField, Button, Alert } from '@/components/FormUI';
+import { authApi } from '@/api/auth';
 
 export function ForgotPasswordPage() {
   const [email, setEmail] = useState('');
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState('');
   const [submitted, setSubmitted] = useState(false);
+  const [resetUrl, setResetUrl] = useState<string | null>(null);
 
   const handleSubmit = async (e: FormEvent) => {
     e.preventDefault();
@@ -27,16 +29,8 @@ export function ForgotPasswordPage() {
     setError('');
 
     try {
-      // TODO: Implement password recovery endpoint in backend
-      // For now, show a message that password recovery needs to be set up
-      console.warn('[ForgotPassword] Password recovery not yet implemented');
-      
-      // This would typically call an API endpoint like:
-      // const response = await fetch('/api/v1/auth/password-recovery/initiate', {
-      //   method: 'POST',
-      //   headers: { 'Content-Type': 'application/json' },
-      //   body: JSON.stringify({ email: email.toLowerCase() }),
-      // });
+      const res = await authApi.forgotPassword(email.toLowerCase().trim());
+      setResetUrl(res.resetUrl ?? null);
 
       setSubmitted(true);
     } catch (err) {
@@ -51,6 +45,15 @@ export function ForgotPasswordPage() {
       <AuthLayout title="Check your email" subtitle="If the account exists, we sent reset instructions.">
         <Alert type="info">
           Open your inbox and follow the reset link.
+          {resetUrl ? (
+            <>
+              {' '}
+              <a href={resetUrl} style={{ color: 'var(--acc-brand)' }}>
+                Use the reset link now
+              </a>
+              .
+            </>
+          ) : null}
         </Alert>
         
         <div style={{ marginTop: 24, textAlign: 'center' }}>

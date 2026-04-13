@@ -58,14 +58,7 @@ export function ComposePanel() {
   }, [to, cc, bcc, subject, body, draftId, hasContent]);
 
   // Get current user's email for reply logic
-  const getUserEmail = (): string => {
-    try {
-      const raw = localStorage.getItem('haseen-auth');
-      if (!raw) return '';
-      const parsed = JSON.parse(raw);
-      return (parsed.user?.email ?? '').toLowerCase();
-    } catch { return ''; }
-  };
+  const getUserEmail = (): string => '';
 
   // Auto-fill reply info
   useEffect(() => {

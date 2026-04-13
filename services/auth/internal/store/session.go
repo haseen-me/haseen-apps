@@ -12,7 +12,7 @@ import (
 	"github.com/jackc/pgx/v5"
 )
 
-const sessionDuration = 30 * 24 * time.Hour // 30 days
+const sessionDuration = 30 * 24 * time.Hour
 
 // CreateSession generates a random token, stores its SHA-256 hash, and returns the raw token.
 func (s *Store) CreateSession(ctx context.Context, userID, userAgent, ipAddress string) (string, error) {
@@ -61,6 +61,16 @@ func (s *Store) DeleteSession(ctx context.Context, token string) error {
 // DeleteUserSessions removes all sessions for a user.
 func (s *Store) DeleteUserSessions(ctx context.Context, userID string) error {
 	_, err := s.DB.Exec(ctx, `DELETE FROM sessions WHERE user_id = $1`, userID)
+	return err
+}
+
+// DeleteOtherSessions revokes all sessions for the user except the one matching the given token.
+func (s *Store) DeleteOtherSessions(ctx context.Context, userID, keepToken string) error {
+	keep := hashToken(keepToken)
+	_, err := s.DB.Exec(ctx,
+		`DELETE FROM sessions WHERE user_id = $1 AND token_hash <> $2`,
+		userID, keep,
+	)
 	return err
 }
 
@@ -130,7 +140,11 @@ func (s *Store) RevokeSession(ctx context.Context, sessionID, userID string) err
 	return nil
 }
 
-func hashToken(token string) string {
+func HashSessionToken(token string) string {
 	h := sha256.Sum256([]byte(token))
 	return hex.EncodeToString(h[:])
+}
+
+func hashToken(token string) string {
+	return HashSessionToken(token)
 }

@@ -47,7 +47,9 @@ export default function App() {
 
   // Check auth on mount
   useEffect(() => {
-    if (requireAuth()) setAuthed(true);
+    void requireAuth().then((ok) => {
+      if (ok) setAuthed(true);
+    });
   }, []);
 
   // Initialize encryption keys

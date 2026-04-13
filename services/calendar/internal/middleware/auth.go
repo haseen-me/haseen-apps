@@ -16,6 +16,15 @@ type contextKey string
 
 const ctxKeyUserID contextKey = "userID"
 
+const sessionCookieName = "haseen_session"
+
+func extractSessionToken(r *http.Request) string {
+	if c, err := r.Cookie(sessionCookieName); err == nil && c.Value != "" {
+		return c.Value
+	}
+	return extractBearer(r)
+}
+
 func UserID(ctx context.Context) string {
 	v, _ := ctx.Value(ctxKeyUserID).(string)
 	return v
@@ -24,7 +33,7 @@ func UserID(ctx context.Context) string {
 func Auth(db *pgxpool.Pool) func(http.Handler) http.Handler {
 	return func(next http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
-			token := extractBearer(r)
+			token := extractSessionToken(r)
 			if token == "" {
 				httpErr(w, http.StatusUnauthorized, "missing authorization")
 				return
@@ -45,7 +54,7 @@ func DevAuth() func(http.Handler) http.Handler {
 		return http.HandlerFunc(func(w http.ResponseWriter, r *http.Request) {
 			uid := r.Header.Get("X-User-ID")
 			if uid == "" {
-				uid = extractBearer(r)
+				uid = extractSessionToken(r)
 			}
 			if uid == "" {
 				httpErr(w, http.StatusUnauthorized, "set X-User-ID header")

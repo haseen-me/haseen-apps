@@ -4,9 +4,10 @@ import type { AuthApi, MailApi, DriveApi, KeysApi, CalendarApi, ContactsApi } fr
 export function createAuthApi(client: ApiClient): AuthApi {
   return {
     register: (params) => client.post('/auth/register', params),
-    loginInit: (params) => client.post('/auth/login/init', params),
-    loginVerify: (params) => client.post('/auth/login/verify', params),
+    login: (params) => client.post('/auth/login', params),
+    loginMfa: (params) => client.post('/auth/login/mfa', params),
     logout: () => client.post('/auth/logout'),
+    me: () => client.get('/auth/me'),
     getAccount: () => client.get('/auth/account'),
   };
 }
@@ -28,17 +29,11 @@ export function createMailApi(client: ApiClient): MailApi {
     updateMessage: (id, params) => client.put(`/mail/messages/${id}`, params),
     search: (query) => client.post('/mail/search', { query }),
     uploadAttachment: async (messageID, file) => {
-      const token = typeof localStorage !== 'undefined'
-        ? (() => { try { return JSON.parse(localStorage.getItem('haseen-auth') ?? '{}').token; } catch { return null; } })()
-        : null;
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
       const form = new FormData();
       form.append('file', file);
       const res = await fetch(`/api/v1/mail/messages/${messageID}/attachments`, {
         method: 'POST',
         credentials: 'include',
-        headers,
         body: form,
       });
       if (!res.ok) throw { status: res.status, message: 'upload failed' };
@@ -60,12 +55,7 @@ export function createDriveApi(client: ApiClient): DriveApi {
     listFolder: (folderID) => client.get(`/drive/folders/${folderID ?? 'root'}`),
     uploadFile: (params) => client.post('/drive/files/upload', params),
     downloadFile: async (fileID) => {
-      const token = typeof localStorage !== 'undefined'
-        ? (() => { try { return JSON.parse(localStorage.getItem('haseen-auth') ?? '{}').token; } catch { return null; } })()
-        : null;
-      const headers: Record<string, string> = {};
-      if (token) headers['Authorization'] = `Bearer ${token}`;
-      const response = await fetch(`/api/v1/drive/files/${fileID}/download`, { credentials: 'include', headers });
+      const response = await fetch(`/api/v1/drive/files/${fileID}/download`, { credentials: 'include' });
       if (!response.ok) throw { status: response.status, message: 'download failed' };
       return response.arrayBuffer();
     },
