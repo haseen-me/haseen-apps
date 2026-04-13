@@ -47,6 +47,8 @@ func (h *Handler) UpdateAccount(w http.ResponseWriter, r *http.Request) {
 	}
 
 	if req.Email != "" {
+		req.Email = normalizeEmail(req.Email)
+
 		// Check uniqueness
 		existing, err := h.Store.GetUserByEmail(r.Context(), req.Email)
 		if err == nil && existing.ID != userID {

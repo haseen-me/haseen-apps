@@ -38,6 +38,8 @@ func (h *Handler) Register(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.Email = normalizeEmail(req.Email)
+
 	if req.Email == "" || req.SRPSalt == "" || req.SRPVerifier == "" {
 		h.Error(w, http.StatusBadRequest, "email, srpSalt, and srpVerifier are required")
 		return
@@ -114,6 +116,8 @@ func (h *Handler) LoginInit(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.Email = normalizeEmail(req.Email)
+
 	if req.Email == "" || req.SRPA == "" {
 		h.Error(w, http.StatusBadRequest, "email and srpA are required")
 		return
@@ -160,6 +164,8 @@ func (h *Handler) LoginVerify(w http.ResponseWriter, r *http.Request) {
 		h.Error(w, http.StatusBadRequest, "invalid request body")
 		return
 	}
+
+	req.Email = normalizeEmail(req.Email)
 
 	if req.Email == "" || req.SRPM1 == "" {
 		h.Error(w, http.StatusBadRequest, "email and srpM1 are required")

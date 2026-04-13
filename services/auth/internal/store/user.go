@@ -27,7 +27,7 @@ func (s *Store) GetUserByEmail(ctx context.Context, email string) (*model.User, 
 	u := &model.User{}
 	err := s.DB.QueryRow(ctx,
 		`SELECT id, email, display_name, srp_salt, srp_verifier, created_at, updated_at
-		 FROM users WHERE email = $1`,
+		 FROM users WHERE lower(email) = lower($1)`,
 		email,
 	).Scan(&u.ID, &u.Email, &u.DisplayName, &u.SRPSalt, &u.SRPVerifier, &u.CreatedAt, &u.UpdatedAt)
 	if errors.Is(err, pgx.ErrNoRows) {

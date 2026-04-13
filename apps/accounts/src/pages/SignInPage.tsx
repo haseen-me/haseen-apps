@@ -32,6 +32,8 @@ export function SignInPage() {
     e.preventDefault();
     if (!email.trim() || !password) return;
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     setLoading(true);
     setError(null);
 
@@ -40,7 +42,7 @@ export function SignInPage() {
         // MFA verification step
         if (!mfaCode.trim()) return setLoading(false);
         setStatus('Verifying 2FA code...');
-        const mfaResult = await authApi.verifyMfaLogin(email.toLowerCase(), mfaCode);
+        const mfaResult = await authApi.verifyMfaLogin(normalizedEmail, mfaCode);
         if (mfaResult.user && mfaResult.token) {
           loginSuccess(
             {
@@ -65,7 +67,7 @@ export function SignInPage() {
       // Step 2: Send email + A to server, receive B + salt
       setStatus('Authenticating with server...');
       const { srpB, srpSalt } = await authApi.loginInit({
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         srpA: ephemeral.public,
       });
 
@@ -76,14 +78,14 @@ export function SignInPage() {
         ephemeral.public,
         srpB,
         srpSalt,
-        email.toLowerCase(),
+        normalizedEmail,
         password,
       );
 
       // Step 4: Send M1 to server, receive M2 + token
       setStatus('Verifying credentials...');
       const result = await authApi.loginVerify({
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         srpM1: m1,
       });
 

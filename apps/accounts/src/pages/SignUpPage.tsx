@@ -44,6 +44,8 @@ export function SignUpPage() {
     e.preventDefault();
     if (!validate()) return;
 
+    const normalizedEmail = email.trim().toLowerCase();
+
     setLoading(true);
     setError(null);
 
@@ -67,7 +69,7 @@ export function SignUpPage() {
       // 3. Derive SRP verifier from password
       setStatus('Computing SRP verifier...');
       const srpSalt = generateSalt();
-      const srpVerifier = computeVerifier(srpSalt, email.toLowerCase(), password);
+      const srpVerifier = computeVerifier(srpSalt, normalizedEmail, password);
 
       // 4. Create self-signature (sign public key with signing key)
       const selfSig = sign(encKP.publicKey, sigKP.secretKey).signature;
@@ -75,7 +77,7 @@ export function SignUpPage() {
       // 5. Register with server (Go []byte fields expect base64 in JSON)
       setStatus('Creating account...');
       const response = await authApi.register({
-        email: email.toLowerCase(),
+        email: normalizedEmail,
         srpSalt,
         srpVerifier,
         publicKey: btoa(String.fromCharCode(...encKP.publicKey)),
@@ -87,7 +89,7 @@ export function SignUpPage() {
       loginSuccess(
         {
           id: response.user.id,
-          email: email.toLowerCase(),
+          email: normalizedEmail,
           displayName: name,
           mfaEnabled: false,
           createdAt: new Date().toISOString(),

@@ -47,6 +47,10 @@ func (h *Handler) Token(r *http.Request) string {
 	return strings.TrimPrefix(auth, "Bearer ")
 }
 
+func normalizeEmail(email string) string {
+	return strings.ToLower(strings.TrimSpace(email))
+}
+
 type contextKey string
 
 const ctxKeyUserID contextKey = "userID"

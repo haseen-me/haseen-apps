@@ -16,6 +16,8 @@ func (h *Handler) MFAVerifyLogin(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
+	req.Email = normalizeEmail(req.Email)
+
 	if req.Email == "" || req.Code == "" {
 		h.Error(w, http.StatusBadRequest, "email and code are required")
 		return
