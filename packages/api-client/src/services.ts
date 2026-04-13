@@ -5,6 +5,7 @@ export interface AuthApi {
   loginInit(params: Record<string, unknown>): Promise<unknown>;
   loginVerify(params: Record<string, unknown>): Promise<unknown>;
   login(params: { email: string; password: string }): Promise<unknown>;
+  loginMfa(params: { mfaToken: string; code: string }): Promise<unknown>;
   me(): Promise<unknown>;
   logout(): Promise<void>;
   getAccount(): Promise<{ userID: string; email: string; createdAt: string }>;

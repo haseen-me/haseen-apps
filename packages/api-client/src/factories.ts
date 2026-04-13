@@ -3,9 +3,11 @@ import type { AuthApi, MailApi, DriveApi, KeysApi, CalendarApi, ContactsApi } fr
 
 export function createAuthApi(client: ApiClient): AuthApi {
   return {
-    register: (params) => client.post('/auth/register', params),
-    login: (params) => client.post('/auth/login', params),
-    loginMfa: (params) => client.post('/auth/login/mfa', params),
+    register: (params: Record<string, unknown>) => client.post('/auth/register', params),
+    loginInit: (params: Record<string, unknown>) => client.post('/auth/login/init', params),
+    loginVerify: (params: Record<string, unknown>) => client.post('/auth/login/verify', params),
+    login: (params: { email: string; password: string }) => client.post('/auth/login', params),
+    loginMfa: (params: { mfaToken: string; code: string }) => client.post('/auth/login/mfa', params),
     logout: () => client.post('/auth/logout'),
     me: () => client.get('/auth/me'),
     getAccount: () => client.get('/auth/account'),
