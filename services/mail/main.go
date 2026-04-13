@@ -2,21 +2,25 @@ package main
 
 import (
 	"context"
+	"encoding/hex"
 	"fmt"
 	"net/http"
 	"os"
 	"os/signal"
 	"syscall"
+	"time"
 
 	"github.com/go-chi/chi/v5"
 	chimw "github.com/go-chi/chi/v5/middleware"
 	"github.com/rs/zerolog"
 	"github.com/rs/zerolog/log"
 
+	"github.com/haseen-me/haseen-apps/services/mail/internal/dkim"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/handler"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/middleware"
 	smtppkg "github.com/haseen-me/haseen-apps/services/mail/internal/smtp"
 	"github.com/haseen-me/haseen-apps/services/mail/internal/store"
+	"github.com/haseen-me/haseen-apps/services/mail/internal/worker"
 )
 
 func main() {
@@ -28,6 +32,14 @@ func main() {
 	domain := env("MAIL_DOMAIN", "haseen.me")
 	dbURL := env("DATABASE_URL", "postgres://haseen:haseen@localhost:5432/haseen?sslmode=disable")
 	devMode := env("DEV_MODE", "false") == "true"
+	dkimKeyHex := env("DKIM_ENCRYPTION_KEY", "0000000000000000000000000000000000000000000000000000000000000000")
+
+	dkimKeyBytes, err := hex.DecodeString(dkimKeyHex)
+	if err != nil || len(dkimKeyBytes) != 32 {
+		log.Warn().Msg("DKIM_ENCRYPTION_KEY invalid or not set, using zero key (development only)")
+		dkimKeyBytes = make([]byte, 32)
+	}
+	dkim.SetEncryptionKey(dkimKeyBytes)
 
 	// Database
 	ctx := context.Background()
@@ -37,11 +49,25 @@ func main() {
 	}
 	defer st.Close()
 
+	// SMTP Sender (for outbound relay)
+	sender := smtppkg.NewSender(domain, log.Logger)
+
+	// DNS verification worker
+	dnsWorker := worker.NewDNSWorker(st, log.Logger, domain, 60*time.Second)
+	dnsWorker.Start()
+	defer dnsWorker.Stop()
+
+	// Outbound relay worker
+	relayWorker := worker.NewRelayWorker(st, sender, log.Logger, 5*time.Second)
+	relayWorker.Start()
+	defer relayWorker.Stop()
+
 	// Handler
 	h := &handler.Handler{
-		Store:  st,
-		Log:    log.Logger,
-		Domain: domain,
+		Store:     st,
+		Log:       log.Logger,
+		Domain:    domain,
+		DNSWorker: dnsWorker,
 	}
 
 	// Router
@@ -93,6 +119,20 @@ func main() {
 		r.Post("/drafts", h.SaveDraft)
 		r.Put("/drafts/{messageID}", h.UpdateDraft)
 		r.Post("/drafts/{messageID}/send", h.SendDraft)
+
+		// Custom Domains
+		r.Get("/domains", h.ListDomains)
+		r.Post("/domains", h.AddDomain)
+		r.Get("/domains/{domainID}", h.GetDomain)
+		r.Delete("/domains/{domainID}", h.DeleteDomain)
+		r.Post("/domains/{domainID}/verify", h.VerifyDomain)
+		r.Get("/domains/{domainID}/dns", h.GetDNSRecords)
+		r.Get("/domains/{domainID}/dns/logs", h.GetDNSCheckLogs)
+
+		// Domain Mailboxes
+		r.Get("/domains/{domainID}/mailboxes", h.ListDomainMailboxes)
+		r.Post("/domains/{domainID}/mailboxes", h.AddDomainMailbox)
+		r.Delete("/domains/{domainID}/mailboxes/{mailboxID}", h.DeleteDomainMailbox)
 	})
 
 	// SMTP Server (inbound)

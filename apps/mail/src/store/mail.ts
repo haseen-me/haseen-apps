@@ -56,6 +56,10 @@ interface MailboxState {
   /* Sort preference */
   sortBy: 'date' | 'sender' | 'subject';
   setSortBy: (v: 'date' | 'sender' | 'subject') => void;
+
+  /* Settings panel */
+  settingsView: 'mail' | 'domains';
+  setSettingsView: (v: 'mail' | 'domains') => void;
 }
 
 export const useMailStore = create<MailboxState>((set, get) => ({
@@ -112,4 +116,7 @@ export const useMailStore = create<MailboxState>((set, get) => ({
 
   sortBy: 'date',
   setSortBy: (sortBy) => set({ sortBy }),
+
+  settingsView: 'mail',
+  setSettingsView: (settingsView) => set({ settingsView }),
 }));
