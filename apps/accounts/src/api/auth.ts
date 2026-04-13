@@ -187,6 +187,12 @@ export const authApi = {
       body: JSON.stringify({ enforced }),
     }),
 
+  adminSetQuotas: (id: string, quotas: { mailQuotaBytes: number; driveQuotaBytes: number }) =>
+    request<{ ok: boolean }>(`/admin/users/${id}/quotas`, {
+      method: 'POST',
+      body: JSON.stringify(quotas),
+    }),
+
   adminDomains: () => request<{ domains: unknown[] }>('/admin/domains'),
 
   adminDomainOverride: (id: string) =>

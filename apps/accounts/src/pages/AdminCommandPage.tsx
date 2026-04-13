@@ -18,6 +18,7 @@ export function AdminCommandPage() {
   const [domains, setDomains] = useState<any[]>([]);
   const [audit, setAudit] = useState<any[]>([]);
   const [health, setHealth] = useState<Record<string, unknown> | null>(null);
+  const [editingQuotas, setEditingQuotas] = useState<Record<string, { mail: string; drive: string }>>({});
 
   const tabs = useMemo(
     () => [
@@ -70,6 +71,36 @@ export function AdminCommandPage() {
     } catch (e) {
       toast.show(e instanceof Error ? e.message : 'Action failed', { countdown: 6 });
     }
+  };
+
+  const openQuotaEditor = (u: any) => {
+    setEditingQuotas((prev) => ({
+      ...prev,
+      [u.id]: {
+        mail: String(u.mailQuotaBytes ?? 0),
+        drive: String(u.driveQuotaBytes ?? 0),
+      },
+    }));
+  };
+
+  const saveQuotas = async (u: any) => {
+    const v = editingQuotas[u.id];
+    if (!v) return;
+    const mail = Number(v.mail);
+    const drive = Number(v.drive);
+    if (!Number.isFinite(mail) || !Number.isFinite(drive) || mail < 0 || drive < 0) {
+      toast.show('Quotas must be valid non-negative numbers (bytes).', { countdown: 6 });
+      return;
+    }
+    await action(
+      () => authApi.adminSetQuotas(u.id, { mailQuotaBytes: Math.trunc(mail), driveQuotaBytes: Math.trunc(drive) }),
+      'Quotas updated',
+    );
+    setEditingQuotas((prev) => {
+      const next = { ...prev };
+      delete next[u.id];
+      return next;
+    });
   };
 
   return (
@@ -132,8 +163,61 @@ export function AdminCommandPage() {
                     {u.displayName || '—'} · sessions: {u.sessionCount ?? 0} · MFA:{' '}
                     {u.mfaEnabled ? 'on' : 'off'} · verified: {u.emailVerified ? 'yes' : 'no'}
                   </div>
+                  <div style={{ fontSize: 12, color: 'var(--acc-text-muted)', marginTop: 4 }}>
+                    mail quota: {String(u.mailQuotaBytes ?? 0)} bytes · drive quota: {String(u.driveQuotaBytes ?? 0)} bytes
+                  </div>
+                  {editingQuotas[u.id] ? (
+                    <div style={{ display: 'flex', gap: 8, marginTop: 10, flexWrap: 'wrap' }}>
+                      <div style={{ minWidth: 220 }}>
+                        <FormField
+                          label="Mail quota (bytes)"
+                          placeholder="e.g. 5368709120"
+                          value={editingQuotas[u.id]?.mail ?? ''}
+                          onChange={(e) =>
+                            setEditingQuotas((prev) => ({
+                              ...prev,
+                              [u.id]: { mail: e.target.value, drive: prev[u.id]?.drive ?? '' },
+                            }))
+                          }
+                        />
+                      </div>
+                      <div style={{ minWidth: 220 }}>
+                        <FormField
+                          label="Drive quota (bytes)"
+                          placeholder="e.g. 10737418240"
+                          value={editingQuotas[u.id]?.drive ?? ''}
+                          onChange={(e) =>
+                            setEditingQuotas((prev) => ({
+                              ...prev,
+                              [u.id]: { mail: prev[u.id]?.mail ?? '', drive: e.target.value },
+                            }))
+                          }
+                        />
+                      </div>
+                      <div style={{ display: 'flex', gap: 8, alignItems: 'flex-end' }}>
+                        <Button variant="secondary" onClick={() => saveQuotas(u)}>
+                          Save quotas
+                        </Button>
+                        <Button
+                          variant="secondary"
+                          onClick={() =>
+                            setEditingQuotas((prev) => {
+                              const next = { ...prev };
+                              delete next[u.id];
+                              return next;
+                            })
+                          }
+                        >
+                          Cancel
+                        </Button>
+                      </div>
+                    </div>
+                  ) : null}
                 </div>
                 <div style={{ display: 'flex', gap: 8, flexWrap: 'wrap', justifyContent: 'flex-end' }}>
+                  <Button variant="secondary" onClick={() => openQuotaEditor(u)}>
+                    Edit quotas
+                  </Button>
                   <Button variant="secondary" onClick={() => action(() => authApi.adminVerifyEmail(u.id), 'Account verified')}>
                     Verify
                   </Button>

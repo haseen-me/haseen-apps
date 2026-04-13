@@ -69,6 +69,7 @@ type DataStore interface {
 	// Admin
 	AdminListUsers(ctx context.Context, q string, limit, offset int) ([]model.AdminUserRow, int, error)
 	AdminGetUser(ctx context.Context, id string) (*model.AdminUserRow, error)
+	AdminUpsertStorageQuotas(ctx context.Context, userID string, mailQuotaBytes, driveQuotaBytes int64) error
 	AdminQueueStats(ctx context.Context) (queued, sending, sent, deferred, failed int64, err error)
 	AdminAttachmentStats(ctx context.Context) (count int64, totalBytes int64, err error)
 	AdminListDomains(ctx context.Context, limit int) ([]AdminDomainRow, error)

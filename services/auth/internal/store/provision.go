@@ -63,9 +63,13 @@ func (s *Store) ProvisionUserResources(ctx context.Context, userID string) error
 	}
 
 	// Quotas: create per-user quota rows if the schema supports it (optional table).
-	// If the table doesn't exist, provisioning still succeeds.
-	// NOTE: quotas are currently enforced at service level (e.g. Drive defaults to 10GB).
-	// A dedicated quotas table will be added alongside the admin panel work.
+	// NOTE: enforcement is currently service-level for Drive; admin management uses this table.
+	_, _ = tx.Exec(ctx,
+		`INSERT INTO storage_quotas (user_id, mail_quota_bytes, drive_quota_bytes)
+		 VALUES ($1, $2, $3)
+		 ON CONFLICT (user_id) DO NOTHING`,
+		userID, DefaultMailQuotaBytes, DefaultDriveQuotaBytes,
+	)
 
 	if err := tx.Commit(ctx); err != nil && err != pgx.ErrTxClosed {
 		return err

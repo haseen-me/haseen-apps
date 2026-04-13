@@ -13,8 +13,11 @@ import (
 const adminUserSelect = `SELECT u.id, u.email, u.display_name, u.password_hash, COALESCE(u.avatar_url,''),
 		u.email_verified_at, u.suspended_at, u.mfa_enforced, u.is_admin, u.is_super_admin, u.created_at, u.updated_at,
 		COALESCE((SELECT enabled FROM mfa_secrets m WHERE m.user_id = u.id LIMIT 1), false),
-		(SELECT COUNT(*)::int FROM sessions s WHERE s.user_id = u.id AND s.expires_at > NOW())
-		FROM users u`
+		(SELECT COUNT(*)::int FROM sessions s WHERE s.user_id = u.id AND s.expires_at > NOW()),
+		COALESCE(q.mail_quota_bytes, 0)::bigint,
+		COALESCE(q.drive_quota_bytes, 0)::bigint
+		FROM users u
+		LEFT JOIN storage_quotas q ON q.user_id = u.id`
 
 func (s *Store) AdminListUsers(ctx context.Context, q string, limit, offset int) ([]model.AdminUserRow, int, error) {
 	if limit <= 0 || limit > 200 {
@@ -65,7 +68,7 @@ func (s *Store) AdminListUsers(ctx context.Context, q string, limit, offset int)
 		if err := rows.Scan(
 			&r.ID, &r.Email, &r.DisplayName, &r.PasswordHash, &r.AvatarURL,
 			&emailVerified, &suspended, &r.MFAEnforced, &r.IsAdmin, &r.IsSuperAdmin, &r.CreatedAt, &r.UpdatedAt,
-			&r.MFAEnabled, &r.SessionCount,
+			&r.MFAEnabled, &r.SessionCount, &r.MailQuotaBytes, &r.DriveQuotaBytes,
 		); err != nil {
 			return nil, 0, err
 		}
@@ -86,7 +89,7 @@ func (s *Store) AdminGetUser(ctx context.Context, id string) (*model.AdminUserRo
 	).Scan(
 		&r.ID, &r.Email, &r.DisplayName, &r.PasswordHash, &r.AvatarURL,
 		&emailVerified, &suspended, &r.MFAEnforced, &r.IsAdmin, &r.IsSuperAdmin, &r.CreatedAt, &r.UpdatedAt,
-		&r.MFAEnabled, &r.SessionCount,
+		&r.MFAEnabled, &r.SessionCount, &r.MailQuotaBytes, &r.DriveQuotaBytes,
 	)
 	if errors.Is(err, pgx.ErrNoRows) {
 		return nil, ErrNotFound

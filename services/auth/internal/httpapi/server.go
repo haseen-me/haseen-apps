@@ -218,6 +218,7 @@ func NewFiberApp(s *Server) *fiber.App {
 	admin.Post("/users/:id/reactivate", s.handleAdminReactivate)
 	admin.Post("/users/:id/verify-email", s.handleAdminVerifyEmail)
 	admin.Post("/users/:id/mfa-enforce", s.handleAdminMFAEnforce)
+	admin.Post("/users/:id/quotas", s.handleAdminSetUserQuotas)
 	admin.Get("/domains", s.handleAdminDomains)
 	admin.Post("/domains/:id/verify-override", s.handleAdminDomainOverride)
 	admin.Get("/metrics/smtp-queue", s.handleAdminSMTPQueue)
@@ -1125,6 +1126,29 @@ func (s *Server) handleAdminMFAEnforce(c *fiber.Ctx) error {
 	if err := s.Store.SetMFAEnforced(c.Context(), id, body.Enforced); err != nil {
 		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
 	}
+	return c.JSON(model.OkResponse{OK: true})
+}
+
+func (s *Server) handleAdminSetUserQuotas(c *fiber.Ctx) error {
+	id := c.Params("id")
+	var body struct {
+		MailQuotaBytes  int64 `json:"mailQuotaBytes"`
+		DriveQuotaBytes int64 `json:"driveQuotaBytes"`
+	}
+	if err := c.BodyParser(&body); err != nil {
+		return fiber.NewError(fiber.StatusBadRequest, "invalid request body")
+	}
+	if body.MailQuotaBytes < 0 || body.DriveQuotaBytes < 0 {
+		return fiber.NewError(fiber.StatusBadRequest, "quota bytes must be >= 0")
+	}
+	if err := s.Store.AdminUpsertStorageQuotas(c.Context(), id, body.MailQuotaBytes, body.DriveQuotaBytes); err != nil {
+		s.Log.Error().Err(err).Msg("admin set quotas")
+		return fiber.NewError(fiber.StatusInternalServerError, "internal error")
+	}
+	s.writeAudit(c, "admin.user_quotas_set", "user", id, map[string]any{
+		"mailQuotaBytes":  body.MailQuotaBytes,
+		"driveQuotaBytes": body.DriveQuotaBytes,
+	})
 	return c.JSON(model.OkResponse{OK: true})
 }
 
