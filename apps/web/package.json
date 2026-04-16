@@ -12,7 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@haseen-me/ui": "file:../../../ui",
+    "@haseen-me/ui": "*",
     "@haseen-me/shared": "*",
     "react": "^19.0.0",
     "react-dom": "^19.0.0",

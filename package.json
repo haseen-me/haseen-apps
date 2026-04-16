@@ -4,6 +4,7 @@
   "version": "0.0.0",
   "description": "Haseen — Privacy-first, end-to-end encrypted productivity suite",
   "workspaces": [
+    "ui",
     "apps/*",
     "packages/*"
   ],

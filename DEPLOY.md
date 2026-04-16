@@ -35,9 +35,8 @@ Install:
 Then copy the repo to the server so this layout is preserved:
 
 - `/path/to/repo/haseen-apps`
-- `/path/to/repo/ui`
 
-The frontend build depends on the sibling `ui/` package, so both directories must be present.
+The frontend build now uses the vendored `ui/` workspace that lives inside this repository, so no extra sibling checkout is required.
 
 Create deploy path first as `root`, then delegate runtime ownership to `nazim`:
 

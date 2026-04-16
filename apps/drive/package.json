@@ -12,7 +12,7 @@
     "clean": "rm -rf dist"
   },
   "dependencies": {
-    "@haseen-me/ui": "file:../../../ui",
+    "@haseen-me/ui": "*",
     "@haseen-me/crypto": "*",
     "@haseen-me/api-client": "*",
     "@haseen-me/shared": "*",

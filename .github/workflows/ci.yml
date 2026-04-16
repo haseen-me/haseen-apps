@@ -16,25 +16,11 @@ jobs:
         with:
           path: haseen-apps
 
-      - name: Checkout UI dependency
-        uses: actions/checkout@v4
-        with:
-          repository: haseen-me/ui
-          path: ui
-
       - uses: actions/setup-node@v4
         with:
           node-version: 20
           cache: npm
           cache-dependency-path: haseen-apps/package-lock.json
-
-      - name: Install UI dependencies
-        working-directory: ./ui
-        run: npm ci
-
-      - name: Build UI package
-        working-directory: ./ui
-        run: npm run build
 
       - name: Install dependencies
         working-directory: ./haseen-apps
