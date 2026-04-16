@@ -17,7 +17,7 @@ function Hero() {
         background: 'radial-gradient(ellipse 80% 60% at 50% 0%, rgba(45,184,175,0.08) 0%, transparent 70%)',
       }}
     >
-      <span className="section-label">End-to-End Encrypted</span>
+      <span className="section-label">Encrypted Mail Startup</span>
       <h1
         style={{
           fontSize: 'clamp(36px, 6vw, 72px)',
@@ -28,7 +28,7 @@ function Hero() {
           letterSpacing: '-0.02em',
         }}
       >
-        Your productivity,{' '}
+        The encrypted mail startup for{' '}
         <span style={{ color: 'var(--hsn-cta-primary-default)' }}>truly private</span>
       </h1>
       <p
@@ -40,9 +40,9 @@ function Hero() {
           marginBottom: 40,
         }}
       >
-        Haseen is a privacy-first productivity suite with end-to-end encrypted
-        mail, drive, and calendar. Zero-knowledge architecture means no one — not
-        even us — can read your data.
+        Haseen is a privacy-first mail startup building an end-to-end encrypted
+        suite for email, drive, and calendar. Zero-knowledge architecture means
+        no one, not even us, can read your data.
       </p>
       <div style={{ display: 'flex', gap: 12, flexWrap: 'wrap', justifyContent: 'center' }}>
         <Button

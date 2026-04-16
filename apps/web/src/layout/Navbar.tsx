@@ -67,7 +67,8 @@ export function Navbar() {
           <div
             style={{
               width: 32, height: 32, borderRadius: 8,
-              background: 'var(--hsn-cta-primary-default)',
+              background: 'linear-gradient(135deg, var(--hsn-brand-light), var(--hsn-accent-teal))',
+              boxShadow: '0 10px 24px rgba(15, 118, 110, 0.22)',
               display: 'flex', alignItems: 'center', justifyContent: 'center',
               color: '#fff', fontWeight: 800, fontSize: 16,
             }}
